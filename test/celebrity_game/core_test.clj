@@ -1,7 +1,9 @@
 (ns celebrity-game.core-test
   (:require [clojure.test :refer :all]
-            [celebrity-game.core :refer :all]))
+            [celebrity-game.core :refer :all]
+            [ring.mock.request :as mock]))
 
 (deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+  (testing "Home page is 200"
+    (is (= (:status (handler (mock/request :get "/")))
+           200))))

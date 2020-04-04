@@ -7,6 +7,7 @@ ENV PORT 3030
 WORKDIR /game
 COPY project.clj .
 RUN lein deps
+RUN lein with-profile test deps
 
 COPY . /game
 

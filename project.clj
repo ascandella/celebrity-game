@@ -8,7 +8,8 @@
                  [ring/ring-jetty-adapter "1.6.3"]]
   :main ^:skip-aot celebrity-game.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}}
+  :profiles {:uberjar {:aot :all}
+             :test {:dependencies [[ring/ring-mock "0.4.0"]]} }
 
   :ring
   {:handler celebrity-game.core/handler
