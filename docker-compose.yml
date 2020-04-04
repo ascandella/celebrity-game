@@ -1,0 +1,9 @@
+version: "3.7"
+services:
+  backend:
+    build:
+      context: .
+    environment:
+      - PORT=3030
+    expose:
+      - "3030"
