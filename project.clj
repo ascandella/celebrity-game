@@ -11,5 +11,6 @@
   :profiles {:uberjar {:aot :all}}
 
   :ring
-  {:handler celebrity-game.core/handler}
+  {:handler celebrity-game.core/handler
+   :open-browser? false}
   :plugins [[lein-ring "0.12.5"]])
