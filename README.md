@@ -12,9 +12,23 @@ FIXME: explanation
 
     $ java -jar celebrity-game-0.1.0-standalone.jar [args]
 
-## Options
+## Docker Compose
 
-FIXME: listing of options this app accepts.
+``` sh
+docker-compose up -d
+```
+
+### Logs
+
+``` sh
+docker-compose logs -f
+```
+
+### Stopping
+
+``` sh
+docker-compose down
+```
 
 ## Examples
 

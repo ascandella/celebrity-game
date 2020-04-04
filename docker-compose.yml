@@ -9,3 +9,13 @@ services:
       - "3030:3030"
     volumes:
       - ./:/game
+
+  frontend:
+    build:
+      context: frontend
+    environment:
+      - PORT=3040
+    ports:
+      - "3040:3040"
+    volumes:
+      - ./frontend:/frontend
