@@ -1,0 +1,25 @@
+name: Test
+
+on:
+  push:
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: '14'
+
+      - name: Setup Clojure
+        uses: DeLaGuardo/setup-clojure@2.0
+        with:
+          lein: '2.9.3'
+
+      - name: Run Clojure tests
+        run: lein test
