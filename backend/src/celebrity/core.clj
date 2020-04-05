@@ -1,4 +1,4 @@
-(ns celebrity-game.core
+(ns celebrity.core
   (:gen-class))
 
 (defn -main

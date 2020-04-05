@@ -22,7 +22,9 @@ jobs:
           lein: '2.9.3'
 
       - name: Run Clojure tests
-        run: lein test
+        run: |
+          cd backend
+          lein test
 
 
   frontend-tests:

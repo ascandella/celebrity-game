@@ -2,13 +2,13 @@ version: "3.7"
 services:
   backend:
     build:
-      context: .
+      context: backend
     environment:
       - PORT=3030
     ports:
       - "3030:3030"
     volumes:
-      - ./:/game
+      - ./backend/:/game
 
   frontend:
     build:
