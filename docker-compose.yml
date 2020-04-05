@@ -3,6 +3,7 @@ services:
   backend:
     build:
       context: backend
+      dockerfile: .docker/Dockerfile
     environment:
       - PORT=3030
     ports:

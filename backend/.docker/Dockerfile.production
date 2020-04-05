@@ -1,0 +1,18 @@
+FROM circleci/clojure:openjdk-14-lein-buster AS builder
+ENV VERSION "0.1.0-SNAPSHOT"
+
+WORKDIR /build
+COPY . .
+USER root
+
+RUN lein uberjar
+
+FROM openjdk:14-jdk-buster AS production
+ENV VERSION "0.1.0-SNAPSHOT"
+ENV PORT 3040
+
+WORKDIR /backend
+
+COPY --from=builder /build/target/uberjar/celebrity-${VERSION}-standalone.jar .
+
+CMD ["sh", "-c", "java -jar celebrity-${VERSION}-standalone.jar"]
