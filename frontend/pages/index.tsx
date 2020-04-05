@@ -1,10 +1,12 @@
-import Header from '../components/header'
+import React, { FunctionComponent } from 'react';
+import Header from '../components/header';
 
-export default function Index() {
-  return (
-    <div>
-      <Header />
-      <p>Hello next.js</p>
-    </div>
-  )
-}
+const Index: FunctionComponent = () => (
+  <div>
+    <Header />
+    <p>Hello next.js</p>
+  </div>
+);
+
+
+export default Index;
