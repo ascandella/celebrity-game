@@ -34,7 +34,9 @@ jobs:
         with:
           node-version: '13.x'
 
-      - run: yarn install
+      - run: |
+          cd frontend
+          yarn install
 
       - name: ESLint
         run: |
