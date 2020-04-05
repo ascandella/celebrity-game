@@ -46,7 +46,7 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
             <label className="block text-gray-700 font-bold mb-2">
               Code
               <input type="text"value={this.state.gameCode}
-                autoFocus
+                autoFocus required
                 maxLength={this.props.maxLength}
                 onChange={this.handleCodeChange}
                 className="bg-white uppercase focus:outline-none focus:shadow-outline border border-gray-300 rounded-lg py-2 px-4 block w-full appearance-none leading-normal9"
@@ -56,7 +56,7 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
             <label className="block text-gray-700 font-bold mb-2">
               Name
               <input type="text" value={this.state.name}
-                placeholder="Your Name"
+                placeholder="Your Name" required
                 maxLength={this.props.maxNameLength}
                 onChange={(event): void => this.setState({ name: event.target.value })}
                 className="bg-white focus:outline-none focus:shadow-outline border border-gray-300 rounded-lg py-2 px-4 block w-full appearance-none leading-normal9"
