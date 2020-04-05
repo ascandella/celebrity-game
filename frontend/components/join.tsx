@@ -7,8 +7,8 @@ type JoinProps = {
 };
 
 type JoinState = {
-  gameCode?: string;
-  name?: string;
+  gameCode: string;
+  name: string;
 };
 
 export default class JoinGame extends Component<JoinProps, JoinState> {
@@ -20,8 +20,8 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
   constructor(props: JoinProps) {
     super(props);
     this.state = {
-      gameCode: null,
-      name: null,
+      gameCode: '',
+      name: '',
     };
     this.handleCodeChange = this.handleCodeChange.bind(this);
   }
