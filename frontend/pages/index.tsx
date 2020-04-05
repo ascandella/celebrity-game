@@ -1,10 +1,11 @@
 import React, { FunctionComponent } from 'react';
 import Header from '../components/header';
+import JoinGame from '../components/join';
 
 const Index: FunctionComponent = () => (
-  <div>
+  <div className="bg-gray-100 overflow-hidden h-screen">
     <Header />
-    <p>Hello next.js</p>
+    <JoinGame />
   </div>
 );
 
