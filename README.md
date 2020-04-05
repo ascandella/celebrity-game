@@ -1,3 +1,4 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/c29dab66-8c65-4397-a3fb-038daeb06138/deploy-status)](https://app.netlify.com/sites/kind-shannon-15237c/deploys)
 # Celebrity Game
 
 This is a game I am writing to learn [Clojure](https://clojure.org/) and [React](https://reactjs.org/).
