@@ -2,13 +2,13 @@ import React, { Component } from 'react';
 import SmallForm from './small-form';
 
 type JoinProps = {
-  maxLength: number,
-  maxNameLength: number,
+  maxLength: number;
+  maxNameLength: number;
 };
 
 type JoinState = {
-  gameCode?: string,
-  name?: string,
+  gameCode?: string;
+  name?: string;
 };
 
 export default class JoinGame extends Component<JoinProps, JoinState> {
@@ -58,7 +58,7 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
               <input type="text" value={this.state.name}
                 placeholder="Your Name"
                 maxLength={this.props.maxNameLength}
-                onChange={(event) => this.setState({name: event.target.value})}
+                onChange={(event): void => this.setState({ name: event.target.value })}
                 className="bg-white focus:outline-none focus:shadow-outline border border-gray-300 rounded-lg py-2 px-4 block w-full appearance-none leading-normal9"
               />
             </label>
