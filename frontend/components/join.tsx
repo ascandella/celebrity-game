@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import SmallForm from "./small-form";
 
 type JoinProps = {
-  maxLength: number;
+  maxCodeLength: number;
   maxNameLength: number;
 };
 
@@ -13,7 +13,7 @@ type JoinState = {
 
 export default class JoinGame extends Component<JoinProps, JoinState> {
   static defaultProps = {
-    maxLength: 4,
+    maxCodeLength: 4,
     maxNameLength: 12,
   };
 
@@ -53,7 +53,7 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
                 value={this.state.gameCode}
                 autoFocus
                 required
-                maxLength={this.props.maxLength}
+                maxLength={this.props.maxCodeLength}
                 onChange={this.handleCodeChange}
                 className="bg-white uppercase focus:outline-none focus:shadow-outline border border-gray-300 rounded-lg py-2 px-4 block w-full appearance-none leading-normal9"
               />
