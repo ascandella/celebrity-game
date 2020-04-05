@@ -1,6 +1,6 @@
-# celebrity-game
+# Celebrity Game
 
-FIXME: description
+This is a game I am writing to learn [Clojure](https://clojure.org/) and [React](https://reactjs.org/).
 
 ## Installation
 
