@@ -59,7 +59,7 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
               />
             </label>
 
-            <label className="block text-gray-700font-bold mb-2">
+            <label className="block text-gray-700 font-bold mb-2">
               Name
               <input
                 type="text"
