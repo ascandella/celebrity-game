@@ -1,6 +1,6 @@
-(ns celebrity-game.core-test
+(ns celebrity.core-test
   (:require [clojure.test :refer :all]
-            [celebrity-game.core :refer :all]
+            [celebrity.core :refer :all]
             [ring.mock.request :as mock]))
 
 (deftest a-test
