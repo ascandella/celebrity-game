@@ -1,42 +1,38 @@
 module.exports = {
   env: {
     browser: true,
-    es6: true
+    es6: true,
   },
   extends: [
-    'plugin:react/recommended',
-    'plugin:@typescript-eslint/eslint-recommended',
-    'plugin:@typescript-eslint/recommended',
-    'airbnb-base',
+    "plugin:react/recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "airbnb-base",
+    "prettier",
   ],
   globals: {
-    Atomics: 'readonly',
-    SharedArrayBuffer: 'readonly'
+    Atomics: "readonly",
+    SharedArrayBuffer: "readonly",
   },
-  ignorePatterns: [
-    'next-env.d.ts',
-  ],
-  parser: '@typescript-eslint/parser',
+  ignorePatterns: ["next-env.d.ts"],
+  parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaFeatures: {
-      jsx: true
+      jsx: true,
     },
     ecmaVersion: 2018,
-    sourceType: 'module'
+    sourceType: "module",
   },
-  plugins: [
-    'react',
-    '@typescript-eslint',
-  ],
+  plugins: ["react", "@typescript-eslint", "prettier"],
   settings: {
     react: {
-      version: 'detect',
+      version: "detect",
     },
     "import/resolver": {
       node: {
         extensions: [".js", ".jsx", ".ts", ".tsx"],
-      }
-    }
+      },
+    },
   },
   rules: {
     "import/extensions": [
@@ -44,8 +40,8 @@ module.exports = {
       "never",
       {
         ".tsx": "never",
-      }
+      },
     ],
-    '@typescript-eslint/no-explicit-any': 'off',
-  }
-}
+    "@typescript-eslint/no-explicit-any": "off",
+  },
+};
