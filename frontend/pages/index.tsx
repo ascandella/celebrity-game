@@ -3,7 +3,7 @@ import Header from '../components/header';
 import JoinGame from '../components/join';
 
 const Index: FunctionComponent = () => (
-  <div className="bg-gray-100 overflow-hidden h-screen">
+  <div className="bg-gray-100 h-screen">
     <Header />
     <JoinGame />
   </div>
