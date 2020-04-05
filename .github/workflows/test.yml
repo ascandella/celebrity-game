@@ -36,7 +36,8 @@ jobs:
         with:
           node-version: '13.x'
 
-      - run: |
+      - name: Yarn Install
+        run: |
           cd frontend
           yarn install
 
