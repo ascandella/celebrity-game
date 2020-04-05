@@ -8,7 +8,7 @@ type SmallFormProps = {
 
 export default class SmallForm extends Component<SmallFormProps, {}> {
   static defaultProps = {
-    submitText: "submit",
+    submitText: "Submit",
   };
 
   render(): React.ReactNode {
