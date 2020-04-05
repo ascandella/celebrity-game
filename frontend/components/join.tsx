@@ -1,5 +1,5 @@
-import React, { Component } from 'react';
-import SmallForm from './small-form';
+import React, { Component } from "react";
+import SmallForm from "./small-form";
 
 type JoinProps = {
   maxLength: number;
@@ -20,8 +20,8 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
   constructor(props: JoinProps) {
     super(props);
     this.state = {
-      gameCode: '',
-      name: '',
+      gameCode: "",
+      name: "",
     };
     this.handleCodeChange = this.handleCodeChange.bind(this);
   }
@@ -41,29 +41,39 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
   render(): React.ReactNode {
     return (
       <div className="mt-6 mx-6">
-        <SmallForm onSubmit={this.handleSubmit.bind(this)} submitText="Join Game">
+        <SmallForm
+          onSubmit={this.handleSubmit.bind(this)}
+          submitText="Join Game"
+        >
           <div className="mb-6">
             <label className="block text-gray-700 font-bold mb-2">
               Code
-              <input type="text"value={this.state.gameCode}
-                autoFocus required
+              <input
+                type="text"
+                value={this.state.gameCode}
+                autoFocus
+                required
                 maxLength={this.props.maxLength}
                 onChange={this.handleCodeChange}
                 className="bg-white uppercase focus:outline-none focus:shadow-outline border border-gray-300 rounded-lg py-2 px-4 block w-full appearance-none leading-normal9"
               />
             </label>
 
-            <label className="block text-gray-700 font-bold mb-2">
+            <label className="block text-gray-700font-bold mb-2">
               Name
-              <input type="text" value={this.state.name}
-                placeholder="Your Name" required
+              <input
+                type="text"
+                value={this.state.name}
+                placeholder="Your Name"
+                required
                 maxLength={this.props.maxNameLength}
-                onChange={(event): void => this.setState({ name: event.target.value })}
+                onChange={(event): void =>
+                  this.setState({ name: event.target.value })
+                }
                 className="bg-white focus:outline-none focus:shadow-outline border border-gray-300 rounded-lg py-2 px-4 block w-full appearance-none leading-normal9"
               />
             </label>
           </div>
-
         </SmallForm>
       </div>
     );

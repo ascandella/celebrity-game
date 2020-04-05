@@ -1,5 +1,5 @@
-import React, { FunctionComponent } from 'react';
-import Header from '../components/header';
+import React, { FunctionComponent } from "react";
+import Header from "../components/header";
 
 const About: FunctionComponent = () => (
   <div>
