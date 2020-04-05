@@ -1,51 +1,35 @@
 [![Netlify Status](https://api.netlify.com/api/v1/badges/c29dab66-8c65-4397-a3fb-038daeb06138/deploy-status)](https://app.netlify.com/sites/celebrity-game/deploys)
+
 # Celebrity Game
+
+Deployed at https://celebrityga.me/
 
 This is a game I am writing to learn [Clojure](https://clojure.org/) and [React](https://reactjs.org/).
 
 ## Installation
 
-Download from http://example.com/FIXME.
-
-## Usage
-
-FIXME: explanation
-
-    $ java -jar celebrity-game-0.1.0-standalone.jar [args]
+Download from https://github.com/ascandella/celebrity-game.
 
 ## Docker Compose
 
-``` sh
+```sh
 docker-compose up -d
 ```
 
 ### Logs
 
-``` sh
+```sh
 docker-compose logs -f
 ```
 
 ### Stopping
 
-``` sh
+```sh
 docker-compose down
 ```
 
-## Examples
-
-...
-
-### Bugs
-
-...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
-
 ## License
 
-Copyright © 2020 FIXME
+Copyright © 2020 Aiden Scandella
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Distributed under the MIT License.
