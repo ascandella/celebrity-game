@@ -1,6 +1,8 @@
-import { AppProps  } from 'next/app'
-import '../styles/main.css'
+import { AppProps } from 'next/app';
+import React from 'react';
+import '../styles/main.css';
 
-export default function CelebrityApp({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />
+// TODO fix this `any` annotation
+export default function CelebrityApp({ Component, pageProps }: AppProps): any {
+  return <Component {...pageProps} />;
 }

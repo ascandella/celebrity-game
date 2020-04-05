@@ -1,10 +1,11 @@
-import Header from '../components/header'
+import React, { FunctionComponent } from 'react';
+import Header from '../components/header';
 
-export default function About() {
-  return (
-    <div>
-      <Header />
-      <p>This is the about page</p>
-    </div>
-  )
-}
+const About: FunctionComponent = () => (
+  <div>
+    <Header />
+    <p>This is the about page</p>
+  </div>
+);
+
+export default About;
