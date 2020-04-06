@@ -79,9 +79,29 @@ const About: FunctionComponent = () => {
           , so that he could play the game with his friends while quarantined in
           Seattle.
         </p>
+
+        <p className="pt-4">
+          It is open source
+          <a
+            className={`${linkStyle} pl-1`}
+            href="https://github.com/ascandella/celebrity-game/"
+          >
+            on GitHub
+          </a>
+          .
+        </p>
       </AboutSection>
       <AboutSection title="How do I report a bug?">
-        <p>Send me an email to: celebrity at sca dot ndella dot com</p>
+        <p>
+          Open an issue{" "}
+          <a
+            className={linkStyle}
+            href="https://github.com/ascandella/celebrity-game/issues/new"
+          >
+            on GitHub
+          </a>
+          .
+        </p>
       </AboutSection>
     </ContentWrapper>
   );
