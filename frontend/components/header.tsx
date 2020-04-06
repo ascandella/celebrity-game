@@ -17,12 +17,12 @@ const Header: FunctionComponent = () => (
         <a className="font-semibold text-xl tracking-tight">Celebrity</a>
       </Link>
     </div>
-    <div className="block flex-grow lg:flex lg:items-center lg:w-auto">
-      <div className="text-sm">
-        <Link href="/about">
-          <a>About</a>
-        </Link>
-      </div>
+    <div className="block lg:flex lg:items-center lg:w-auto">
+      <Link href="/about">
+        <a className="mt-4 lg:mt-0 text-teal-200 hover:text-white mr-4">
+          About
+        </a>
+      </Link>
     </div>
   </nav>
 );
