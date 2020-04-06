@@ -1,5 +1,5 @@
 function getGameURL(): string {
-  return `${process.env.apiBase}/echo`;
+  return `${process.env.apiBase}/game`;
 }
 
 export default class CelebrityClient {

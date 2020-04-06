@@ -15,24 +15,15 @@
    :headers {"Content-type" "text/plain"}
    :body "Expected a websocket request."})
 
-;; TODO(aiden) remove this
-(defn echo-handler
-  [req]
-  (-> (d/let-flow [socket (http/websocket-connection req)]
-         ;; connect the socket to itself
-         (s/connect socket socket))
-      (d/catch
-          (fn [& args]
-            non-websocket-request))))
-
 (defn game-handler
   [req]
   (->
-   (d/let-flow [conn (http/websocket-connection req)]
-               ;; TODO this
-               (s/connect conn conn))
+   (d/let-flow
+    [conn (http/websocket-connection req)]
+    ;; TODO this
+    (s/connect conn conn))
    (d/catch
-       (fn [& args]
+       (fn [_]
          non-websocket-request))))
 
 (defn health-handler
@@ -45,7 +36,6 @@
   (params/wrap-params
    (compojure/routes
     (GET "/game" [] game-handler)
-    (GET "/echo" [] echo-handler)
     (GET "/health" [] health-handler)
     (route/not-found "No such page."))))
 

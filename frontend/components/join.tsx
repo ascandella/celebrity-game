@@ -50,7 +50,9 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
     });
 
     // TODO actual handshake
-    this.props.client.wsClient.send("hello");
+    this.props.client.wsClient.send(
+      `Name: ${this.state.name}, Room: ${this.state.gameCode}`
+    );
   }
 
   handleCodeChange(event: React.ChangeEvent<HTMLInputElement>): void {
