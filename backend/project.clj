@@ -6,7 +6,7 @@
 
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/core.async "0.4.474"]
-                 [ring/ring-core "1.6.3"]
+                 [ring "1.7.0"]
                  [aleph "0.4.6"]
                  [compojure "1.6.1"]]
 
@@ -16,13 +16,4 @@
 
   :profiles
   {:uberjar {:aot :all}
-   :test {:dependencies [[ring/ring-mock "0.4.0"]]}}
-
-  :ring
-  {:handler celebrity.core/handler
-   ;; keep ring from trying to import test things
-   :reload-paths ["src"]
-   ;; for running in docker
-   :open-browser? false}
-  ;; provides "lein ring server"
-  :plugins [[lein-ring "0.12.5"]])
+   :test {:dependencies [[ring/ring-mock "0.4.0"]]}})

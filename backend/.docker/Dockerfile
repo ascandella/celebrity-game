@@ -10,4 +10,4 @@ RUN lein deps
 
 COPY . /game
 
-CMD lein ring server
+CMD lein run

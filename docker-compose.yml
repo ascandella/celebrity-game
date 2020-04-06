@@ -6,6 +6,7 @@ services:
       dockerfile: .docker/Dockerfile
     environment:
       - PORT=3030
+      - CELEBRITY_ENVIRONMENT=development
     ports:
       - "3030:3030"
     volumes:

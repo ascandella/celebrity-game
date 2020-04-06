@@ -1,12 +1,12 @@
 (ns celebrity.core
   (:require [compojure.core :as compojure :refer [GET]]
-            [ring.middleware.params :as params]
             [compojure.route :as route]
+            [ring.middleware.reload :refer [wrap-reload]]
+            [ring.middleware.params :as params]
             [aleph.http :as http]
-            [byte-streams :as bs]
             [manifold.stream :as s]
             [manifold.deferred :as d]
-            [manifold.bus :as bus]
+            ;;[manifold.bus :as bus]
             [clojure.core.async :as a])
   (:gen-class))
 
@@ -22,17 +22,17 @@
          ;; connect the socket to itself
          (s/connect socket socket))
       (d/catch
-          (fn [_]
+          (fn [& args]
             non-websocket-request))))
 
 (defn game-handler
   [req]
   (->
    (d/let-flow [conn (http/websocket-connection req)]
-        ;; TODO this
-               nil)
+               ;; TODO this
+               (s/connect conn conn))
    (d/catch
-       (fn [_]
+       (fn [& args]
          non-websocket-request))))
 
 (defn health-handler
@@ -49,10 +49,15 @@
     (GET "/health" [] health-handler)
     (route/not-found "No such page."))))
 
+(def wrapped-handler
+  (if (= (System/getenv "CELEBRITY_ENVIRONMENT") "development")
+    (wrap-reload handler)
+    handler))
+
 (defn get-port
   ([] (get-port "PORT"))
   ([key] (Integer/valueOf (or (System/getenv key) "3030"))))
 
 (defn -main
   [& args]
-  (http/start-server handler {:port (get-port)}))
+  (http/start-server wrapped-handler {:port (get-port)}))
