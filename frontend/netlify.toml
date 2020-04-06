@@ -1,3 +1,6 @@
 [build]
   publish = "out/"
   command = "yarn export"
+
+[context.production]
+  environment  = { CELEBRITY_BACKEND = "wss://api.celebrityga.me"}
