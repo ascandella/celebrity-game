@@ -7,7 +7,6 @@ module.exports = (phase, { defaultConfig }) => {
         // default clojure backend in development / docker
         apiBase: "ws://localhost:3030",
       },
-      ...defaultConfig,
     };
   }
 
@@ -15,6 +14,5 @@ module.exports = (phase, { defaultConfig }) => {
     env: {
       apiBase: process.env.CELEBRITY_BACKEND,
     },
-    ...defaultConfig,
   };
 };

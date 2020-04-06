@@ -1,11 +1,5 @@
-const developmentServer = "ws://localhost:3030";
-
 function getGameURL(): string {
-  let base = developmentServer;
-  if (process.env.apiBase) {
-    base = process.env.apiBase;
-  }
-  return `${base}/echo`;
+  return `${process.env.apiBase}/echo`;
 }
 
 export default class CelebrityClient {
