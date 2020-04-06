@@ -14,7 +14,7 @@ const ContentWrapper: FunctionComponent = ({
       <title>Celebrity Game</title>
     </Head>
     <Header />
-    <div className="mt-6">{children}</div>
+    <div className="mt-6 px-6">{children}</div>
   </div>
 );
 
