@@ -11,9 +11,9 @@
   (:gen-class))
 
 (def non-websocket-request
-  {:status 400
+  {:status  400
    :headers {"Content-type" "text/plain"}
-   :body "Expected a websocket request."})
+   :body    "Expected a websocket request."})
 
 (defn game-handler
   [req]
@@ -28,9 +28,9 @@
 
 (defn health-handler
   [req]
-  {:status 200
+  {:status  200
    :headers {"Content-type" "text/plain"}
-   :body "OK"})
+   :body    "OK"})
 
 (def handler
   (params/wrap-params
