@@ -4,10 +4,10 @@
             [ring.middleware.reload :refer [wrap-reload]]
             [ring.middleware.params :as params]
             [aleph.http :as http]
-            [manifold.stream :as s]
             [manifold.deferred :as d]
             ;;[manifold.bus :as bus]
-            [clojure.core.async :as a])
+            ;;[clojure.core.async :as a]
+            [celebrity.websocket :as ws])
   (:gen-class))
 
 (def non-websocket-request
@@ -21,7 +21,7 @@
    (d/let-flow
     [conn (http/websocket-connection req)]
     ;; TODO this
-    (s/connect conn conn))
+    (ws/handle-connect conn))
    (d/catch
        (fn [_]
          non-websocket-request))))
