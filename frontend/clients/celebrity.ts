@@ -54,15 +54,14 @@ export default class CelebrityClient {
     });
   }
 
-  async joinGame({ userName, roomCode }): Promise<void> {
+  async sendCommand(
+    command: string,
+    data: { [key: string]: any }
+  ): Promise<Response> {
     this.wsClient.send(
       JSON.stringify({
-        // TODO make this a const
-        command: "join",
-        join: {
-          name: userName,
-          roomCode: roomCode,
-        },
+        ...data,
+        command,
       })
     );
 
@@ -70,5 +69,17 @@ export default class CelebrityClient {
     if (response.error) {
       throw response.error;
     }
+
+    return response;
+  }
+
+  async joinGame({ userName, roomCode }): Promise<Response> {
+    // TODO make this a const
+    return this.sendCommand("join", {
+      join: {
+        name: userName,
+        roomCode,
+      },
+    });
   }
 }

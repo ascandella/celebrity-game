@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import SmallForm from "./small-form";
-import CelebrityClient, { Response } from "../clients/celebrity";
+import CelebrityClient from "../clients/celebrity";
 
 type JoinProps = {
   maxCodeLength: number;
