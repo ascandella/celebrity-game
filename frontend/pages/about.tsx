@@ -26,7 +26,7 @@ const About: FunctionComponent = () => {
   const linkStyle = "text-blue-500 hover:text-blue-800";
 
   return (
-    <ContentWrapper>
+    <ContentWrapper showHeader={true}>
       <AboutSection title="What is Celebrity?">
         <p>
           From{" "}

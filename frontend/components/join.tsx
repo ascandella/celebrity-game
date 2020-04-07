@@ -80,7 +80,7 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
           onSubmit={this.handleSubmit.bind(this)}
           className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
         >
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="block text-gray-700 font-bold mb-2">
               Code
               <input
@@ -109,6 +109,16 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
               />
             </label>
           </div>
+          {this.state.joinError && (
+            <div className="flex items-center mb-4">
+              <div
+                className="bg-red-100 border border-red-400 text-red-700 p-2 rounded relative"
+                role="alert"
+              >
+                <span className="block sm:inline">{this.state.joinError}</span>
+              </div>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <input
               type="submit"
@@ -120,14 +130,6 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
                 "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 cursor-pointer rounded focus:outline-none focus:shadow-outline"
               }
             />
-            {this.state.joinError && (
-              <div
-                className="bg-red-100 border border-red-400 text-red-700 p-2 rounded relative"
-                role="alert"
-              >
-                <span className="block sm:inline">{this.state.joinError}</span>
-              </div>
-            )}
           </div>
         </form>
       </SmallForm>

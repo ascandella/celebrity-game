@@ -1,6 +1,7 @@
 (ns celebrity.websocket
   (:require [clojure.data.json :as json]
             [clojure.tools.logging :as log]
+            [clojure.string :as string]
             [manifold.stream :as s]
             [manifold.deferred :as d]))
 
@@ -16,6 +17,7 @@
 (defn respond-json
   [stream data]
   (let [data-json (json/write-str data)]
+    (log/info (str "Responding: " data-json))
     (s/put! stream data-json)))
 
 (defn respond-error
@@ -27,8 +29,14 @@
   (log/info (str "Handling join: " message))
   (if-let [join-data (:join message)]
     (if-let [room-code (:roomCode join-data)]
-      ;; TODO check if valid room
-      (respond-error stream "Room does not exist")
+      (let [upper-code (string/upper-case room-code)]
+        ;; TODO check if valid room
+        (if (= upper-code "TEST")
+          (respond-json stream
+                        {:ok       true
+                         :roomCode upper-code
+                         :name     (:name join-data)})
+          (respond-error stream (str "Room \"" upper-code "\" does not exist"))))
       (respond-error stream "Missing room code"))
     (respond-error stream "Invalid join request")))
 
