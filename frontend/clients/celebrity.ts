@@ -2,10 +2,19 @@ function getGameURL(): string {
   return `${process.env.apiBase}/game`;
 }
 
+export type Response = {
+  error?: string;
+};
+
 export default class CelebrityClient {
   connected = false;
 
   wsClient: WebSocket;
+
+  // TODO: is it a good idea to always queue these?
+  messageQueue = [];
+
+  nextMessageCallback?: (Response) => void;
 
   connect(): Promise<Event> {
     return new Promise((resolve, reject) => {
@@ -18,14 +27,30 @@ export default class CelebrityClient {
         reject(event);
       });
       this.wsClient.addEventListener("message", (event) => {
-        // TODO(aiden) thread this through
-        /* eslint-disable no-console */
-        console.log("Message", event.data);
+        const message = JSON.parse(event.data);
+        // Somebody is awaiting a response
+
+        if (this.nextMessageCallback) {
+          this.nextMessageCallback(message);
+          this.nextMessageCallback = null;
+        }
+        this.messageQueue.push(message);
       });
 
       this.wsClient.addEventListener("open", (event) => {
         resolve(event);
       });
+    });
+  }
+
+  getResponse(): Promise<Response> {
+    // TODO: handle rejection
+    return new Promise((resolve) => {
+      if (this.messageQueue.length === 0) {
+        this.nextMessageCallback = resolve;
+      } else {
+        resolve(this.messageQueue.shift());
+      }
     });
   }
 }

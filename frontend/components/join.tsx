@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import SmallForm from "./small-form";
-import CelebrityClient from "../clients/celebrity";
+import CelebrityClient, { Response } from "../clients/celebrity";
 
 type JoinProps = {
   maxCodeLength: number;
@@ -49,10 +49,47 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
       connecting: false,
     });
 
-    // TODO actual handshake
+    try {
+      const response = await this.sendJoinMessage();
+      this.handleJoinResponse(response);
+    } catch (err) {
+      this.setState({
+        joinError: err,
+      });
+    }
+  }
+
+  handleJoinResponse(response: Response): void {
+    // TODO bubble up connection, or make the client do it
+    if (response.error) {
+      /* eslint-disable no-console */
+      console.error("Error joining: ", response);
+      this.setState({
+        joinError: response.error,
+      });
+    } else {
+      /* eslint-disable no-console */
+      console.log("Successful join: ", response);
+      // TODO handle valid join
+      this.setState({
+        joinError: null,
+      });
+    }
+  }
+
+  async sendJoinMessage(): Promise<Response> {
     this.props.client.wsClient.send(
-      `Name: ${this.state.name}, Room: ${this.state.gameCode}`
+      JSON.stringify({
+        // TODO make this a const
+        command: "join",
+        join: {
+          name: this.state.name,
+          roomCode: this.state.gameCode,
+        },
+      })
     );
+
+    return this.props.client.getResponse();
   }
 
   handleCodeChange(event: React.ChangeEvent<HTMLInputElement>): void {
