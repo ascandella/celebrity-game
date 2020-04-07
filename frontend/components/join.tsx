@@ -59,14 +59,16 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
     }
   }
 
-  handleJoinResponse(response: Response) {
+  handleJoinResponse(response: Response): void {
     // TODO bubble up connection, or make the client do it
     if (response.error) {
+      /* eslint-disable no-console */
       console.error("Error joining: ", response);
       this.setState({
         joinError: response.error,
       });
     } else {
+      /* eslint-disable no-console */
       console.log("Successful join: ", response);
       // TODO handle valid join
       this.setState({
@@ -87,7 +89,7 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
       })
     );
 
-    return await this.props.client.getResponse();
+    return this.props.client.getResponse();
   }
 
   handleCodeChange(event: React.ChangeEvent<HTMLInputElement>): void {

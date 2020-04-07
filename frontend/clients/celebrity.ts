@@ -11,8 +11,10 @@ export default class CelebrityClient {
 
   wsClient: WebSocket;
 
+  // TODO: is it a good idea to always queue these?
   messageQueue = [];
-  nextMessageCallback?: ({}) => void;
+
+  nextMessageCallback?: (Response) => void;
 
   connect(): Promise<Event> {
     return new Promise((resolve, reject) => {
@@ -42,7 +44,8 @@ export default class CelebrityClient {
   }
 
   getResponse(): Promise<Response> {
-    return new Promise((resolve, reject) => {
+    // TODO: handle rejection
+    return new Promise((resolve) => {
       if (this.messageQueue.length === 0) {
         this.nextMessageCallback = resolve;
       } else {
