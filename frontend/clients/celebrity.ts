@@ -53,4 +53,22 @@ export default class CelebrityClient {
       }
     });
   }
+
+  async joinGame({ userName, roomCode }): Promise<void> {
+    this.wsClient.send(
+      JSON.stringify({
+        // TODO make this a const
+        command: "join",
+        join: {
+          name: userName,
+          roomCode: roomCode,
+        },
+      })
+    );
+
+    const response = await this.getResponse();
+    if (response.error) {
+      throw response.error;
+    }
+  }
 }

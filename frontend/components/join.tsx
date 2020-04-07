@@ -50,46 +50,21 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
     });
 
     try {
-      const response = await this.sendJoinMessage();
-      this.handleJoinResponse(response);
+      await this.props.client.joinGame({
+        userName: this.state.name,
+        roomCode: this.state.gameCode,
+      });
     } catch (err) {
       this.setState({
         joinError: err,
       });
+      return;
     }
-  }
 
-  handleJoinResponse(response: Response): void {
-    // TODO bubble up connection, or make the client do it
-    if (response.error) {
-      /* eslint-disable no-console */
-      console.error("Error joining: ", response);
-      this.setState({
-        joinError: response.error,
-      });
-    } else {
-      /* eslint-disable no-console */
-      console.log("Successful join: ", response);
-      // TODO handle valid join
-      this.setState({
-        joinError: null,
-      });
-    }
-  }
-
-  async sendJoinMessage(): Promise<Response> {
-    this.props.client.wsClient.send(
-      JSON.stringify({
-        // TODO make this a const
-        command: "join",
-        join: {
-          name: this.state.name,
-          roomCode: this.state.gameCode,
-        },
-      })
-    );
-
-    return this.props.client.getResponse();
+    this.setState({
+      joinError: null,
+    });
+    // parent component will now handle advancement
   }
 
   handleCodeChange(event: React.ChangeEvent<HTMLInputElement>): void {
