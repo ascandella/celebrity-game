@@ -52,7 +52,7 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
     try {
       await this.props.client.joinGame({
         userName: this.state.name,
-        roomCode: this.state.gameCode,
+        roomCode: this.state.gameCode.toUpperCase(),
       });
       // parent component will now handle advancement
     } catch (err) {
