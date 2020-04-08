@@ -28,7 +28,7 @@
 
 (defn create-game
   "Creates a new game, returns a game code"
-  ([stream] (create-game stream games generate-room-code))
+  ([stream] (create-game stream games))
   ([stream registry] (create-game stream registry generate-room-code))
   ([stream registry code-generator]
    (loop [count 0]
