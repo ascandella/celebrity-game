@@ -54,17 +54,12 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
         userName: this.state.name,
         roomCode: this.state.gameCode,
       });
+      // parent component will now handle advancement
     } catch (err) {
       this.setState({
         joinError: err,
       });
-      return;
     }
-
-    this.setState({
-      joinError: null,
-    });
-    // parent component will now handle advancement
   }
 
   handleCodeChange(event: React.ChangeEvent<HTMLInputElement>): void {
