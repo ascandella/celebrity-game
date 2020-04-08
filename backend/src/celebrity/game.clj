@@ -17,12 +17,11 @@
   "Join player on websocket 'stream' with join-data to the room identified by room-code"
   ([stream join-data room-code] (join games stream join-data room-code))
   ([registry stream join-data room-code]
-   (if-let [game (get @registry room-code)]
-     (do
-       (swap! (:clients game) conj stream)
-       {:roomCode room-code
-        :success  true
-        :name     (:name join-data)}))))
+   (when-let [game (get @registry room-code)]
+     (swap! (:clients game) conj stream)
+     {:roomCode room-code
+      :success  true
+      name      (:name join-data)})))
 
 (def max-retries 10)
 
