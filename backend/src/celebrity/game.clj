@@ -79,38 +79,48 @@
 
 (def max-create-retries 10)
 
-(defn new-game-state []
+(defn new-game-state [params]
   {:joinable?    true
-   :player-count 0})
+   :player-count 0
+   :config       (:config params)})
+
+(defn validate-params
+  [params]
+  ;; TODO
+  nil)
 
 (defn create-game
   "Creates a new game, returns a game code"
-  ([stream]
-   (create-game stream games))
+  ([params stream]
+   (create-game params stream games))
 
-  ([stream registry]
-   (create-game stream registry roombus))
+  ([params stream registry]
+   (create-game params stream registry roombus))
 
-  ([stream registry broadcast-bus]
-   (create-game stream registry broadcast-bus generate-room-code))
+  ([params stream registry broadcast-bus]
+   (create-game params stream registry broadcast-bus generate-room-code))
 
-  ([stream registry broadcast-bus code-generator]
-   (loop [count 0]
-     (if (> count max-create-retries)
-       ;; return nil if we can't get it in 10 tries to avoid an infinite loop
-       ;; maybe there's a bug
-       (log/error "Giving up generating code")
-       (let [code   (code-generator)
-             games' @registry]
-         (if (contains? games' code)
-           ;; we managed to generate a code that already exists, what are the chances??
-           (recur (inc count))
-           (if (compare-and-set!
-                registry games'
-                (assoc games' code (new-game-state)))
-             ;; connect the client to the broadcast bus
-             (connect-client-to-game
-              broadcast-bus
-              {:roomCode code}
-              stream registry)
-             (recur (inc count)))))))))
+  ([params stream registry broadcast-bus code-generator]
+   (if-let [error (validate-params params)]
+     (do
+       (log/info (str "Param validation failed on " params " : " error))
+       error)
+     (loop [count 0]
+        (if (> count max-create-retries)
+          ;; return nil if we can't get it in 10 tries to avoid an infinite loop
+          ;; maybe there's a bug
+          (log/error "Giving up generating code")
+          (let [code   (code-generator)
+                games' @registry]
+            (if (contains? games' code)
+              ;; we managed to generate a code that already exists, what are the chances??
+              (recur (inc count))
+              (if (compare-and-set!
+                   registry games'
+                   (assoc games' code (new-game-state params)))
+                ;; connect the client to the broadcast bus
+                (connect-client-to-game
+                 broadcast-bus
+                 (assoc params :roomCode code)
+                 stream registry)
+                (recur (inc count))))))))))

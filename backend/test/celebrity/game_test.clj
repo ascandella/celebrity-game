@@ -20,20 +20,23 @@
 (deftest create-game-gives-up
   (testing "no infinite loop if codes never change"
     (let [registry (atom {"KEY" true})
+          params {}
           broadcast (b/event-bus)
-          game-data (create-game "value" registry broadcast #(str "KEY"))]
+          game-data (create-game params "sentinel-stream" registry broadcast #(str "KEY"))]
       (is (nil? game-data)))))
 
 (deftest create-game-connects-client
   (testing "we can create a new game"
     (let [client (s/buffered-stream 100)
+          params {:config {:foo "bar"}}
           registry (atom {})
           broadcast (b/event-bus)
-          game-data (create-game client registry broadcast)
+          game-data (create-game params client registry broadcast)
           code (:roomCode game-data)]
       (is (not (nil? code)))
       (is (b/active? broadcast code))
       (is (:joinable? (get @registry code)))
+      (is (= (get-in @registry [code :config :foo]) "bar"))
       @(d/let-flow
         [result (s/try-take! client 500)
          _ (b/publish! broadcast code "{\"ping\": true}")]
