@@ -6,6 +6,7 @@ type GameState = {};
 type GameProps = {
   client: CelebrityClient;
   roomCode: string;
+  playerName: string;
 };
 
 class Game extends Component<GameProps, GameState> {

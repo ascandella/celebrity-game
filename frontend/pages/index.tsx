@@ -8,6 +8,7 @@ type IndexState = {
   client: CelebrityClient;
   inGame: boolean;
   roomCode: string;
+  playerName: string;
 };
 
 class Index extends Component<{}, IndexState> {
@@ -19,12 +20,14 @@ class Index extends Component<{}, IndexState> {
       this.setState({
         inGame: true,
         roomCode: response.roomCode,
+        playerName: response.name,
       });
     });
     this.state = {
       client,
       roomCode: "",
       inGame: false,
+      playerName: "",
     };
   }
 
@@ -32,7 +35,11 @@ class Index extends Component<{}, IndexState> {
     let content: React.ReactNode;
     if (this.state.inGame) {
       content = (
-        <Game client={this.state.client} roomCode={this.state.roomCode} />
+        <Game
+          client={this.state.client}
+          roomCode={this.state.roomCode}
+          playerName={this.state.playerName}
+        />
       );
     } else {
       content = <JoinGame client={this.state.client} />;

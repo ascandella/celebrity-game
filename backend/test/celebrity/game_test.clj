@@ -1,7 +1,9 @@
 (ns celebrity.game-test
   (:require [celebrity.game :refer :all]
-            [clojure.test :refer :all]))
-
+            [clojure.test :refer :all]
+            [manifold.bus :as b]
+            [manifold.deferred :as d]
+            [manifold.stream :as s]))
 
 (deftest generate-code-no-args
   (testing "generate room code with no arguments"
@@ -18,14 +20,51 @@
 (deftest create-game-gives-up
   (testing "no infinite loop if codes never change"
     (let [registry (atom {"KEY" true})
-          code (create-game "value" registry #(str "KEY"))]
+          broadcast (b/event-bus)
+          code (create-game "value" registry broadcast #(str "KEY"))]
       (is (nil? code)))))
 
-(deftest create-game-associates-value
+(deftest create-game-connects-client
   (testing "we can create a new game"
-    (let [registry (atom {})
-          code (create-game "sentinel" registry)]
-       (is (not (nil? code)))
-       (is (=
-            @(:clients (get @registry code))
-            ["sentinel"])))))
+    (let [client (s/buffered-stream 100)
+          registry (atom {})
+          broadcast (b/event-bus)
+          code (create-game client registry broadcast)]
+      (is (not (nil? code)))
+      (is (b/active? broadcast code))
+      (is (:joinable? (get @registry code)))
+      @(d/let-flow
+        [result (s/try-take! client 500)
+         _ (b/publish! broadcast code "test")]
+        (is (= result "test"))))))
+
+(deftest join-game-does-not-exist
+  (testing "try to join a game that doesn't exist"
+    (let [client (s/stream)
+          registry (atom {})
+          response (join client {} "TEST" registry)]
+      (is (nil? response)))))
+
+(deftest join-game-not-joinable
+  (testing "we test a game is joinable"
+    (let [client (s/stream)
+          registry (atom {"TEST" {:joinable? false}})
+          response (join client {} "TEST" registry)]
+      (is (=
+           (:error response)
+           "Room is not joinable")))))
+
+(deftest client-disconnect-with-active-players
+  (testing "We decrement player count on disconnect"
+    (let [code "test"
+          registry (atom {code {:player-count 2}})
+          new-registry (on-client-disconnect registry code)]
+      (is (= 1
+             (get-in new-registry [code :player-count]))))))
+
+(deftest client-last-player
+  (testing "We cull old games when the last client disconnects"
+    (let [code "test"
+          registry (atom {code {:player-count 1}})
+          new-registry (on-client-disconnect registry code)]
+      (is (nil? (get code new-registry))))))
