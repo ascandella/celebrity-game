@@ -3,7 +3,8 @@
             [clojure.tools.logging :as log]
             [clojure.string :as string]
             [manifold.stream :as s]
-            [manifold.deferred :as d]))
+            [manifold.deferred :as d]
+            [celebrity.game :as game]))
 
 (defn parse-json
   [message]
@@ -23,7 +24,6 @@
 (defn respond-error
   [stream error-message]
   (respond-json stream {:error error-message}))
-
 (defn handle-join
   [stream message]
   (log/info (str "Handling join: " message))
@@ -45,9 +45,18 @@
   (log/info (str "Handle ping: " message))
   (respond-json stream {:pong true}))
 
+(defn handle-create
+  [stream message]
+  (log/info (str "Handle create: " message))
+  ;; TODO pass game params
+  (if-let [code (game/create-game stream)]
+    (respond-json stream {:roomCode code})
+    (respond-error stream "Unable to create game")))
+
 (def command-map
   {"join" handle-join
-   "ping" handle-ping})
+   "ping" handle-ping
+   "create" handle-create})
 
 (defn handle-first-message
   "When a client connects, route them to the right place"
