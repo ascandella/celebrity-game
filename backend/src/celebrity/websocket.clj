@@ -77,11 +77,7 @@
    [raw-message (s/take! stream)]
    (s/on-closed stream #(log/info "Stream closed"))
    (if-let [message (parse-json raw-message)]
-     (do
-       (handle-first-message stream message)
-       ;; remember to send a nil response for compojure
-        nil)
+     (handle-first-message stream message)
      (do
        (respond-error stream "Invalid message")
-       (log/warn (str "Dropping message: " raw-message))
-       nil))))
+       (log/warn (str "Dropping message: " raw-message))))))

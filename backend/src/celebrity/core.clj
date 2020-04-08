@@ -20,7 +20,6 @@
   (->
    (d/let-flow
     [conn (http/websocket-connection req)]
-    ;; TODO this
     (ws/handle-connect conn))
    (d/catch
        (fn [_]
