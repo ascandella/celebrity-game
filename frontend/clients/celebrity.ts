@@ -9,6 +9,8 @@ export type Response = {
   [key: string]: any;
 };
 
+const pingTime = 10000;
+
 export default class CelebrityClient {
   connected = false;
 
@@ -21,6 +23,12 @@ export default class CelebrityClient {
 
   events: EventEmitter;
 
+  pingInterval: number;
+
+  lastPingSent: number;
+
+  lastPongReceived: number;
+
   constructor() {
     this.events = new EventEmitter();
   }
@@ -32,11 +40,36 @@ export default class CelebrityClient {
       }
 
       this.wsClient = new WebSocket(getGameURL());
+      this.wsClient.addEventListener("close", (event) => {
+        // TODO handle this with an event listener, or propagate to game
+        this.events.emit("close", event);
+        if (this.pingInterval) {
+          window.clearInterval(this.pingInterval);
+        }
+      });
       this.wsClient.addEventListener("error", (event) => {
+        // TODO handle this
         reject(event);
+        if (this.pingInterval) {
+          window.clearTimeout(this.pingInterval);
+        }
       });
       this.wsClient.addEventListener("message", (event) => {
-        const message = JSON.parse(event.data);
+        if (!event.data) {
+          return;
+        }
+        let message;
+        try {
+          message = JSON.parse(event.data);
+        } catch (err) {
+          /* eslint-disable no-console */
+          console.error("Unable to parse server response: ", event.data);
+          return;
+        }
+        if (message.pong) {
+          this.lastPongReceived = Date.now();
+          return;
+        }
 
         // Somebody is awaiting a response
         if (this.nextMessageCallback) {
@@ -51,6 +84,20 @@ export default class CelebrityClient {
         resolve(event);
       });
     });
+  }
+
+  ping(): void {
+    if (this.lastPingSent) {
+      if (
+        !this.lastPongReceived ||
+        this.lastPingSent - this.lastPongReceived > pingTime
+      ) {
+        /* eslint-disable no-console */
+        console.error("Is the connection dead?");
+      }
+    }
+    this.sendCommand("ping", {});
+    this.lastPingSent = Date.now();
   }
 
   getResponse(): Promise<Response> {
@@ -95,6 +142,9 @@ export default class CelebrityClient {
       },
     });
     this.events.emit("join", response);
+
+    this.pingInterval = window.setInterval(() => this.ping(), pingTime);
+
     return response;
   }
 }

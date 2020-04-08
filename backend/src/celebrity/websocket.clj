@@ -23,27 +23,29 @@
 
 (defn respond-error
   [stream error-message]
-  (respond-json stream {:error error-message}))
+  (respond-json stream {:error error-message})
+  (s/close! stream))
+
+(defn handle-ping
+  [stream message]
+  (log/info (str "Handle ping: " message))
+  (respond-json stream {:pong true}))
+
 (defn handle-join
   [stream message]
   (log/info (str "Handling join: " message))
   (if-let [join-data (:join message)]
     (if-let [room-code (:roomCode join-data)]
       (let [upper-code (string/upper-case room-code)]
-        ;; TODO check if valid room
-        (if (= upper-code "TEST")
-          (respond-json stream
-                        {:ok       true
-                         :roomCode upper-code
-                         :name     (:name join-data)})
-          (respond-error stream (str "Room \"" upper-code "\" does not exist"))))
+        (if-let [response (game/join stream join-data upper-code)]
+          (do
+            @(respond-json stream response)
+            (log/info "Starting loop")
+            ;; TODO this is not right
+            (s/consume (partial handle-ping stream) stream))
+          (respond-error stream "Room does not exist")))
       (respond-error stream "Missing room code"))
     (respond-error stream "Invalid join request")))
-
-(defn handle-ping
-  [stream message]
-  (log/info (str "Handle ping: " message))
-  (respond-json stream {:pong true}))
 
 (defn handle-create
   [stream message]
@@ -73,6 +75,7 @@
   [stream]
   (d/let-flow
    [raw-message (s/take! stream)]
+   (s/on-closed stream #(log/info "Stream closed"))
    (if-let [message (parse-json raw-message)]
      (do
        (handle-first-message stream message)
