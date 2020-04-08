@@ -53,3 +53,18 @@
       (is (=
            (:error response)
            "Room is not joinable")))))
+
+(deftest client-disconnect-with-active-players
+  (testing "We decrement player count on disconnect"
+    (let [code "test"
+          registry (atom {code {:player-count 2}})
+          new-registry (on-client-disconnect registry code)]
+      (is (= 1
+             (get-in new-registry [code :player-count]))))))
+
+(deftest client-last-player
+  (testing "We cull old games when the last client disconnects"
+    (let [code "test"
+          registry (atom {code {:player-count 1}})
+          new-registry (on-client-disconnect registry code)]
+      (is (nil? (get code new-registry))))))

@@ -13,20 +13,36 @@
     (apply str (take len (repeatedly #(char (+ (rand 26) 65)))))))
 
 (def games
-  (atom
-   {"TEST" {:joinable? true}}))
+  (atom {"TEST" {:joinable? true :player-count 0}}))
 
 ;; event bus per-room, where we can publish to te topic named by room code
 ;; and all clients will receive the exact message over websockets
 (def roombus (b/event-bus))
 
+(defn on-client-disconnect
+  [registry code]
+  (log/info (str "Client disconnected from game: " code))
+  (let [updated-registry (swap! registry update-in [code :player-count] dec)
+        player-count (get-in updated-registry [code :player-count])]
+    (log/info (str "Player count for code: " code ", count: " player-count))
+    (when (< player-count 1)
+     (log/info (str "All clients disconnected from: " code ", deregistering game"))
+     ;; TODO make sure we clean up anything else going on with the game
+     (swap! registry dissoc code))
+    updated-registry))
+
 (defn connect-client-to-game
-  [broadcast topic client]
+  [broadcast topic client registry]
+  (s/on-closed
+   client
+   #(on-client-disconnect registry topic))
+  (swap! registry update-in [topic :player-count] inc)
   ;; send all messages from the broadcast topic to the client
   (s/connect
    (b/subscribe broadcast topic)
    client
-   {:timeout 10000})
+   ;; TODO: is this an appropriate timeout?
+   {:timeout 500})
   ;; read all messages from the client, route them appropriately
   (s/consume
    ;; TODO: for now this just publishes them to the broadcast
@@ -38,13 +54,17 @@
 
 (defn join
   "Join player on websocket 'stream' with join-data to the room identified by room-code"
-  ([stream join-data room-code] (join stream join-data room-code games roombus))
-  ([stream join-data room-code registry] (join stream join-data room-code registry roombus))
+  ([stream join-data room-code]
+   (join stream join-data room-code games roombus))
+
+  ([stream join-data room-code registry]
+   (join stream join-data room-code registry roombus))
+
   ([stream join-data room-code registry broadcast-bus]
    (when-let [game (get @registry room-code)]
      (if (:joinable? game)
        (do
-         (connect-client-to-game broadcast-bus room-code stream)
+         (connect-client-to-game broadcast-bus room-code stream registry)
          {:roomCode room-code
           :success  true
           :name     (:name join-data)})
@@ -53,7 +73,8 @@
 (def max-create-retries 10)
 
 (defn new-game-state []
-  {:joinable? true})
+  {:joinable?    true
+   :player-count 0})
 
 (defn create-game
   "Creates a new game, returns a game code"
@@ -82,5 +103,5 @@
                 ;; TODO if i don't end up needing a map, convert this to a vector
                 (assoc games' code (new-game-state)))
              ;; connect the client to the broadcast bus
-             (connect-client-to-game broadcast-bus code stream)
+             (connect-client-to-game broadcast-bus code stream registry)
              (recur (inc count)))))))))
