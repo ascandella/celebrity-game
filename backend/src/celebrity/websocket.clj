@@ -38,11 +38,9 @@
     (if-let [room-code (:roomCode join-data)]
       (let [upper-code (string/upper-case room-code)]
         (if-let [response (game/join stream join-data upper-code)]
-          (do
-            @(respond-json stream response)
-            (log/info "Starting loop")
-            ;; TODO this is not right
-            (s/consume (partial handle-ping stream) stream))
+          (if-let [error (:error response)]
+            (respond-error stream error)
+            (respond-json stream response))
           (respond-error stream "Room does not exist")))
       (respond-error stream "Missing room code"))
     (respond-error stream "Invalid join request")))
@@ -68,7 +66,8 @@
     (if-let [handler (get command-map command)]
       (handler stream message)
       (respond-error stream (str "Invalid command " command)))
-    (respond-error stream "No command sent")))
+    (respond-error stream "No command sent"))
+  nil)
 
 (defn handle-connect
   "Handle a new websocket stream connection."

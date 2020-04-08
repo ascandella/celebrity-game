@@ -29,6 +29,8 @@ export default class CelebrityClient {
 
   lastPongReceived: number;
 
+  playerName?: string;
+
   constructor() {
     this.events = new EventEmitter();
   }
@@ -96,7 +98,7 @@ export default class CelebrityClient {
         console.error("Is the connection dead?");
       }
     }
-    this.sendCommand("ping", {});
+    this.sendCommand("ping", {name: this.playerName});
     this.lastPingSent = Date.now();
   }
 
@@ -142,6 +144,7 @@ export default class CelebrityClient {
       },
     });
     this.events.emit("join", response);
+    this.playerName = userName;
 
     this.pingInterval = window.setInterval(() => this.ping(), pingTime);
 
