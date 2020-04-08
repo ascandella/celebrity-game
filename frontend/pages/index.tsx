@@ -9,6 +9,7 @@ type IndexState = {
   inGame: boolean;
   roomCode: string;
   playerName: string;
+  clientID?: string;
 };
 
 class Index extends Component<{}, IndexState> {
@@ -21,6 +22,7 @@ class Index extends Component<{}, IndexState> {
         inGame: true,
         roomCode: response.roomCode,
         playerName: response.name,
+        clientID: response.clientID,
       });
     });
     this.state = {
@@ -28,6 +30,7 @@ class Index extends Component<{}, IndexState> {
       roomCode: "",
       inGame: false,
       playerName: "",
+      clientID: null,
     };
   }
 

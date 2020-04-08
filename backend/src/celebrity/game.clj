@@ -1,6 +1,7 @@
 (ns celebrity.game
   (:require [clojure.tools.logging :as log]
-            [manifold.deferred :as d]
+            [celebrity.protocol :as proto]
+            ;;[manifold.deferred :as d]
             [manifold.bus :as b]
             [manifold.stream :as s]))
 
@@ -32,43 +33,49 @@
     updated-registry))
 
 (defn connect-client-to-game
-  [broadcast topic client registry]
-  (s/on-closed
-   client
-   #(on-client-disconnect registry topic))
-  (swap! registry update-in [topic :player-count] inc)
-  ;; send all messages from the broadcast topic to the client
-  (s/connect
-   (b/subscribe broadcast topic)
-   client
-   ;; TODO: is this an appropriate timeout?
-   {:timeout 500})
-  ;; read all messages from the client, route them appropriately
-  (s/consume
-   ;; TODO: for now this just publishes them to the broadcast
-   ;; really, we're going to need to parse and handle them
-   #(b/publish! broadcast topic %)
-   (->> client
-        (s/buffer 30)))
-  topic)
+  [broadcast join-data client registry]
+  (let [topic (:roomCode join-data)
+        uuid (.toString (java.util.UUID/randomUUID))]
+    (s/on-closed
+     client
+     #(on-client-disconnect registry topic))
+    (swap! registry update-in [topic :player-count] inc)
+    ;; send all messages from the broadcast topic to the client
+    (s/connect
+     (b/subscribe broadcast topic)
+     client
+     ;; TODO: is this an appropriate timeout?
+     {:timeout 500})
+    ;; read all messages from the client, route them appropriately
+    (s/consume
+     ;; TODO: for now this just publishes them to the broadcast
+     ;; really, we're going to need to parse and handle them
+     #(b/publish! broadcast topic %)
+     (->> client
+          (s/map #(proto/parse-json % {}))
+          (s/map #(assoc % :id uuid))
+          (s/buffer 30)))
+    {:roomCode topic
+     :success  true
+     :clientID uuid
+     :name     (:name join-data)}))
 
 (defn join
   "Join player on websocket 'stream' with join-data to the room identified by room-code"
-  ([stream join-data room-code]
-   (join stream join-data room-code games roombus))
+  ([stream join-data]
+   (join stream join-data games roombus))
 
-  ([stream join-data room-code registry]
-   (join stream join-data room-code registry roombus))
+  ([stream join-data registry]
+   (join stream join-data registry roombus))
 
-  ([stream join-data room-code registry broadcast-bus]
-   (when-let [game (get @registry room-code)]
-     (if (:joinable? game)
-       (do
-         (connect-client-to-game broadcast-bus room-code stream registry)
-         {:roomCode room-code
-          :success  true
-          :name     (:name join-data)})
-       {:error "Room is not joinable"}))))
+  ([stream join-data registry broadcast-bus]
+   (if-let [room-code (:roomCode join-data)]
+     (if-let [game (get @registry room-code)]
+       (if (:joinable? game)
+         (connect-client-to-game broadcast-bus join-data stream registry)
+         {:error "Room is full"})
+       {:error "Room not found"})
+    {:error "No room code provided"})))
 
 (def max-create-retries 10)
 
@@ -100,8 +107,10 @@
            (recur (inc count))
            (if (compare-and-set!
                 registry games'
-                ;; TODO if i don't end up needing a map, convert this to a vector
                 (assoc games' code (new-game-state)))
              ;; connect the client to the broadcast bus
-             (connect-client-to-game broadcast-bus code stream registry)
+             (connect-client-to-game
+              broadcast-bus
+              {:roomCode code}
+              stream registry)
              (recur (inc count)))))))))

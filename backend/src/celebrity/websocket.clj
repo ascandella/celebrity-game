@@ -1,57 +1,34 @@
 (ns celebrity.websocket
-  (:require [clojure.data.json :as json]
-            [clojure.tools.logging :as log]
-            [clojure.string :as string]
+  (:require [clojure.tools.logging :as log]
             [manifold.stream :as s]
             [manifold.deferred :as d]
-            [celebrity.game :as game]))
+            [celebrity.game :as game]
+            [celebrity.protocol :as proto]))
 
-(defn parse-json
-  [message]
-  (try
-    (json/read-str message
-                   :key-fn keyword)
-    (catch Exception e
-        (log/warn (str "Unable to parse JSON: " (.getMessage e) ": " message)
-          nil))))
-
-(defn respond-json
-  [stream data]
-  (let [data-json (json/write-str data)]
-    (log/info (str "Responding: " data-json))
-    (s/put! stream data-json)))
-
-(defn respond-error
-  [stream error-message]
-  (respond-json stream {:error error-message})
-  (s/close! stream))
 
 (defn handle-ping
   [stream message]
   (log/info (str "Handle ping: " message))
-  (respond-json stream {:pong true}))
+  (proto/respond-json stream {:pong true}))
 
 (defn handle-join
   [stream message]
   (log/info (str "Handling join: " message))
   (if-let [join-data (:join message)]
-    (if-let [room-code (:roomCode join-data)]
-      (let [upper-code (string/upper-case room-code)]
-        (if-let [response (game/join stream join-data upper-code)]
-          (if-let [error (:error response)]
-            (respond-error stream error)
-            (respond-json stream response))
-          (respond-error stream "Room does not exist")))
-      (respond-error stream "Missing room code"))
-    (respond-error stream "Invalid join request")))
+    (let [response (game/join stream join-data)]
+      ;; TODO refactor this
+      (if-let [error (:error response)]
+        (proto/respond-error stream error)
+        (proto/respond-json stream response)))
+    (proto/respond-error stream "Invalid join request")))
 
 (defn handle-create
   [stream message]
   (log/info (str "Handle create: " message))
   ;; TODO pass game params
   (if-let [code (game/create-game stream)]
-    (respond-json stream {:roomCode code})
-    (respond-error stream "Unable to create game")))
+    (proto/respond-json stream {:roomCode code})
+    (proto/respond-error stream "Unable to create game")))
 
 (def command-map
   {"join" handle-join
@@ -65,8 +42,8 @@
   (if-let [command (:command message)]
     (if-let [handler (get command-map command)]
       (handler stream message)
-      (respond-error stream (str "Invalid command " command)))
-    (respond-error stream "No command sent"))
+      (proto/respond-error stream (str "Invalid command " command)))
+    (proto/respond-error stream "No command sent"))
   nil)
 
 (defn handle-connect
@@ -75,8 +52,8 @@
   (d/let-flow
    [raw-message (s/take! stream)]
    (s/on-closed stream #(log/info "Stream closed"))
-   (if-let [message (parse-json raw-message)]
+   (if-let [message (proto/parse-json raw-message)]
      (handle-first-message stream message)
      (do
-       (respond-error stream "Invalid message")
+       (proto/respond-error stream "Invalid message")
        (log/warn (str "Dropping message: " raw-message))))))
