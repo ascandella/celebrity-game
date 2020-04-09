@@ -47,7 +47,7 @@ export default class CelebrityClient {
         }
       });
 
-      this.wsClient.addEventListener("error", (event) => {
+      this.wsClient.addEventListener("error", () => {
         reject(new Error("Unable to connect to server"));
         if (this.pingInterval) {
           window.clearTimeout(this.pingInterval);
