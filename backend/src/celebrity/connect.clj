@@ -1,4 +1,4 @@
-(ns celebrity.websocket
+(ns celebrity.connect
   (:require [taoensso.timbre :as log]
             [manifold.stream :as s]
             [manifold.deferred :as d]

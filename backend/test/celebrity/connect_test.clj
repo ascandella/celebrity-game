@@ -1,5 +1,5 @@
-(ns celebrity.websocket-test
-  (:require [celebrity.websocket :refer :all]
+(ns celebrity.connect-test
+  (:require [celebrity.connect :refer :all]
             [celebrity.protocol :as proto]
             [manifold.stream :as s]
             [manifold.deferred :as d]
@@ -33,13 +33,3 @@
        (handle-connect stream))
      (is (= response
             {:error "No command sent"})))))
-
-(deftest handle-connect-ping-command
-  (testing "Handle connect with ping"
-    (test-stream
-     stream response
-     (do
-       (proto/respond-json stream {:command "ping"})
-       (handle-connect stream))
-     (is (= response
-            {:pong true})))))
