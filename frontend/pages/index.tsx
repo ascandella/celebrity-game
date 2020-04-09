@@ -3,7 +3,8 @@ import ContentWrapper from "../components/content-wrapper";
 import JoinGame from "../components/join";
 import CreateGame from "../components/create";
 import Game from "../components/game";
-import CelebrityClient, { Response } from "../clients/celebrity";
+import CelebrityClient from "../clients/celebrity";
+import { Response } from "../clients/messages";
 
 type IndexState = {
   client: CelebrityClient;
@@ -48,9 +49,9 @@ class Index extends Component<{}, IndexState> {
         />
       );
     } else if (this.state.creating) {
-      content = <CreateGame client={this.state.client} />;
+      content = <CreateGame createGame={this.state.client.createGame} />;
     } else {
-      content = <JoinGame client={this.state.client} />;
+      content = <JoinGame joinGame={this.state.client.joinGame} />;
     }
     return (
       <ContentWrapper showHeader={!this.state.inGame}>

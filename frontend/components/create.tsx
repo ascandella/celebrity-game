@@ -1,15 +1,16 @@
 import React, { Component } from "react";
 import SmallForm from "./small-form";
-import CelebrityClient from "../clients/celebrity";
+import { CreateGameRequest } from "../clients/celebrity";
 
 type CreateProps = {
-  client: CelebrityClient;
+  createGame: (CreateGameRequest) => void;
 };
 
 type CreateState = {
   maxPlayers: number;
   name: string;
   connecting: boolean;
+  createError: string;
 };
 
 export default class CreateGame extends Component<CreateProps, CreateState> {
@@ -19,27 +20,22 @@ export default class CreateGame extends Component<CreateProps, CreateState> {
       maxPlayers: 12,
       name: "",
       connecting: false,
+      createError: "",
     };
   }
 
   async handleSubmit(event: React.FormEvent<HTMLInputElement>): Promise<void> {
-    event.preventDefault();
-    try {
-      await this.props.client.connect();
-    } catch (err) {
-      // TODO this
-      // console.error("Error connecting");
-    }
+    this.setState({ connecting: true });
 
     try {
-      await this.props.client.createGame({
+      await this.props.createGame({
         userName: this.state.name,
         maxPlayers: this.state.maxPlayers,
       });
     } catch (err) {
-      // console.error("Error creating");
+      this.setState({ createError: err });
     }
-    // TODO
+    this.setState({ connecting: false });
   }
 
   render(): React.ReactNode {
@@ -64,7 +60,16 @@ export default class CreateGame extends Component<CreateProps, CreateState> {
               />
             </label>
           </div>
-
+          {this.state.createError && (
+            <div className="flex items-center mb-4">
+              <div
+                className="bg-red-100 border border-red-400 text-red-700 p-2 rounded relative"
+                role="alert"
+              >
+                <span className="block sm:inline">{this.state.createError}</span>
+              </div>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <input
               type="submit"
