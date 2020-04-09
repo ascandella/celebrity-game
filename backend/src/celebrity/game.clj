@@ -89,20 +89,21 @@
 
 (defn spawn-game-handler
   [code client-in broadcast]
-  (d/loop [state {}]
-    (d/chain
-     (s/take! client-in ::drained)
-     (fn [msg]
-       (log/debug (str "Received message from: " (:id msg) ", " (dissoc msg :conn)))
-       (if (identical? ::drained msg)
-         (log/info "Client disconnected")
-         (do
-           (when-let [{client-id :id
-                       conn :conn} msg]
-             ;; TODO real handler, not just pong responses
-             (proto/respond-json conn {:pong true :clientID client-id}))
-           ;; TODO update state before recurring
-           (d/recur state)))))))
+  (log/with-context {:code code}
+    (d/loop [state {}]
+      (d/chain
+       (s/take! client-in ::drained)
+       (fn [msg]
+         (log/debug (str "Received message from: " (:id msg) ", " (dissoc msg :conn)))
+         (if (identical? ::drained msg)
+           (log/info "Client disconnected")
+           (do
+             (when-let [{client-id :id
+                         conn      :conn} msg]
+               ;; TODO real handler, not just pong responses
+               (proto/respond-json conn {:pong true :clientID client-id}))
+             ;; TODO update state before recurring
+             (d/recur state))))))))
 
 (defn validate-params
   [params]

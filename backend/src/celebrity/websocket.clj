@@ -10,10 +10,7 @@
   (log/info (str "Handling join: " message))
   (if-let [join-data (:join message)]
     (let [response (game/join stream join-data)]
-      ;; TODO refactor this
-      (if-let [error (:error response)]
-        (proto/respond-error stream error)
-        (proto/respond-json stream response)))
+      (proto/respond-json stream response))
     (proto/respond-error stream "Invalid join request")))
 
 (defn handle-create

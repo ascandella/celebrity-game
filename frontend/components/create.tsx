@@ -34,7 +34,10 @@ export default class CreateGame extends Component<CreateProps, CreateState> {
         maxPlayers: this.state.maxPlayers,
       });
     } catch (err) {
-      this.setState({ createError: err, connecting: false });
+      this.setState({
+        createError: err.message,
+        connecting: false,
+      });
     }
   }
 
