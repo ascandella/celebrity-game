@@ -38,21 +38,32 @@ class Index extends Component<{}, IndexState> {
     };
   }
 
-  render(): React.ReactNode {
-    let content: React.ReactNode;
+  renderForState(): React.ReactNode {
     if (this.state.inGame) {
-      content = (
+      return (
         <Game
           client={this.state.client}
           roomCode={this.state.roomCode}
           playerName={this.state.playerName}
         />
       );
-    } else if (this.state.creating) {
-      content = <CreateGame createGame={this.state.client.createGame} />;
-    } else {
-      content = <JoinGame joinGame={this.state.client.joinGame} />;
     }
+
+    if (this.state.creating) {
+      return (
+        <CreateGame
+          createGame={this.state.client.createGame.bind(this.state.client)}
+        />
+      );
+    }
+
+    return (
+      <JoinGame joinGame={this.state.client.joinGame.bind(this.state.client)} />
+    );
+  }
+
+  render(): React.ReactNode {
+    const content = this.renderForState();
     return (
       <ContentWrapper showHeader={!this.state.inGame}>
         {content}

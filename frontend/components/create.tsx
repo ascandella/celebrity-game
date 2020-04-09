@@ -1,9 +1,9 @@
 import React, { Component } from "react";
 import SmallForm from "./small-form";
-import { CreateGameRequest } from "../clients/messages";
+import { CreateGameRequest, Response } from "../clients/messages";
 
 type CreateProps = {
-  createGame: (req: CreateGameRequest) => void;
+  createGame: (req: CreateGameRequest) => Promise<Response>;
 };
 
 type CreateState = {
@@ -34,9 +34,8 @@ export default class CreateGame extends Component<CreateProps, CreateState> {
         maxPlayers: this.state.maxPlayers,
       });
     } catch (err) {
-      this.setState({ createError: err });
+      this.setState({ createError: err, connecting: false });
     }
-    this.setState({ connecting: false });
   }
 
   render(): React.ReactNode {
@@ -67,7 +66,9 @@ export default class CreateGame extends Component<CreateProps, CreateState> {
                 className="bg-red-100 border border-red-400 text-red-700 p-2 rounded relative"
                 role="alert"
               >
-                <span className="block sm:inline">{this.state.createError}</span>
+                <span className="block sm:inline">
+                  {this.state.createError}
+                </span>
               </div>
             </div>
           )}

@@ -1,11 +1,11 @@
 import React, { Component } from "react";
 import SmallForm from "./small-form";
-import { JoinGameRequest } from "../clients/messages";
+import { JoinGameRequest, Response } from "../clients/messages";
 
 type JoinProps = {
   maxCodeLength: number;
   maxNameLength: number;
-  joinGame: (req: JoinGameRequest) => void;
+  joinGame: (req: JoinGameRequest) => Promise<Response>;
 };
 
 type JoinState = {
@@ -40,7 +40,7 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
     });
 
     try {
-      await this.joinGame({
+      await this.props.joinGame({
         userName: this.state.name,
         roomCode: this.state.gameCode.toUpperCase(),
       });
@@ -48,17 +48,15 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
     } catch (err) {
       this.setState({
         joinError: err,
+        connecting: false,
       });
     }
-    this.setState({ 
-      connecting: false,
-    })
   }
 
   handleCodeChange(event: React.ChangeEvent<HTMLInputElement>): void {
     this.setState({
       gameCode: event.target.value,
-      joinError: ""
+      joinError: "",
     });
   }
 
