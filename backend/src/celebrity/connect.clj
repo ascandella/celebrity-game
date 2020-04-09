@@ -23,7 +23,7 @@
     (proto/respond-error "Invalid creation request")))
 
 (def command-map
-  {"join" handle-join
+  {"join"   handle-join
    "create" handle-create})
 
 (defn handle-first-message

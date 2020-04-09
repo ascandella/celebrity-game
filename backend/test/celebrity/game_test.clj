@@ -33,7 +33,7 @@
           registry (atom {})
           broadcast (b/event-bus)
           game-data (create-game params client registry broadcast)
-          code (:roomCode game-data)]
+          code (:room-code game-data)]
       (is (not (nil? code)))
       (is (b/active? broadcast code))
       (is (:joinable? (get @registry code)))
@@ -43,7 +43,7 @@
          _ (s/put! client "{\"ping\": true}")]
         (let [result-parsed (proto/parse-json result)]
           (is (:pong result-parsed))
-          (is (> (count (:clientID result-parsed)) 20)))))))
+          (is (> (count (:client-id result-parsed)) 20)))))))
 
 (deftest join-game-does-not-exist
   (testing "try to join a game that doesn't exist"
