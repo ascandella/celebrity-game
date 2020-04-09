@@ -1,5 +1,5 @@
 (ns celebrity.game
-  (:require [clojure.tools.logging :as log]
+  (:require [taoensso.timbre :as log]
             [celebrity.protocol :as proto]
             [manifold.deferred :as d]
             [manifold.bus :as b]

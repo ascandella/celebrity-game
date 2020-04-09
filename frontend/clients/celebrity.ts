@@ -48,8 +48,7 @@ export default class CelebrityClient {
       });
 
       this.wsClient.addEventListener("error", (event) => {
-        // TODO handle this
-        reject("Unable to connect to server");
+        reject(new Error("Unable to connect to server"));
         if (this.pingInterval) {
           window.clearTimeout(this.pingInterval);
         }
@@ -136,7 +135,7 @@ export default class CelebrityClient {
     /* eslint-disable no-console */
     console.log("Response: ", response);
     if (response.error) {
-      throw response.error;
+      throw new Error(response.error);
     }
 
     return response;

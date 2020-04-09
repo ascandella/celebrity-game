@@ -47,7 +47,7 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
       // parent component will now handle advancement
     } catch (err) {
       this.setState({
-        joinError: err,
+        joinError: err.message,
         connecting: false,
       });
     }

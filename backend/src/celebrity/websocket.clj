@@ -1,5 +1,5 @@
 (ns celebrity.websocket
-  (:require [clojure.tools.logging :as log]
+  (:require [taoensso.timbre :as log]
             [manifold.stream :as s]
             [manifold.deferred :as d]
             [celebrity.game :as game]
@@ -52,7 +52,7 @@
   [stream]
   (d/let-flow
    [raw-message (s/take! stream)]
-   (s/on-closed stream #(log/info "Stream closed"))
+   (s/on-closed stream #(log/debug "Stream closed"))
    (if-let [message (proto/parse-json raw-message)]
      (handle-first-message stream message)
      (do
