@@ -82,7 +82,6 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
                 autoFocus
                 required
                 tabIndex="1"
-                placeholder="4-letter code"
                 maxLength={this.props.maxCodeLength}
                 onChange={this.handleCodeChange}
                 className="uppercase"

@@ -44,3 +44,13 @@
        (handle-connect stream))
      (is (includes? (:error response) "Invalid command"))
      (is (includes? (:error response) "frobulate")))))
+
+(deftest handle-join-no-such-room
+  (testing "Handle connect when room code is wrong"
+    (test-stream
+     stream response
+     (do
+       (proto/respond-json stream {:command "join"
+                                   :join    {:room-code "test-room-code"}})
+       (handle-connect stream))
+     (is (includes? (:error response) "Room not found")))))
