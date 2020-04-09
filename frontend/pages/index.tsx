@@ -55,16 +55,18 @@ class Index extends Component<{}, IndexState> {
     return (
       <ContentWrapper showHeader={!this.state.inGame}>
         {content}
-        <div className="flex justify-center">
-          <a
-            onClick={(): void =>
-              this.setState({ creating: !this.state.creating })
-            }
-            className="text-blue-500 hover:text-blue-800 cursor-pointer"
-          >
-            {this.state.creating ? "Join" : "Create"} Game
-          </a>
-        </div>
+        {!this.state.inGame && (
+          <div className="flex justify-center">
+            <a
+              onClick={(): void =>
+                this.setState({ creating: !this.state.creating })
+              }
+              className="text-blue-500 hover:text-blue-800 cursor-pointer"
+            >
+              {this.state.creating ? "Join" : "Create"} Game
+            </a>
+          </div>
+        )}
       </ContentWrapper>
     );
   }
