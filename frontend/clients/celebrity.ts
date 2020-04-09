@@ -54,7 +54,7 @@ export default class CelebrityClient {
           window.clearTimeout(this.pingInterval);
         }
       });
-      
+
       this.wsClient.addEventListener("message", (event) => {
         this.onMessage(event);
       })
@@ -146,7 +146,7 @@ export default class CelebrityClient {
     this.events.emit("join", response);
     this.playerName = response.name;
 
-    // Start a healthcheck, show we can display a UI element
+    // Start a healthcheck, so we can display a UI element
     // if we detect requests failing.
     this.pingInterval = window.setInterval(() => this.ping(), pingTime);
   }
