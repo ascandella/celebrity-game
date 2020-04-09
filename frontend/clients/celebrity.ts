@@ -39,17 +39,17 @@ export default class CelebrityClient {
 
       this.wsClient = new WebSocket(getGameURL());
       this.wsClient.addEventListener("close", (event) => {
-        this.connected  = false;
+        this.connected = false;
         // TODO hook up a UI event listener, or propagate to game
         this.events.emit("close", event);
         if (this.pingInterval) {
           window.clearInterval(this.pingInterval);
         }
       });
-      
+
       this.wsClient.addEventListener("error", (event) => {
         // TODO handle this
-        reject(event);
+        reject("Unable to connect to server");
         if (this.pingInterval) {
           window.clearTimeout(this.pingInterval);
         }
@@ -57,7 +57,7 @@ export default class CelebrityClient {
 
       this.wsClient.addEventListener("message", (event) => {
         this.onMessage(event);
-      })
+      });
 
       this.wsClient.addEventListener("open", (event) => {
         resolve(event);
@@ -163,7 +163,10 @@ export default class CelebrityClient {
     return response;
   }
 
-  async createGame({ userName, maxPlayers }: CreateGameRequest): Promise<Response> {
+  async createGame({
+    userName,
+    maxPlayers,
+  }: CreateGameRequest): Promise<Response> {
     const response = await this.sendCommand("create", {
       create: {
         name: userName,

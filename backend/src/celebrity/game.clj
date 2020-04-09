@@ -93,7 +93,7 @@
     (d/chain
      (s/take! client-in ::drained)
      (fn [msg]
-       (log/info (str "Received message from: " (:id msg) ", " (dissoc msg :conn)))
+       (log/debug (str "Received message from: " (:id msg) ", " (dissoc msg :conn)))
        (if (identical? ::drained msg)
          (log/info "Client disconnected")
          (do
