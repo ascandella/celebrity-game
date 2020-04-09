@@ -49,7 +49,6 @@
      (s/sink-only client)
      ;; TODO: is this an appropriate timeout?
      {:timeout 500})
-    ;; connect server messages
     ;; read all messages from the client, route them appropriately
     (s/consume
      #(s/put! game-bus %)
@@ -60,7 +59,6 @@
      :success  true
      :clientID uuid
      :name     (:name join-data)}))
-
 
 (defn new-game-state [params]
   {:joinable?    true

@@ -50,22 +50,22 @@ class Index extends Component<{}, IndexState> {
     } else if (this.state.creating) {
       content = <CreateGame client={this.state.client} />;
     } else {
-      content = (
-        <div>
-          <JoinGame client={this.state.client} />
+      content = <JoinGame client={this.state.client} />;
+    }
+    return (
+      <ContentWrapper showHeader={!this.state.inGame}>
+        {content}
+        <div className="flex justify-center">
           <a
             onClick={(): void =>
               this.setState({ creating: !this.state.creating })
             }
             className="text-blue-500 hover:text-blue-800 cursor-pointer"
           >
-            Create
+            {this.state.creating ? "Join" : "Create"} Game
           </a>
         </div>
-      );
-    }
-    return (
-      <ContentWrapper showHeader={!this.state.inGame}>{content}</ContentWrapper>
+      </ContentWrapper>
     );
   }
 }
