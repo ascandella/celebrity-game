@@ -73,7 +73,6 @@ class Index extends Component<{}, IndexState> {
               onClick={(): void =>
                 this.setState({ creating: !this.state.creating })
               }
-              className="text-blue-500 hover:text-blue-800 cursor-pointer"
             >
               {this.state.creating ? "Join" : "Create"} Game
             </a>

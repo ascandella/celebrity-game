@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+a {
+  @apply text-blue-500 cursor-pointer;
+  &:hover {
+    @apply text-blue-800;
+  }
+}
+
+p {
+  @apply pt-4;
+}
+
+h3 {
+  @apply text-xl;
+}
