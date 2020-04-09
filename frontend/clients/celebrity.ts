@@ -98,7 +98,7 @@ export default class CelebrityClient {
         console.error("Is the connection dead?");
       }
     }
-    this.sendCommand("ping", {name: this.playerName});
+    this.sendCommand("ping", { name: this.playerName });
     this.lastPingSent = Date.now();
   }
 
@@ -135,6 +135,13 @@ export default class CelebrityClient {
     return response;
   }
 
+  joinedGame(response: Response): void {
+    this.events.emit("join", response);
+    this.playerName = response.name;
+
+    this.pingInterval = window.setInterval(() => this.ping(), pingTime);
+  }
+
   async joinGame({ userName, roomCode }): Promise<Response> {
     // TODO make this a const
     const response = await this.sendCommand("join", {
@@ -143,11 +150,18 @@ export default class CelebrityClient {
         roomCode,
       },
     });
-    this.events.emit("join", response);
-    this.playerName = userName;
+    this.joinedGame(response);
+    return response;
+  }
 
-    this.pingInterval = window.setInterval(() => this.ping(), pingTime);
-
+  async createGame({ userName, maxPlayers }): Promise<Response> {
+    const response = await this.sendCommand("create", {
+      create: {
+        name: userName,
+        maxPlayers,
+      },
+    });
+    this.joinedGame(response);
     return response;
   }
 }
