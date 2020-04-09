@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import SmallForm from "./small-form";
-import { CreateGameRequest } from "../clients/celebrity";
+import { CreateGameRequest } from "../clients/messages";
 
 type CreateProps = {
   createGame: (req: CreateGameRequest) => void;
