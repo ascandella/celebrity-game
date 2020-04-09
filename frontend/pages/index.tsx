@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import ContentWrapper from "../components/content-wrapper";
 import JoinGame from "../components/join";
+import CreateGame from "../components/create";
 import Game from "../components/game";
 import CelebrityClient, { Response } from "../clients/celebrity";
 
@@ -10,6 +11,7 @@ type IndexState = {
   roomCode: string;
   playerName: string;
   clientID?: string;
+  creating: boolean;
 };
 
 class Index extends Component<{}, IndexState> {
@@ -31,6 +33,7 @@ class Index extends Component<{}, IndexState> {
       inGame: false,
       playerName: "",
       clientID: null,
+      creating: false,
     };
   }
 
@@ -44,8 +47,22 @@ class Index extends Component<{}, IndexState> {
           playerName={this.state.playerName}
         />
       );
+    } else if (this.state.creating) {
+      content = <CreateGame client={this.state.client} />;
     } else {
-      content = <JoinGame client={this.state.client} />;
+      content = (
+        <div>
+          <JoinGame client={this.state.client} />
+          <a
+            onClick={(): void =>
+              this.setState({ creating: !this.state.creating })
+            }
+            className="text-blue-500 hover:text-blue-800 cursor-pointer"
+          >
+            Create
+          </a>
+        </div>
+      );
     }
     return (
       <ContentWrapper showHeader={!this.state.inGame}>{content}</ContentWrapper>

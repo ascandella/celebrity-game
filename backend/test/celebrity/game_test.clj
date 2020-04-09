@@ -1,5 +1,6 @@
 (ns celebrity.game-test
   (:require [celebrity.game :refer :all]
+            [celebrity.protocol :as proto]
             [clojure.test :refer :all]
             [manifold.bus :as b]
             [manifold.deferred :as d]
@@ -39,9 +40,10 @@
       (is (= (get-in @registry [code :config :foo]) "bar"))
       @(d/let-flow
         [result (s/try-take! client 500)
-         _ (b/publish! broadcast code "{\"ping\": true}")]
-        (is (:ping result))
-        (is (> (count (:id result)) 20))))))
+         _ (s/put! client "{\"ping\": true}")]
+        (let [result-parsed (proto/parse-json result)]
+          (is (:pong result-parsed))
+          (is (> (count (:clientID result-parsed)) 20)))))))
 
 (deftest join-game-does-not-exist
   (testing "try to join a game that doesn't exist"

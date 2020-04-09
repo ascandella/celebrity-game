@@ -4,7 +4,7 @@
   :license {:name "MIT"
             :url "https://opensource.org/licenses/MIT"}
 
-  :dependencies [[org.clojure/clojure "1.10.1"]
+  :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/core.async "0.4.474"]
                  [org.clojure/data.json "1.0.0"]
                  [org.clojure/tools.logging "1.0.0"]

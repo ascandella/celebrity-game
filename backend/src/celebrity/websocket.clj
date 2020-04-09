@@ -25,10 +25,11 @@
 (defn handle-create
   [stream message]
   (log/info (str "Handle create: " message))
-  ;; TODO pass game params
-  (if-let [code (game/create-game stream)]
-    (proto/respond-json stream {:roomCode code})
-    (proto/respond-error stream "Unable to create game")))
+  (if-let [params (:create message)]
+    (if-let [response (game/create-game params stream)]
+      (proto/respond-json stream response)
+      (proto/respond-error stream "Unable to create game"))
+    (proto/respond-error "Invalid creation request")))
 
 (def command-map
   {"join" handle-join
