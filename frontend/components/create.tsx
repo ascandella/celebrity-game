@@ -25,6 +25,7 @@ export default class CreateGame extends Component<CreateProps, CreateState> {
   }
 
   async handleSubmit(event: React.FormEvent<HTMLInputElement>): Promise<void> {
+    event.preventDefault();
     this.setState({ connecting: true });
 
     try {
