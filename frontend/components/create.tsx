@@ -75,7 +75,7 @@ export default class CreateGame extends Component<CreateProps, CreateState> {
 
           <div className="flex justify-center">
             <SubmitButton
-              value="Create game"
+              value="Create Game"
               submitting={this.state.connecting}
             />
           </div>

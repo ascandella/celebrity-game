@@ -23,7 +23,9 @@
     (let [registry (atom {"KEY" true})
           params {}
           broadcast (b/event-bus)
-          game-data (create-game params "sentinel-stream" registry broadcast #(str "KEY"))]
+          game-data (create-game params "sentinel-stream" {:registry registry
+                                                           :broadcast broadcast
+                                                           :code-generator #(str "KEY")})]
       (is (nil? game-data)))))
 
 (deftest create-game-connects-client
@@ -32,7 +34,7 @@
           params {:config {:foo "bar"}}
           registry (atom {})
           broadcast (b/event-bus)
-          game-data (create-game params client registry broadcast)
+          game-data (create-game params client {:registry registry :broadcast broadcast})
           code (:room-code game-data)]
       (is (not (nil? code)))
       (is (b/active? broadcast code))
@@ -49,7 +51,8 @@
   (testing "try to join a game that doesn't exist"
     (let [client (s/stream)
           registry (atom {})
-          response (join client {} "TEST" registry)]
+          response (join client {} {:registry registry
+                                    :broadcast nil})]
       (is (=
            (:error response)
            "No room code provided")))))
@@ -58,9 +61,9 @@
   (testing "we test a game is joinable"
     (let [client (s/stream)
           code "TEST"
-          join-data {:roomCode code}
+          join-data {:room-code code}
           registry (atom {code  {:joinable? false}})
-          response (join client join-data registry)]
+          response (join client join-data {:registry registry})]
       (is (=
            (:error response)
            "Room is full")))))

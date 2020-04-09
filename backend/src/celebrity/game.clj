@@ -19,15 +19,15 @@
 
 (defn on-client-disconnect
   [registry code]
-  (log/info (str "Client disconnected from game: " code))
+  (log/info "Client disconnected from game: " code)
   (let [updated-registry (swap! registry update-in [code :player-count] dec)
         player-count (get-in updated-registry [code :player-count])]
-    (log/info (str "Player count for code: " code ", count: " player-count))
+    (log/info "Player count for code: " code ", count: " player-count)
     (when (< player-count 1)
-     (log/info (str "All clients disconnected from: " code ", deregistering game"))
+     (log/info "All clients disconnected from: " code ", deregistering game")
      ;; TODO make sure we clean up anything else going on with the game
      (when-let [server-conn (get-in updated-registry [code :bus])]
-       (log/info (str "Closing server connection: " server-conn))
+       (log/info "Closing server connection: " server-conn)
        (s/close! server-conn))
      (swap! registry dissoc code))
     updated-registry))
@@ -38,7 +38,7 @@
         uuid (.toString (java.util.UUID/randomUUID))
         registry' (swap! registry update-in [topic :player-count] inc)
         game-bus (get-in registry' [topic :bus])]
-    (log/info (str "Connecting client to game: " topic ": " uuid ", " join-data))
+    (log/info "Connecting client to game: " topic ": " uuid ", " join-data)
     (s/on-closed
      client
      #(on-client-disconnect registry topic))
@@ -70,20 +70,16 @@
 
 (defn join
   "Join player on websocket 'stream' with join-data to the room identified by room-code"
-  ([stream join-data]
-   (join stream join-data games roombus))
-
-  ([stream join-data registry]
-   (join stream join-data registry roombus))
-
-  ([stream join-data registry broadcast-bus]
-   (if-let [room-code (:roomCode join-data)]
+  [stream join-data & [{:keys [registry broadcast]
+                        :or   {registry  games
+                               broadcast roombus}}]]
+   (if-let [room-code (:room-code join-data)]
      (if-let [game (get @registry room-code)]
        (if (:joinable? game)
-         (connect-client-to-game broadcast-bus join-data stream registry)
+         (connect-client-to-game broadcast join-data stream registry)
          {:error "Room is full"})
        {:error "Room not found"})
-    {:error "No room code provided"})))
+    {:error "No room code provided"}))
 
 (def max-create-retries 10)
 
@@ -94,7 +90,7 @@
       (d/chain
        (s/take! client-in ::drained)
        (fn [msg]
-         (log/debug (str "Received message from: " (:id msg) ", " (dissoc msg :conn)))
+         (log/debug "Received message from: " (:id msg) ", " (dissoc msg :conn))
          (if (identical? ::drained msg)
            (log/info "Client disconnected")
            (do
@@ -112,19 +108,13 @@
 
 (defn create-game
   "Creates a new game, returns a game code"
-  ([params stream]
-   (create-game params stream games))
-
-  ([params stream registry]
-   (create-game params stream registry roombus))
-
-  ([params stream registry broadcast-bus]
-   (create-game params stream registry broadcast-bus generate-room-code))
-
-  ([params stream registry broadcast-bus code-generator]
+  [params stream & [{:keys [registry broadcast code-generator]
+                     :or   {registry       games
+                            broadcast      roombus
+                            code-generator generate-room-code}}]]
    (if-let [error (validate-params params)]
      (do
-       (log/info (str "Param validation failed on " params " : " error))
+       (log/info "Param validation failed on " params " : " error)
        error)
      (loop [count 0]
         (if (> count max-create-retries)
@@ -140,10 +130,10 @@
                    registry registry'
                    (assoc registry' code (new-game-state params)))
                 (do
-                  (spawn-game-handler code (get-in @registry [code :bus]) broadcast-bus)
+                  (spawn-game-handler code (get-in @registry [code :bus]) broadcast)
                   ;; connect the client to the broadcast bus
                   (connect-client-to-game
-                   broadcast-bus
+                   broadcast
                    (assoc params :room-code code)
                    stream registry))
-                (recur (inc count))))))))))
+                (recur (inc count)))))))))

@@ -10,17 +10,17 @@
   (log/info (str "Handling join: " message))
   (if-let [join-data (:join message)]
     (let [response (game/join stream join-data)]
-      (proto/respond-json stream response))
-    (proto/respond-error stream "Invalid join request")))
+      (proto/respond-message stream response))
+    (proto/respond-error stream "Invalid request")))
 
 (defn handle-create
   [stream message]
   (log/info (str "Handle create: " message))
   (if-let [params (:create message)]
     (if-let [response (game/create-game params stream)]
-      (proto/respond-json stream response)
+      (proto/respond-message stream response)
       (proto/respond-error stream "Unable to create game"))
-    (proto/respond-error "Invalid creation request")))
+    (proto/respond-error "Invalid request")))
 
 (def command-map
   {"join"   handle-join
