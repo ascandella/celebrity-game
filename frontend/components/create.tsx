@@ -3,7 +3,7 @@ import SmallForm from "./small-form";
 import { CreateGameRequest } from "../clients/celebrity";
 
 type CreateProps = {
-  createGame: (CreateGameRequest) => void;
+  createGame: (req: CreateGameRequest) => void;
 };
 
 type CreateState = {

@@ -5,7 +5,7 @@ import { JoinGameRequest } from "../clients/messages";
 type JoinProps = {
   maxCodeLength: number;
   maxNameLength: number;
-  joinGame: (JoinGameRequest) => void;
+  joinGame: (req: JoinGameRequest) => void;
 };
 
 type JoinState = {

@@ -89,7 +89,7 @@ export default class CelebrityClient {
     } else {
       this.messageQueue.push(message);
     }
-  });
+  }
 
   ping(): void {
     if (this.lastPingSent) {
