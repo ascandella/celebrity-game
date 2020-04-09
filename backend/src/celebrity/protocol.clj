@@ -16,10 +16,17 @@
 (defn respond-json
   [stream data]
   (let [data-json (json/write-str data :key-fn csk/->camelCaseString)]
-    (log/info (str "Responding: " data-json))
+    (log/info "Responding: " data-json)
     (s/put! stream data-json)))
 
 (defn respond-error
   [stream error-message]
   (respond-json stream {:error error-message})
+  (log/debug "Closing stream due to error" stream)
   (s/close! stream))
+
+(defn respond-message
+  [stream data]
+  (if-let [error (:error data)]
+    (respond-error stream error)
+    (respond-json stream data)))
