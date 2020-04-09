@@ -5,12 +5,6 @@
             [celebrity.game :as game]
             [celebrity.protocol :as proto]))
 
-
-(defn handle-ping
-  [stream message]
-  (log/info (str "Handle ping: " message))
-  (proto/respond-json stream {:pong true}))
-
 (defn handle-join
   [stream message]
   (log/info (str "Handling join: " message))
@@ -33,7 +27,6 @@
 
 (def command-map
   {"join" handle-join
-   "ping" handle-ping
    "create" handle-create})
 
 (defn handle-first-message

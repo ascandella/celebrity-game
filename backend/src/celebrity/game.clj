@@ -97,9 +97,10 @@
        (if (identical? ::drained msg)
          (log/info "Client disconnected")
          (do
-           (when-let [conn (:conn msg)]
+           (when-let [{client-id :id
+                       conn :conn} msg]
              ;; TODO real handler, not just pong responses
-             (proto/respond-json conn {:pong true :clientID (:id msg)}))
+             (proto/respond-json conn {:pong true :clientID client-id}))
            ;; TODO update state before recurring
            (d/recur state)))))))
 

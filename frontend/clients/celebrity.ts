@@ -59,6 +59,7 @@ export default class CelebrityClient {
       });
 
       this.wsClient.addEventListener("open", (event) => {
+        this.connected = true;
         resolve(event);
       });
     });
