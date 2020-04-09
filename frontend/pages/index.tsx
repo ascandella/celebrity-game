@@ -25,7 +25,7 @@ class Index extends Component<{}, IndexState> {
         inGame: true,
         roomCode: response.roomCode,
         playerName: response.name,
-        clientID: response.clientID,
+        clientID: response.clientId,
       });
     });
     this.state = {

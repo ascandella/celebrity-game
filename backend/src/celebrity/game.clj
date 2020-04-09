@@ -34,7 +34,7 @@
 
 (defn connect-client-to-game
   [broadcast join-data client registry]
-  (let [topic (:roomCode join-data)
+  (let [topic (:room-code join-data)
         uuid (.toString (java.util.UUID/randomUUID))
         registry' (swap! registry update-in [topic :player-count] inc)
         game-bus (get-in registry' [topic :bus])]
@@ -55,10 +55,10 @@
      (->> client
           (s/map #(proto/parse-json % {}))
           (s/map #(assoc % :id uuid :conn client))))
-    {:roomCode topic
-     :success  true
-     :clientID uuid
-     :name     (:name join-data)}))
+    {:room-code topic
+     :success   true
+     :client-id uuid
+     :name      (:name join-data)}))
 
 (defn new-game-state [params]
   {:joinable?    true
@@ -101,7 +101,7 @@
              (when-let [{client-id :id
                          conn      :conn} msg]
                ;; TODO real handler, not just pong responses
-               (proto/respond-json conn {:pong true :clientID client-id}))
+               (proto/respond-json conn {:pong true :client-id client-id}))
              ;; TODO update state before recurring
              (d/recur state))))))))
 
@@ -144,6 +144,6 @@
                   ;; connect the client to the broadcast bus
                   (connect-client-to-game
                    broadcast-bus
-                   (assoc params :roomCode code)
+                   (assoc params :room-code code)
                    stream registry))
                 (recur (inc count))))))))))
