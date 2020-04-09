@@ -1,18 +1,19 @@
 (ns celebrity.connect-test
   (:require [celebrity.connect :refer :all]
             [celebrity.protocol :as proto]
+            [clojure.string :refer [includes?]]
             [manifold.stream :as s]
             [manifold.deferred :as d]
             [clojure.test :refer :all]))
 
 (defmacro test-stream
-  [stream-name response-name setup assertions]
+  [stream-name response-name setup & assertions]
   `(let [~stream-name (s/stream)]
      ~setup
      (d/let-flow
       [response# (s/take! ~stream-name)]
       (let [~response-name (proto/parse-json response#)]
-        ~assertions))))
+        ~@assertions))))
 
 (deftest handle-connect-missing-message
   (testing "Handle connect with invalid JSON"
@@ -33,3 +34,13 @@
        (handle-connect stream))
      (is (= response
             {:error "No command sent"})))))
+
+(deftest handle-connect-invalid-command
+  (testing "Handle connect with frobulate is rejected"
+    (test-stream
+     stream response
+     (do
+       (proto/respond-json stream {:command "frobulate"})
+       (handle-connect stream))
+     (is (includes? (:error response) "Invalid command"))
+     (is (includes? (:error response) "frobulate")))))
