@@ -1,25 +1,16 @@
-(ns celebrity.websocket
-  (:require [clojure.tools.logging :as log]
+(ns celebrity.connect
+  (:require [taoensso.timbre :as log]
             [manifold.stream :as s]
             [manifold.deferred :as d]
             [celebrity.game :as game]
             [celebrity.protocol :as proto]))
-
-
-(defn handle-ping
-  [stream message]
-  (log/info (str "Handle ping: " message))
-  (proto/respond-json stream {:pong true}))
 
 (defn handle-join
   [stream message]
   (log/info (str "Handling join: " message))
   (if-let [join-data (:join message)]
     (let [response (game/join stream join-data)]
-      ;; TODO refactor this
-      (if-let [error (:error response)]
-        (proto/respond-error stream error)
-        (proto/respond-json stream response)))
+      (proto/respond-json stream response))
     (proto/respond-error stream "Invalid join request")))
 
 (defn handle-create
@@ -33,7 +24,6 @@
 
 (def command-map
   {"join" handle-join
-   "ping" handle-ping
    "create" handle-create})
 
 (defn handle-first-message
@@ -52,7 +42,7 @@
   [stream]
   (d/let-flow
    [raw-message (s/take! stream)]
-   (s/on-closed stream #(log/info "Stream closed"))
+   (s/on-closed stream #(log/debug "Stream closed"))
    (if-let [message (proto/parse-json raw-message)]
      (handle-first-message stream message)
      (do

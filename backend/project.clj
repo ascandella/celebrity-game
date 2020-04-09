@@ -7,7 +7,7 @@
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/core.async "0.4.474"]
                  [org.clojure/data.json "1.0.0"]
-                 [org.clojure/tools.logging "1.0.0"]
+                 [com.taoensso/timbre "4.10.0"]
                  [ring "1.7.0"]
                  [aleph "0.4.6"]
                  [compojure "1.6.1"]]

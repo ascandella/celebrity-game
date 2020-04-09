@@ -1,5 +1,5 @@
 (ns celebrity.protocol
-  (:require [clojure.tools.logging :as log]
+  (:require [taoensso.timbre :as log]
             [clojure.data.json :as json]
             [manifold.stream :as s]))
 

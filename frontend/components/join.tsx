@@ -1,11 +1,11 @@
 import React, { Component } from "react";
 import SmallForm from "./small-form";
-import CelebrityClient from "../clients/celebrity";
+import { JoinGameRequest, Response } from "../clients/messages";
 
 type JoinProps = {
   maxCodeLength: number;
   maxNameLength: number;
-  client: CelebrityClient;
+  joinGame: (req: JoinGameRequest) => Promise<Response>;
 };
 
 type JoinState = {
@@ -38,26 +38,17 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
     this.setState({
       connecting: true,
     });
-    try {
-      await this.props.client.connect();
-    } catch (err) {
-      this.setState({
-        joinError: "Unable to connect to game server",
-      });
-    }
-    this.setState({
-      connecting: false,
-    });
 
     try {
-      await this.props.client.joinGame({
+      await this.props.joinGame({
         userName: this.state.name,
         roomCode: this.state.gameCode.toUpperCase(),
       });
       // parent component will now handle advancement
     } catch (err) {
       this.setState({
-        joinError: err,
+        joinError: err.message,
+        connecting: false,
       });
     }
   }
@@ -65,6 +56,7 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
   handleCodeChange(event: React.ChangeEvent<HTMLInputElement>): void {
     this.setState({
       gameCode: event.target.value,
+      joinError: "",
     });
   }
 

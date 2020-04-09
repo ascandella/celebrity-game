@@ -5,6 +5,7 @@ WORKDIR /build
 COPY . .
 USER root
 
+ENV TIMBRE_LEVEL ":info"
 RUN lein uberjar
 
 FROM openjdk:14-jdk-buster AS production

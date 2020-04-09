@@ -1,13 +1,9 @@
 import { EventEmitter } from "events";
+import { JoinGameRequest, CreateGameRequest, Response } from "./messages";
 
 function getGameURL(): string {
   return `${process.env.apiBase}/game`;
 }
-
-export type Response = {
-  error?: string;
-  [key: string]: any;
-};
 
 const pingTime = 10000;
 
@@ -43,49 +39,56 @@ export default class CelebrityClient {
 
       this.wsClient = new WebSocket(getGameURL());
       this.wsClient.addEventListener("close", (event) => {
-        // TODO handle this with an event listener, or propagate to game
+        this.connected = false;
+        // TODO hook up a UI event listener, or propagate to game
         this.events.emit("close", event);
         if (this.pingInterval) {
           window.clearInterval(this.pingInterval);
         }
       });
-      this.wsClient.addEventListener("error", (event) => {
-        // TODO handle this
-        reject(event);
+
+      this.wsClient.addEventListener("error", () => {
+        reject(new Error("Unable to connect to server"));
         if (this.pingInterval) {
           window.clearTimeout(this.pingInterval);
         }
       });
-      this.wsClient.addEventListener("message", (event) => {
-        if (!event.data) {
-          return;
-        }
-        let message;
-        try {
-          message = JSON.parse(event.data);
-        } catch (err) {
-          /* eslint-disable no-console */
-          console.error("Unable to parse server response: ", event.data);
-          return;
-        }
-        if (message.pong) {
-          this.lastPongReceived = Date.now();
-          return;
-        }
 
-        // Somebody is awaiting a response
-        if (this.nextMessageCallback) {
-          this.nextMessageCallback(message);
-          this.nextMessageCallback = null;
-        } else {
-          this.messageQueue.push(message);
-        }
+      this.wsClient.addEventListener("message", (event) => {
+        this.onMessage(event);
       });
 
       this.wsClient.addEventListener("open", (event) => {
+        this.connected = true;
         resolve(event);
       });
     });
+  }
+
+  onMessage(event): void {
+    if (!event.data) {
+      return;
+    }
+    let message;
+    try {
+      message = JSON.parse(event.data);
+    } catch (err) {
+      /* eslint-disable no-console */
+      console.error("Unable to parse server response: ", event.data);
+      return;
+    }
+    if (message.pong) {
+      this.lastPongReceived = Date.now();
+      return;
+    }
+
+    // Somebody is awaiting a response
+    if (this.nextMessageCallback) {
+      this.nextMessageCallback(message);
+      this.nextMessageCallback = null;
+    } else {
+      this.messageQueue.push(message);
+    }
   }
 
   ping(): void {
@@ -117,6 +120,10 @@ export default class CelebrityClient {
     command: string,
     data: { [key: string]: any }
   ): Promise<Response> {
+    if (!this.connected) {
+      await this.connect();
+    }
+
     this.wsClient.send(
       JSON.stringify({
         ...data,
@@ -129,7 +136,7 @@ export default class CelebrityClient {
     /* eslint-disable no-console */
     console.log("Response: ", response);
     if (response.error) {
-      throw response.error;
+      throw new Error(response.error);
     }
 
     return response;
@@ -139,10 +146,12 @@ export default class CelebrityClient {
     this.events.emit("join", response);
     this.playerName = response.name;
 
+    // Start a healthcheck, so we can display a UI element
+    // if we detect requests failing.
     this.pingInterval = window.setInterval(() => this.ping(), pingTime);
   }
 
-  async joinGame({ userName, roomCode }): Promise<Response> {
+  async joinGame({ userName, roomCode }: JoinGameRequest): Promise<Response> {
     // TODO make this a const
     const response = await this.sendCommand("join", {
       join: {
@@ -154,7 +163,10 @@ export default class CelebrityClient {
     return response;
   }
 
-  async createGame({ userName, maxPlayers }): Promise<Response> {
+  async createGame({
+    userName,
+    maxPlayers,
+  }: CreateGameRequest): Promise<Response> {
     const response = await this.sendCommand("create", {
       create: {
         name: userName,

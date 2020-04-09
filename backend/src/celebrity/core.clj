@@ -7,7 +7,7 @@
             [manifold.deferred :as d]
             ;;[manifold.bus :as bus]
             ;;[clojure.core.async :as a]
-            [celebrity.websocket :as ws])
+            [celebrity.connect :as connect])
   (:gen-class))
 
 (def non-websocket-request
@@ -20,7 +20,7 @@
   (->
    (d/let-flow
     [conn (http/websocket-connection req)]
-    (ws/handle-connect conn))
+    (connect/handle-connect conn))
    (d/catch
        (fn [_]
          non-websocket-request))))
