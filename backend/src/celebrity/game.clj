@@ -35,7 +35,7 @@
   (if-let [room-code (:room-code join-data)]
     (if-let [game (get @registry room-code)]
       (if (:joinable? game)
-        (connect-client-to-game join-data stream (:bus registry))
+        (connect-client-to-game join-data stream (:bus game))
         {:error "Room is full"})
       {:error "Room not found"})
     {:error "No room code provided"}))

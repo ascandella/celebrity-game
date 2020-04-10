@@ -67,7 +67,8 @@
           response (join client join-data {:registry registry})]
       (is (=
            (:error response)
-           "Room is full")))))
+           "Room is full"))
+      (s/close! client))))
 
 (deftest client-last-player
   (testing "We cull old games when the last client disconnects"
@@ -85,3 +86,25 @@
         (let [bus (:bus game-state)]
           ;; NOTE: this will block
           (is (false? (a/>!! bus "test message"))))))))
+
+(deftest created-game-can-be-joined
+  (testing "After creating a game, another client can join"
+    (let [creator  (s/stream)
+          joiner   (s/stream)
+          params   {:name "creator"}
+          registry (atom {})
+          _        (create-game params creator {:registry registry})
+          response @(s/try-take! creator 500)
+          parsed   (proto/parse-message response)
+          code     (:room-code parsed)]
+      (is (= :pending
+             (join joiner {:room-code code
+                           :name "joiner"}
+                   {:registry registry})))
+      (let [join-response @(s/try-take! joiner 500)
+            parsed-join   (proto/parse-message join-response)]
+        (is (:success parsed-join))
+        (is (= "joiner" (:name parsed-join)))
+        (is (= code (:room-code parsed-join))))
+      (s/close! creator)
+      (s/close! joiner))))
