@@ -11,17 +11,20 @@ type ConnectionStatusProps = {
   status: string;
 };
 
+const messages = {
+  "pong-timeout": "Connection unstable",
+  error: "Connection error",
+  closed: "Connection lost",
+};
+
 const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
   status,
 }: ConnectionStatusProps) => {
-  if (status == "pong-timeout") {
-    return <StatusBanner>Connection unstable</StatusBanner>;
-  } else if (status == "error") {
-    return <StatusBanner>Connection error</StatusBanner>;
-  } else if (status == "closed") {
-    return <StatusBanner>Connection lost</StatusBanner>;
+  const userMessage = messages[status];
+  if (!userMessage) {
+    return null;
   }
-  return null;
+  return <StatusBanner>{userMessage}</StatusBanner>;
 };
 
 export default ConnectionStatus;
