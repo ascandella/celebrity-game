@@ -76,7 +76,7 @@
           params   {}
           registry (atom {})
           created  (create-game params client {:registry registry})
-          response @(s/try-take! client 500)
+          response @(s/take! client)
           parsed   (proto/parse-message response)]
       (is (= :pending created))
       (s/close! client)
@@ -101,7 +101,7 @@
              (join joiner {:room-code code
                            :name "joiner"}
                    {:registry registry})))
-      (let [join-response @(s/try-take! joiner 1000)
+      (let [join-response @(s/take! joiner)
             parsed-join   (proto/parse-message join-response)
             players       (:players parsed-join)]
         (is (:success parsed-join))
