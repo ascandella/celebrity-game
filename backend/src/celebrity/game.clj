@@ -42,7 +42,7 @@
     (log/info "Connecting client to game: " topic uuid join-data)
     (a/>!! game-bus {:id uuid :ch client :join join-data})
     ;; NOTE: we don't return a response, the game handler does
-    :created))
+    :pending))
 
 (defn new-game-state [params]
   {:joinable?    true

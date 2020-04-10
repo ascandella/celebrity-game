@@ -10,7 +10,7 @@
   (log/info (str "Handling join: " message))
   (if-let [join-data (:join message)]
     (let [response (game/join stream join-data)]
-      (when-not (identical? :created response)
+      (when-not (identical? :pending response)
         (proto/respond-message stream response)))
     (proto/respond-error stream "Invalid request")))
 
@@ -19,7 +19,7 @@
   (log/info (str "Handle create: " message))
   (if-let [params (:create message)]
     (if-let [response (game/create-game params stream)]
-      (when-not (identical? :created response)
+      (when-not (identical? :pending response)
         ;; the creation had some sort of immediate error
         (proto/respond-message stream response))
       (proto/respond-error stream "Unable to create game"))

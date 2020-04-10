@@ -32,7 +32,7 @@
                     :config {:foo "bar"}}
           registry (atom {})
           val        (create-game params client {:registry registry})]
-      (is (= val :created))
+      (is (= val :pending))
       ;; this should succeed because the server is listening
       @(d/let-flow
         [create-response (s/try-take! client 500)]
