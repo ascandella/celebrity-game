@@ -12,7 +12,7 @@
      ~setup
      (d/let-flow
       [response# (s/take! ~stream-name)]
-      (let [~response-name (proto/parse-json response#)]
+      (let [~response-name (proto/parse-message response#)]
         ~@assertions))))
 
 (deftest handle-connect-missing-message

@@ -4,19 +4,19 @@
             [manifold.stream :as s]
             [manifold.deferred :as d]))
 
-(deftest parse-json-valid
+(deftest parse-message-valid
   (testing "Valid JSON parsing"
     (is (=
-         (parse-json "{\"key\": \"value\"}")
+         (parse-message "{\"key\": \"value\"}")
          {:key "value"}))))
 
-(deftest parse-json-invalid
+(deftest parse-message-invalid
   (testing "Invalid JSON parsing"
-    (is (nil? (parse-json "{")))))
+    (is (nil? (parse-message "{")))))
 
-(deftest parse-json-return-default
+(deftest parse-message-return-default
   (testing "Invalid JSON parsing returning a default"
-    (is (= (parse-json "foo" {})
+    (is (= (parse-message "foo" {})
            {}))))
 
 (deftest respond-error-valid
@@ -26,5 +26,5 @@
       (d/let-flow
        [response (s/take! stream)]
        (is (=
-            (parse-json response)
+            (parse-message response)
             {:error "message"}))))))

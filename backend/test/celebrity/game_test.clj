@@ -2,7 +2,6 @@
   (:require [celebrity.game :refer :all]
             [celebrity.protocol :as proto]
             [clojure.test :refer :all]
-            [manifold.bus :as b]
             [manifold.deferred :as d]
             [manifold.stream :as s]))
 
@@ -22,37 +21,38 @@
   (testing "no infinite loop if codes never change"
     (let [registry (atom {"KEY" true})
           params {}
-          broadcast (b/event-bus)
           game-data (create-game params "sentinel-stream" {:registry registry
-                                                           :broadcast broadcast
                                                            :code-generator #(str "KEY")})]
       (is (nil? game-data)))))
 
 (deftest create-game-connects-client
   (testing "we can create a new game"
-    (let [client (s/buffered-stream 100)
-          params {:config {:foo "bar"}}
+    (let [client   (s/stream)
+          params   {:create {:name "aiden"}
+                    :config {:foo "bar"}}
           registry (atom {})
-          broadcast (b/event-bus)
-          game-data (create-game params client {:registry registry :broadcast broadcast})
-          code (:room-code game-data)]
-      (is (not (nil? code)))
-      (is (b/active? broadcast code))
-      (is (:joinable? (get @registry code)))
-      (is (= (get-in @registry [code :config :foo]) "bar"))
+          val        (create-game params client {:registry registry})]
+      (is (= val :pending))
+      ;; this should succeed because the server is listening
       @(d/let-flow
-        [result (s/try-take! client 500)
-         _ (s/put! client "{\"ping\": true}")]
-        (let [result-parsed (proto/parse-json result)]
-          (is (:pong result-parsed))
-          (is (> (count (:client-id result-parsed)) 20)))))))
+        [create-response (s/try-take! client 500)]
+        (let [json-response (proto/parse-message create-response)
+              code (:room-code json-response)]
+          (is (not (nil? code)))
+          (is (= (:name json-response) "aiden"))
+          (is (:joinable? (get @registry code)))
+          (is (= (get-in @registry [code :config :foo]) "bar"))
+          (is @(s/try-put! client "{\"ping\" true}" 500))
+          (d/let-flow [ping-response (s/try-take! client 500)]
+                      (let [result-parsed (proto/parse-message ping-response)]
+                        (is (:pong result-parsed))
+                        (is (> (count (:client-id result-parsed)) 20)))))))))
 
 (deftest join-game-does-not-exist
   (testing "try to join a game that doesn't exist"
     (let [client (s/stream)
           registry (atom {})
-          response (join client {} {:registry registry
-                                    :broadcast nil})]
+          response (join client {} {:registry registry})]
       (is (=
            (:error response)
            "No room code provided")))))
