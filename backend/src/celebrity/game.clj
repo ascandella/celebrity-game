@@ -2,8 +2,6 @@
   (:require [taoensso.timbre :as log]
             [celebrity.protocol :as proto]
             [clojure.core.async :as a]
-            [manifold.deferred :as d]
-            [manifold.bus :as b]
             [manifold.stream :as s]))
 
 (def room-code-length 4)
@@ -13,10 +11,6 @@
   ([] (generate-room-code room-code-length))
   ([len]
     (apply str (take len (repeatedly #(char (+ (rand 26) 65)))))))
-
-;; event bus per-room, where we can publish to te topic named by room code
-;; and all clients will receive the exact message over websockets
-(def roombus (b/event-bus))
 
 (defn on-client-disconnect
   [registry code]
@@ -34,33 +28,21 @@
     updated-registry))
 
 (defn connect-client-to-game
-  [broadcast join-data client registry]
+  [join-data client registry]
   (let [topic (:room-code join-data)
         uuid (.toString (java.util.UUID/randomUUID))
+        ;; TODO Move this side effect to the state machine loop
         registry' (swap! registry update-in [topic :player-count] inc)
         game-bus (get-in registry' [topic :bus])]
-    (log/info "Connecting client to game: " topic ": " uuid ", " join-data)
     (s/on-closed
      client
+     ;; TODO let the server loop handle this
      #(on-client-disconnect registry topic))
-    ;; send all messages from the broadcast topic to the client
-    (s/connect
-     (b/subscribe broadcast topic)
-     ;; we only want to send messages to the clients through this
-     (s/sink-only client)
-     ;; TODO: is this an appropriate timeout?
-     {:timeout 500})
-    ;; read all messages from the client, route them appropriately
-    (s/consume
-     ;; buffered channel, so we should be OK
-     #(a/>!! game-bus %)
-     (->> client
-          (s/map #(proto/parse-json % {}))
-          (s/map #(assoc % :id uuid :conn client))))
-    {:room-code topic
-     :success   true
-     :client-id uuid
-     :name      (:name join-data)}))
+    ;; send a message to the server handler that a new client has connected
+    (log/info "Connecting client to game: " topic uuid join-data)
+    (a/>!! game-bus {:id uuid :ch client :join join-data})
+    ;; NOTE: we don't return a response, the game handler does
+    :created))
 
 (defn new-game-state [params]
   {:joinable?    true
@@ -72,34 +54,57 @@
 
 (defn join
   "Join player on websocket 'stream' with join-data to the room identified by room-code"
-  [stream join-data & [{:keys [registry broadcast]
-                        :or   {registry  games
-                               broadcast roombus}}]]
-   (if-let [room-code (:room-code join-data)]
-     (if-let [game (get @registry room-code)]
-       (if (:joinable? game)
-         (connect-client-to-game broadcast join-data stream registry)
-         {:error "Room is full"})
-       {:error "Room not found"})
+  [stream join-data & [{:keys [registry]
+                        :or   {registry games}}]]
+  (if-let [room-code (:room-code join-data)]
+    (if-let [game (get @registry room-code)]
+      (if (:joinable? game)
+        (connect-client-to-game join-data stream registry)
+        {:error "Room is full"})
+      {:error "Room not found"})
     {:error "No room code provided"}))
 
 (def max-create-retries 10)
 
+(defn create-client-channel
+  "Connect the TCP stream to channels, encoding and decoding along the way"
+  [conn]
+  (let [in-ch (a/chan)
+        out-ch (a/chan)]
+    (s/connect
+     (s/map proto/parse-message (s/source-only conn))
+     in-ch)
+    (s/connect
+     (s/map proto/encode-message (s/->source out-ch))
+     (s/sink-only conn))
+    [in-ch out-ch]))
+
 (defn game-state-machine
-  [code client-in broadcast]
+  [code client-in]
   (a/go
-    (loop [state {}]
-      (let [msg (a/<! client-in)]
+    (loop [inputs {} outputs {} state {}]
+      (let [[msg channel] (a/alts! (conj (keys inputs) client-in))]
         (if (nil? msg)
-          (log/info "Control channel closed, done processing " code)
-          (do
-            (log/debug "Received message from: " (:id msg) ", " (dissoc msg :conn))
-            (when-let [{client-id :id
-                        conn      :conn} msg]
-              ;; TODO real handler, not just pong responses
-              (proto/respond-json conn {:pong true :client-id client-id}))
-            ;; TODO update state before recurring
-            (recur state)))))))
+          (log/info "All channels closed, done processing" code)
+          (if (identical? channel client-in)
+            (do
+              (log/info "Received client connection: " msg)
+              (let [client-id      (:id msg)
+                    [input output] (create-client-channel (:ch msg))]
+                ;; TODO validate whether the client can connect
+                (a/>! output {:room-code code
+                              :success true
+                              :client-id client-id
+                              :name (get-in msg [:join :name])})
+                (recur
+                 (assoc inputs input client-id)
+                 (assoc outputs input output)
+                 state)))
+            (let [out-ch (get outputs channel)
+                  client-id (get inputs channel)]
+              (log/info "Received client message: " msg)
+              (a/>! out-ch {:pong true :client-id client-id})
+              (recur inputs outputs state))))))))
 
 (defn validate-params
   [params]
@@ -108,34 +113,32 @@
 
 (defn create-game
   "Creates a new game, returns a game code"
-  [params stream & [{:keys [registry broadcast code-generator]
+  [params stream & [{:keys [registry code-generator]
                      :or   {registry       games
-                            broadcast      roombus
                             code-generator generate-room-code}}]]
-   (if-let [error (validate-params params)]
-     (do
-       (log/info "Param validation failed on " params " : " error)
-       error)
-     (loop [count 0]
-        (if (> count max-create-retries)
-          ;; return nil if we can't get it in 10 tries to avoid an infinite loop
-          ;; maybe there's a bug
-          (log/error "Giving up generating code")
-          (let [code   (code-generator)
-                registry' @registry]
-            (if (contains? registry' code)
-              ;; we managed to generate a code that already exists, what are the chances??
-              (recur (inc count))
-              ;; otherwise, try to add it to the registry
-              (if (compare-and-set!
-                   registry registry'
-                   (assoc registry' code (new-game-state params)))
-                ;; it was added, now create the game
-                (do
-                  (game-state-machine code (get-in @registry [code :bus]) broadcast)
-                  ;; connect the client to the broadcast bus
-                  (connect-client-to-game
-                   broadcast
-                   (assoc params :room-code code)
-                   stream registry))
+  (if-let [error (validate-params params)]
+    (do
+      (log/info "Param validation failed on " params " : " error)
+      error)
+    (loop [count 0]
+      (if (> count max-create-retries)
+        ;; return nil if we can't get it in 10 tries to avoid an infinite loop
+        ;; maybe there's a bug
+        (log/error "Giving up generating code")
+        (let [code      (code-generator)
+              registry' @registry]
+          (if (contains? registry' code)
+            ;; we managed to generate a code that already exists, what are the chances??
+            (recur (inc count))
+            ;; otherwise, try to add it to the registry
+            (if (compare-and-set!
+                 registry registry'
+                 (assoc registry' code (new-game-state params)))
+              ;; it was added, now create the game
+              (do
+                (game-state-machine code (get-in @registry [code :bus]))
+                ;; connect the client to the server handler
+                (connect-client-to-game
+                 (assoc params :room-code code)
+                 stream registry))
                 (recur (inc count)))))))))
