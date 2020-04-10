@@ -38,7 +38,7 @@ export default class CelebrityClient {
       }
 
       this.wsClient = new WebSocket(getGameURL());
-      this.wsClient.addEventListener("close", (event) => {
+      this.wsClient.addEventListener("close", () => {
         this.connected = false;
         this.events.emit("connection-status", "closed");
         if (this.pingInterval) {

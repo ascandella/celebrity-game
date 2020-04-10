@@ -1,7 +1,7 @@
 import React, { Component } from "react";
+import styled from "styled-components";
 import CelebrityClient from "../clients/celebrity";
 import ConnectionStatus from "./connection-status";
-import styled from "styled-components";
 
 type GameState = {
   connectionStatus: string;
