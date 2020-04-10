@@ -2,6 +2,7 @@
   (:require [celebrity.game :refer :all]
             [celebrity.protocol :as proto]
             [clojure.test :refer :all]
+            [clojure.core.async :as a]
             [manifold.deferred :as d]
             [manifold.stream :as s]))
 
@@ -28,25 +29,25 @@
 (deftest create-game-connects-client
   (testing "we can create a new game"
     (let [client   (s/stream)
-          params   {:create {:name "aiden"}
+          params   {:name   "aiden"
                     :config {:foo "bar"}}
           registry (atom {})
-          val        (create-game params client {:registry registry})]
+          val      (create-game params client {:registry registry})]
       (is (= val :pending))
       ;; this should succeed because the server is listening
-      @(d/let-flow
-        [create-response (s/try-take! client 500)]
-        (let [json-response (proto/parse-message create-response)
-              code (:room-code json-response)]
-          (is (not (nil? code)))
-          (is (= (:name json-response) "aiden"))
-          (is (:joinable? (get @registry code)))
-          (is (= (get-in @registry [code :config :foo]) "bar"))
-          (is @(s/try-put! client "{\"ping\" true}" 500))
-          (d/let-flow [ping-response (s/try-take! client 500)]
-                      (let [result-parsed (proto/parse-message ping-response)]
-                        (is (:pong result-parsed))
-                        (is (> (count (:client-id result-parsed)) 20)))))))))
+      (let [create-response @(s/try-take! client 500)
+            json-response   (proto/parse-message create-response)
+            code            (:room-code json-response)]
+        (is (not (nil? code)))
+        (is (= (:name json-response) "aiden"))
+        (is (:joinable? (get @registry code)))
+        (is (= (get-in @registry [code :config :foo]) "bar"))
+        (is @(s/try-put! client "{\"ping\" true}" 500))
+
+        (let [ping-response @(s/try-take! client 500)
+              result-parsed (proto/parse-message ping-response)]
+          (is (:pong result-parsed))
+          (is (> (count (:client-id result-parsed)) 20)))))))
 
 (deftest join-game-does-not-exist
   (testing "try to join a game that doesn't exist"
@@ -68,17 +69,19 @@
            (:error response)
            "Room is full")))))
 
-(deftest client-disconnect-with-active-players
-  (testing "We decrement player count on disconnect"
-    (let [code "test"
-          registry (atom {code {:player-count 2}})
-          new-registry (on-client-disconnect registry code)]
-      (is (= 1
-             (get-in new-registry [code :player-count]))))))
-
 (deftest client-last-player
   (testing "We cull old games when the last client disconnects"
-    (let [code "test"
-          registry (atom {code {:player-count 1}})
-          new-registry (on-client-disconnect registry code)]
-      (is (nil? (get code new-registry))))))
+    (let [client   (s/stream)
+          params   {}
+          registry (atom {})
+          created  (create-game params client {:registry registry})
+          response @(s/try-take! client 500)
+          parsed   (proto/parse-message response)]
+      (is (= :pending created))
+      (s/close! client)
+      (Thread/sleep 50)
+      ;; either the game is deregistered, or the server conn should be closed
+      (when-let [game-state (get @registry (:room-code parsed))]
+        (let [bus (:bus game-state)]
+          ;; NOTE: this will block
+          (is (false? (a/>!! bus "test message"))))))))
