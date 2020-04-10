@@ -27,8 +27,6 @@ export default class CelebrityClient {
 
   playerName?: string;
 
-  clientID?: string;
-
   constructor() {
     this.events = new EventEmitter();
   }
@@ -120,6 +118,11 @@ export default class CelebrityClient {
     });
   }
 
+  close(): void {
+    this.wsClient.close();
+    this.connected = false;
+  }
+
   async sendCommand(
     command: string,
     data: { [key: string]: any }
@@ -158,17 +161,30 @@ export default class CelebrityClient {
     this.pingInterval = window.setInterval(() => this.ping(), pingTime);
   }
 
-  async joinGame({ userName, roomCode, clientID }: JoinGameRequest): Promise<Response> {
+  async joinGame({
+    userName,
+    roomCode,
+    clientID,
+  }: JoinGameRequest): Promise<Response> {
     // TODO make this a const
-    const response = await this.sendCommand("join", {
-      join: {
-        name: userName,
-        clientId: clientID,
-        roomCode,
-      },
-    });
-    this.joinedGame(response);
-    return response;
+    try {
+      const response = await this.sendCommand("join", {
+        join: {
+          name: userName,
+          clientId: clientID,
+          roomCode,
+        },
+      });
+
+      this.joinedGame(response);
+      return response;
+    } catch (err) {
+      this.close();
+      if (err.message.indexOf("already exists") !== -1 && clientID) {
+        return this.joinGame({ userName, roomCode });
+      }
+      throw err;
+    }
   }
 
   async createGame({
