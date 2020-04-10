@@ -38,17 +38,18 @@ export default class CelebrityClient {
       }
 
       this.wsClient = new WebSocket(getGameURL());
-      this.wsClient.addEventListener("close", (event) => {
+      this.wsClient.addEventListener("close", () => {
         this.connected = false;
-        // TODO hook up a UI event listener, or propagate to game
-        this.events.emit("close", event);
+        this.events.emit("connection-status", "closed");
         if (this.pingInterval) {
           window.clearInterval(this.pingInterval);
         }
+        // TODO: try to reconnect after a backoff
       });
 
       this.wsClient.addEventListener("error", () => {
         reject(new Error("Unable to connect to server"));
+        this.events.emit("connection-status", "error");
         if (this.pingInterval) {
           window.clearTimeout(this.pingInterval);
         }
@@ -97,8 +98,9 @@ export default class CelebrityClient {
         !this.lastPongReceived ||
         this.lastPingSent - this.lastPongReceived > pingTime
       ) {
-        /* eslint-disable no-console */
-        console.error("Is the connection dead?");
+        this.events.emit("connection-status", "pong-timeout");
+      } else {
+        this.events.emit("connection-status", "pong-ok");
       }
     }
     this.sendCommand("ping", { name: this.playerName });
