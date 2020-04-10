@@ -118,7 +118,7 @@ export default class CelebrityClient {
     });
   }
 
-  close() {
+  close(): void {
     this.wsClient.close();
     this.connected = false;
   }
@@ -182,9 +182,8 @@ export default class CelebrityClient {
       this.close();
       if (err.message.indexOf("already exists") !== -1 && clientID) {
         return this.joinGame({ userName, roomCode });
-      } else {
-        throw err;
       }
+      throw err;
     }
   }
 
