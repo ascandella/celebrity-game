@@ -58,20 +58,37 @@
      (s/sink-only conn))
     [in-ch out-ch]))
 
+(defn can-join?
+  [client-id name state]
+  ;; TODO validate whether the client can connect
+  true)
+
 (defn try-join
   "If the client with join message `msg` can join, return updated state a"
-  [msg state]
-  (let [client-id      (:id msg)
-        code           (get-in msg [:join :room-code])
-        [input output] (create-client-channel (:ch msg) client-id)]
-    ;; TODO validate whether the client can connect
-    (a/>!! output {:room-code code
-                   :success   true
-                   :client-id client-id
-                   :name      (get-in msg [:join :name])})
-    (-> state
-        (assoc-in [:clients client-id] output)
-        (update-in [:inputs] conj input))))
+  [state {client-id    :id
+          ch           :ch
+          {code :room-code
+           name :name} :join}]
+  (let [[input output] (create-client-channel ch client-id)]
+    (if-not (can-join? client-id name state)
+      (do
+        (a/>!! output {:success false
+                       :error "Cannot join game"})
+        (a/close! input)
+        (a/close! output)
+        (s/close! ch)
+        state)
+      (let
+          [new-state (-> state
+                         (assoc-in [:clients client-id] output)
+                         (update :players conj {:id client-id :name name})
+                         (update :inputs conj input))]
+        (a/>!! output {:room-code code
+                       :success   true
+                       :client-id client-id
+                       :players   (:players new-state)
+                       :name      name})
+        new-state))))
 
 (defn deregister-server
   [code registry]
@@ -84,12 +101,12 @@
   (-> state
       (update-in [:inputs] disj in-ch)))
 
+;; TODO increase this, maybe 5 minutes?
 (def server-timeout-after 60000)
 
 (defn game-state-machine
-  [code client-in & [{:keys [registry]
-                      :or   {registry games}}]]
-  (a/go-loop [state {:inputs #{}}]
+  [code client-in registry]
+  (a/go-loop [state {:inputs #{} :players []}]
     ;; wait for messages from clients connecting, clients sending message, or a
     ;; timeout indicating nobody is here anymore
     (let [timeout-ch    (a/timeout server-timeout-after)
@@ -108,7 +125,7 @@
         (if is-client-in
           (do
             (log/info "Received client connection: " (dissoc msg :ch))
-            (when-let [new-state (try-join msg state)]
+            (when-let [new-state (try-join state msg)]
               (recur new-state)))
           (let [client-id (:id msg)
                 out-ch    (get-in state [:clients client-id])]
@@ -145,7 +162,7 @@
                  (assoc registry' code (new-game-state params)))
               ;; it was added, now create the game
               (let [connect-bus (get-in @registry [code :bus])]
-                (game-state-machine code connect-bus {:registry registry})
+                (game-state-machine code connect-bus registry)
                 ;; connect the client to the server handler
                 (connect-client-to-game (assoc params :room-code code) stream connect-bus))
               (recur (inc count)))))))))

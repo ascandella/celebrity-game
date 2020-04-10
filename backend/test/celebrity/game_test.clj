@@ -102,9 +102,12 @@
                            :name "joiner"}
                    {:registry registry})))
       (let [join-response @(s/try-take! joiner 500)
-            parsed-join   (proto/parse-message join-response)]
+            parsed-join   (proto/parse-message join-response)
+            players       (:players parsed-join)]
         (is (:success parsed-join))
         (is (= "joiner" (:name parsed-join)))
-        (is (= code (:room-code parsed-join))))
+        (is (= code (:room-code parsed-join)))
+        (is (= 2 (count players)))
+        (is (= "joiner" (:name (nth players 1)))))
       (s/close! creator)
       (s/close! joiner))))
