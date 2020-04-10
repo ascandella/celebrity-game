@@ -27,6 +27,8 @@ export default class CelebrityClient {
 
   playerName?: string;
 
+  clientID?: string;
+
   constructor() {
     this.events = new EventEmitter();
   }
@@ -147,17 +149,21 @@ export default class CelebrityClient {
   joinedGame(response: Response): void {
     this.events.emit("join", response);
     this.playerName = response.name;
+    window.localStorage.setItem("client-id", response.clientId);
+    window.localStorage.setItem("client-name", response.name);
+    window.localStorage.setItem("room-code", response.roomCode);
 
     // Start a healthcheck, so we can display a UI element
     // if we detect requests failing.
     this.pingInterval = window.setInterval(() => this.ping(), pingTime);
   }
 
-  async joinGame({ userName, roomCode }: JoinGameRequest): Promise<Response> {
+  async joinGame({ userName, roomCode, clientID }: JoinGameRequest): Promise<Response> {
     // TODO make this a const
     const response = await this.sendCommand("join", {
       join: {
         name: userName,
+        clientId: clientID,
         roomCode,
       },
     });

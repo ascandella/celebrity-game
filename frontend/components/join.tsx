@@ -15,10 +15,11 @@ type JoinProps = {
 };
 
 type JoinState = {
-  gameCode: string;
-  name: string;
+  roomCode: string;
+  playerName: string;
   connecting: boolean;
   joinError: string;
+  clientID?: string;
 };
 
 export default class JoinGame extends Component<JoinProps, JoinState> {
@@ -30,12 +31,21 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
   constructor(props: JoinProps) {
     super(props);
     this.state = {
-      gameCode: "",
-      name: "",
+      roomCode: "",
+      playerName: "",
       connecting: false,
       joinError: "",
+      clientID: null,
     };
     this.handleCodeChange = this.handleCodeChange.bind(this);
+  }
+
+  componentDidMount(): void {
+    this.setState({
+      clientID: window.localStorage.getItem("client-id"),
+      playerName: window.localStorage.getItem("client-name"),
+      roomCode: window.localStorage.getItem("room-code"),
+    });
   }
 
   /* eslint-disable class-methods-use-this */
@@ -47,8 +57,9 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
 
     try {
       await this.props.joinGame({
-        userName: this.state.name,
-        roomCode: this.state.gameCode.toUpperCase(),
+        userName: this.state.playerName,
+        roomCode: this.state.roomCode.toUpperCase(),
+        clientID: this.state.clientID,
       });
       // parent component will now handle advancement
     } catch (err) {
@@ -61,7 +72,7 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
 
   handleCodeChange(event: React.ChangeEvent<HTMLInputElement>): void {
     this.setState({
-      gameCode: event.target.value,
+      roomCode: event.target.value,
       joinError: "",
     });
   }
@@ -78,7 +89,7 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
               Code
               <FormInput
                 type="text"
-                value={this.state.gameCode}
+                value={this.state.roomCode}
                 autoFocus
                 required
                 tabIndex="1"
@@ -92,13 +103,13 @@ export default class JoinGame extends Component<JoinProps, JoinState> {
               Name
               <FormInput
                 type="text"
-                value={this.state.name}
+                value={this.state.playerName}
                 placeholder="Your Name"
                 required
                 tabIndex="2"
                 maxLength={this.props.maxNameLength}
                 onChange={(event): void =>
-                  this.setState({ name: event.target.value })
+                  this.setState({ playerName: event.target.value })
                 }
               />
             </FormLabel>

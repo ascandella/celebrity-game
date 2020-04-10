@@ -14,18 +14,14 @@
 
 (defn connect-client-to-game
   [join-data client game-bus]
-  (let [uuid (.toString (java.util.UUID/randomUUID))]
+  (let [uuid (or (:client-id join-data) (.toString (java.util.UUID/randomUUID)))]
     ;; send a message to the server handler that a new client has connected
     (log/info "Connecting client to game: " join-data)
     (a/>!! game-bus {:id uuid :ch client :join join-data})
     ;; NOTE: we don't return a response, the game handler does
     :pending))
 
-(defn new-game-state [params]
-  {:joinable?    true
-   :bus          (a/chan 10)
-   :config       (:config params)})
-
+;; global mapping of code:string -> a/chan (connection channel)
 (def games (atom {}))
 
 (defn join
@@ -34,16 +30,14 @@
                         :or   {registry games}}]]
   (if-let [room-code (:room-code join-data)]
     (if-let [game (get @registry room-code)]
-      (if (:joinable? game)
-        (connect-client-to-game join-data stream (:bus game))
-        {:error "Room is full"})
+      (connect-client-to-game join-data stream game)
       {:error "Room not found"})
     {:error "No room code provided"}))
 
 (def max-create-retries 10)
 
 (defn create-client-channel
-  "Connect the TCP stream to channels, encoding and decoding along the way"
+  "Connect the TCP stream to channels, encoding and decoding JSON along the way"
   [conn client-id]
   (let [in-ch (a/chan)
         out-ch (a/chan)]
@@ -58,10 +52,20 @@
      (s/sink-only conn))
     [in-ch out-ch]))
 
-(defn can-join?
-  [client-id name state]
-  ;; TODO validate whether the client can connect
-  true)
+(defn try-rejoin
+  [client-id name {players :players :as state}]
+  ;; is there a player here with that name already
+  (if-let [existing-player (first (filter #(= (:name %) name) players))]
+    (do
+      (log/info "Found existing player: " existing-player)
+      (if (= client-id (:id existing-player))
+        (do
+          (log/info "Reconnecting client by id: " client-id "name: " name)
+          [state nil])
+        (do
+          (log/warn "Name " name " client ID " client-id "tried to connect but name already taken:" (:id existing-player))
+          [state (str "Name '" name "' already taken")])))
+    [(update state :players conj {:id client-id :name name}) nil]))
 
 (defn try-join
   "If the client with join message `msg` can join, return updated state a"
@@ -69,26 +73,25 @@
           ch           :ch
           {code :room-code
            name :name} :join}]
-  (let [[input output] (create-client-channel ch client-id)]
-    (if-not (can-join? client-id name state)
+  (let [[input output] (create-client-channel ch client-id)
+        [state' join-error] (try-rejoin client-id name state)]
+    (if join-error
       (do
         (a/>!! output {:success false
-                       :error "Cannot join game"})
+                       :error join-error})
         (a/close! input)
         (a/close! output)
-        (s/close! ch)
         state)
-      (let
-          [new-state (-> state
-                         (assoc-in [:clients client-id] output)
-                         (update :players conj {:id client-id :name name})
-                         (update :inputs conj input))]
+      (do
         (a/>!! output {:room-code code
                        :success   true
                        :client-id client-id
-                       :players   (:players new-state)
+                       :players   (:players state')
                        :name      name})
-        new-state))))
+
+        (-> state'
+              (assoc-in [:clients client-id] output)
+              (update :inputs conj input))))))
 
 (defn deregister-server
   [code registry]
@@ -105,8 +108,10 @@
 (def server-timeout-after 60000)
 
 (defn game-state-machine
-  [code client-in registry]
-  (a/go-loop [state {:inputs #{} :players []}]
+  [code client-in game-config registry]
+  (a/go-loop [state {:inputs #{}
+                     :players []
+                     :config game-config}]
     ;; wait for messages from clients connecting, clients sending message, or a
     ;; timeout indicating nobody is here anymore
     (let [timeout-ch    (a/timeout server-timeout-after)
@@ -125,8 +130,7 @@
         (if is-client-in
           (do
             (log/info "Received client connection: " (dissoc msg :ch))
-            (when-let [new-state (try-join state msg)]
-              (recur new-state)))
+            (recur (try-join state msg)))
           (let [client-id (:id msg)
                 out-ch    (get-in state [:clients client-id])]
             (a/>! out-ch {:pong true :client-id client-id})
@@ -157,12 +161,14 @@
             ;; we managed to generate a code that already exists, what are the chances??
             (recur (inc count))
             ;; otherwise, try to add it to the registry
-            (if (compare-and-set!
-                 registry registry'
-                 (assoc registry' code (new-game-state params)))
-              ;; it was added, now create the game
-              (let [connect-bus (get-in @registry [code :bus])]
-                (game-state-machine code connect-bus registry)
-                ;; connect the client to the server handler
-                (connect-client-to-game (assoc params :room-code code) stream connect-bus))
-              (recur (inc count)))))))))
+            (let [server-chan (a/chan 1)]
+              (if (compare-and-set!
+                   registry registry'
+                   (assoc registry' code server-chan))
+                ;; it was added, now create the game
+                (do
+                  (log/info "Game code created with code: " code "config: " params)
+                  (game-state-machine code server-chan params registry)
+                  ;; connect the client to the server handler
+                  (connect-client-to-game (assoc params :room-code code) stream server-chan))
+                (recur (inc count))))))))))

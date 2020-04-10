@@ -1,6 +1,7 @@
 export type JoinGameRequest = {
   userName: string;
   roomCode: string;
+  clientID?: string;
 };
   
 export type CreateGameRequest = {
