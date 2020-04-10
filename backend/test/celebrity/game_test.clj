@@ -101,7 +101,7 @@
              (join joiner {:room-code code
                            :name "joiner"}
                    {:registry registry})))
-      (let [join-response @(s/try-take! joiner 500)
+      (let [join-response @(s/try-take! joiner 1000)
             parsed-join   (proto/parse-message join-response)
             players       (:players parsed-join)]
         (is (:success parsed-join))
