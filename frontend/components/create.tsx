@@ -24,9 +24,9 @@ export default class CreateGame extends Component<CreateProps, CreateState> {
     super(props);
     this.state = {
       maxPlayers: 12,
-      name: "",
       connecting: false,
       createError: "",
+      name: "",
     };
   }
 

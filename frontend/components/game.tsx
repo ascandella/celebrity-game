@@ -3,8 +3,14 @@ import styled from "styled-components";
 import CelebrityClient from "../clients/celebrity";
 import ConnectionStatus from "./connection-status";
 
+type player = {
+  id: string;
+  name: string;
+};
+
 type GameState = {
   connectionStatus: string;
+  players: player[];
 };
 
 type GameProps = {
@@ -22,10 +28,12 @@ class Game extends Component<GameProps, GameState> {
     super(props);
     this.state = {
       connectionStatus: "unknown",
+      players: [],
     };
     this.props.client.events.on("connection-status", (status) => {
       this.setState({ connectionStatus: status });
     });
+    // TODO: figure out a way to thread players into here
   }
 
   render(): React.ReactNode {

@@ -3,6 +3,7 @@
             [celebrity.protocol :as proto]
             [clojure.test :refer :all]
             [clojure.core.async :as a]
+            [clojure.string :as string]
             [manifold.deferred :as d]
             [manifold.stream :as s]))
 
@@ -40,8 +41,7 @@
             code            (:room-code json-response)]
         (is (not (nil? code)))
         (is (= (:name json-response) "aiden"))
-        (is (:joinable? (get @registry code)))
-        (is (= (get-in @registry [code :config :foo]) "bar"))
+        (is (contains? @registry code))
         (is @(s/try-put! client "{\"ping\" true}" 500))
 
         (let [ping-response @(s/try-take! client 500)
@@ -58,17 +58,33 @@
            (:error response)
            "No room code provided")))))
 
-(deftest join-game-not-joinable
-  (testing "we test a game is joinable"
-    (let [client (s/stream)
-          code "TEST"
-          join-data {:room-code code}
-          registry (atom {code  {:joinable? false}})
-          response (join client join-data {:registry registry})]
-      (is (=
-           (:error response)
-           "Room is full"))
-      (s/close! client))))
+(deftest try-rejoin-name-taken
+  (testing "trying to rejoin with a taken name fails"
+    (let [client-id "test-id"
+          name "tester-taken"
+          state {:players [{:id "foo" :name name}]}
+          [_ join-error] (try-rejoin client-id name state)]
+      (is (string/includes? join-error "already taken"))
+      (is (string/includes? join-error name)))))
+
+(deftest try-rejoin-name-empty
+  (testing "trying to rejoin with a taken name fails"
+    (let [client-id "test-id"
+          name "not-taken"
+          state {:players []}
+          [{players :players} join-error] (try-rejoin client-id name state)]
+      (is (nil? join-error))
+      (is (= 1 (count players)))
+      (is (= "not-taken" (:name (first players)))))))
+
+(deftest try-rejoin-same-id
+  (testing "rejoining with the same name and ID works"
+    (let [client-id "test-id"
+          name "not-taken"
+          state {:players [{:id client-id :name name}]}
+          [{players :players} join-error] (try-rejoin client-id name state)]
+      (is (nil? join-error))
+      (is (= 1 (count players))))))
 
 (deftest client-last-player
   (testing "We cull old games when the last client disconnects"
