@@ -77,6 +77,14 @@
       (is (= 1 (count players)))
       (is (= "not-taken" (:name (first players)))))))
 
+(deftest try-rejoin-overlapping-id
+  (testing "overlapping IDs are rejected"
+    (let [client-id "test-id"
+          new-name "new-name"
+          state {:players [{:id client-id :name "old-name"}]}
+          [state join-error] (try-rejoin client-id name state)]
+      (is (= join-error "Client already exists with that ID")))))
+
 (deftest try-rejoin-same-id
   (testing "rejoining with the same name and ID works"
     (let [client-id "test-id"

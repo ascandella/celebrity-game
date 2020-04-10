@@ -65,7 +65,9 @@
         (do
           (log/warn "Name " name " client ID " client-id "tried to connect but name already taken:" (:id existing-player))
           [state (str "Name '" name "' already taken")])))
-    [(update state :players conj {:id client-id :name name}) nil]))
+    (if (some #(= (:id %) client-id) players)
+      [state (str "Client already exists with that ID")]
+      [(update state :players conj {:id client-id :name name}) nil])))
 
 (defn try-join
   "If the client with join message `msg` can join, return updated state a"
