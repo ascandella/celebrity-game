@@ -179,8 +179,8 @@ export default class CelebrityClient {
       this.joinedGame(response);
       return response;
     } catch (err) {
+      this.close();
       if (err.message.indexOf("already exists") !== -1 && clientID) {
-        this.close();
         return this.joinGame({ userName, roomCode });
       } else {
         throw err;
