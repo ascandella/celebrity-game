@@ -1,6 +1,7 @@
 (ns celebrity.game
   (:require [taoensso.timbre :as log]
             [celebrity.protocol :as proto]
+            [clojure.core.async :as a]
             [manifold.deferred :as d]
             [manifold.bus :as b]
             [manifold.stream :as s]))
@@ -28,7 +29,7 @@
      ;; TODO make sure we clean up anything else going on with the game
      (when-let [server-conn (get-in updated-registry [code :bus])]
        (log/info "Closing server connection: " server-conn)
-       (s/close! server-conn))
+       (a/close! server-conn))
      (swap! registry dissoc code))
     updated-registry))
 
@@ -51,7 +52,8 @@
      {:timeout 500})
     ;; read all messages from the client, route them appropriately
     (s/consume
-     #(s/put! game-bus %)
+     ;; buffered channel, so we should be OK
+     #(a/>!! game-bus %)
      (->> client
           (s/map #(proto/parse-json % {}))
           (s/map #(assoc % :id uuid :conn client))))
@@ -63,7 +65,7 @@
 (defn new-game-state [params]
   {:joinable?    true
    :player-count 0
-   :bus          (s/stream)
+   :bus          (a/chan 10)
    :config       (:config params)})
 
 (def games (atom {}))
@@ -83,23 +85,21 @@
 
 (def max-create-retries 10)
 
-(defn spawn-game-handler
+(defn game-state-machine
   [code client-in broadcast]
-  (log/with-context {:code code}
-    (d/loop [state {}]
-      (d/chain
-       (s/take! client-in ::drained)
-       (fn [msg]
-         (log/debug "Received message from: " (:id msg) ", " (dissoc msg :conn))
-         (if (identical? ::drained msg)
-           (log/info "Client disconnected")
-           (do
-             (when-let [{client-id :id
-                         conn      :conn} msg]
-               ;; TODO real handler, not just pong responses
-               (proto/respond-json conn {:pong true :client-id client-id}))
-             ;; TODO update state before recurring
-             (d/recur state))))))))
+  (a/go
+    (loop [state {}]
+      (let [msg (a/<! client-in)]
+        (if (nil? msg)
+          (log/info "Control channel closed, done processing " code)
+          (do
+            (log/debug "Received message from: " (:id msg) ", " (dissoc msg :conn))
+            (when-let [{client-id :id
+                        conn      :conn} msg]
+              ;; TODO real handler, not just pong responses
+              (proto/respond-json conn {:pong true :client-id client-id}))
+            ;; TODO update state before recurring
+            (recur state)))))))
 
 (defn validate-params
   [params]
@@ -126,11 +126,13 @@
             (if (contains? registry' code)
               ;; we managed to generate a code that already exists, what are the chances??
               (recur (inc count))
+              ;; otherwise, try to add it to the registry
               (if (compare-and-set!
                    registry registry'
                    (assoc registry' code (new-game-state params)))
+                ;; it was added, now create the game
                 (do
-                  (spawn-game-handler code (get-in @registry [code :bus]) broadcast)
+                  (game-state-machine code (get-in @registry [code :bus]) broadcast)
                   ;; connect the client to the broadcast bus
                   (connect-client-to-game
                    broadcast
