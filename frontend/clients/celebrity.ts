@@ -1,6 +1,13 @@
 import { Store } from "redux";
-import { JoinGameRequest, CreateGameRequest, Response } from "./messages";
-import { connectionStatus, joinedGame, setConnecting } from "../actions";
+import { JoinGameRequest, CreateGameRequest, GameEvent } from "./messages";
+import {
+  connectionStatus,
+  connectError,
+  joinedGame,
+  setConnecting,
+  receivedMessage,
+} from "../actions";
+import store from "../reducers/store";
 
 function getGameURL(): string {
   return `${process.env.apiBase}/game`;
@@ -103,7 +110,11 @@ export default class CelebrityClient {
   ): Promise<void> {
     if (!this.connected) {
       this.store.dispatch(setConnecting(true));
-      await this.connect();
+      try {
+        await this.connect();
+      } catch (err) {
+        this.store.dispatch(connectError(err));
+      }
       this.store.dispatch(setConnecting(false));
     }
 
@@ -115,9 +126,7 @@ export default class CelebrityClient {
     );
   }
 
-  joinedGame(response: Response): void {
-    this.store.dispatch(joinedGame(response));
-
+  joinedGame(response: GameEvent): void {
     // Start a healthcheck, so we can display a UI element
     // if we detect requests failing.
     this.pingInterval = window.setInterval(() => this.ping(), pingTime);
@@ -147,7 +156,7 @@ export default class CelebrityClient {
   //   }
   // }
 
-  createGame({ userName, maxPlayers }: CreateGameRequest): Promise<void> {
+  createGame({ userName, maxPlayers }: CreateGameRequest): void {
     this.sendCommand("create", {
       create: {
         name: userName,
@@ -156,3 +165,5 @@ export default class CelebrityClient {
     });
   }
 }
+
+export const client = new CelebrityClient(store);

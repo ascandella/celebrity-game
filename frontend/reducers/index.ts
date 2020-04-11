@@ -5,8 +5,10 @@ import {
   JOINED_GAME,
   CREATING_GAME,
   JOIN_ERROR,
+  CREATE_ERROR,
   RECEIVED_PONG,
   SET_CONNECTING,
+  CONNECT_ERROR,
 } from "../actions";
 
 // TODO make a type for players?
@@ -16,6 +18,24 @@ const players = (state = [], action): any[] => {
       return action.players;
     case JOINED_GAME:
       return action.players;
+    default:
+      return state;
+  }
+};
+
+const playerName = (state = null, action): string => {
+  switch (action.type) {
+    case JOINED_GAME:
+      return action.playerName;
+    default:
+      return state;
+  }
+};
+
+const clientID = (state = null, action): string => {
+  switch (action.type) {
+    case JOINED_GAME:
+      return action.clientID;
     default:
       return state;
   }
@@ -63,6 +83,19 @@ const joinError = (state = null, action): string => {
       return action.error;
     case JOINED_GAME:
       return null;
+    case CREATING_GAME:
+      return null;
+    default:
+      return state;
+  }
+};
+
+const createError = (state = null, action): string => {
+  switch (action.type) {
+    case CREATE_ERROR:
+      return action.error;
+    case JOINED_GAME:
+      return null;
     default:
       return state;
   }
@@ -72,6 +105,22 @@ const lastPongTime = (state = 0, action): number => {
   switch (action.type) {
     case RECEIVED_PONG:
       return Date.now();
+    default:
+      return state;
+  }
+};
+
+const connectError = (state = null, action): string => {
+  switch (action.type) {
+    case CONNECT_ERROR:
+      return "Could not connect to server";
+    // if we received a join or a connect, we can clear it out
+    case JOINED_GAME:
+      return null;
+    case JOIN_ERROR:
+      return null;
+    case CONNECT_ERROR:
+      return null;
     default:
       return state;
   }
@@ -88,13 +137,20 @@ const connecting = (state = false, action): boolean => {
 
 const rootReducer = combineReducers({
   gameCode,
+  playerName,
   players,
-  connectionStatus,
+  clientID,
+
   inGame,
   creatingGame,
+
   joinError,
+  createError,
+
   lastPongTime,
+  connectionStatus,
   connecting,
+  connectError,
 });
 export default rootReducer;
 

@@ -31,8 +31,8 @@
   (if-let [room-code (:room-code join-data)]
     (if-let [game (get @registry room-code)]
       (connect-client-to-game join-data stream game)
-      {:error "Room not found"})
-    {:error "No room code provided"}))
+      {:error "Room not found" :event "join-error"})
+    {:error "No room code provided" :event "join-error"}))
 
 (def max-create-retries 10)
 

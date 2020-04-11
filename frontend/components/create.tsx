@@ -1,8 +1,6 @@
 import React, { Component } from "react";
-import { Dispatch } from "redux";
 import { connect } from "react-redux";
-import { CreateGameRequest, Response } from "../clients/messages";
-import { setConnecting } from "../actions";
+import { CreateGameRequest } from "../clients/messages";
 import { RootState } from "../reducers";
 import {
   FormWrapper,
@@ -13,8 +11,7 @@ import {
 } from "./form";
 
 type CreateProps = {
-  createGame: (req: CreateGameRequest) => Promise<Response>;
-  setConnecting: (isConnecting: boolean) => void;
+  createGame: (req: CreateGameRequest) => void;
   connecting: boolean;
   createError: string;
 };
@@ -33,19 +30,13 @@ class CreateGame extends Component<CreateProps, CreateState> {
     };
   }
 
-  async handleSubmit(event: React.FormEvent<HTMLInputElement>): Promise<void> {
+  handleSubmit(event: React.FormEvent<HTMLInputElement>): void {
     event.preventDefault();
 
-    try {
-      await this.props.createGame({
-        userName: this.state.name,
-        maxPlayers: this.state.maxPlayers,
-      });
-    } catch (err) {
-      this.setState({
-        createError: err.message,
-      });
-    }
+    this.props.createGame({
+      userName: this.state.name,
+      maxPlayers: this.state.maxPlayers,
+    });
   }
 
   render(): React.ReactNode {
@@ -63,7 +54,7 @@ class CreateGame extends Component<CreateProps, CreateState> {
                 value={this.state.name}
                 placeholder="Your Name"
                 autoFocus
-                tabIndex="1"
+                tabIndex={1}
                 required
                 onChange={(event): void =>
                   this.setState({ name: event.target.value })
@@ -87,14 +78,10 @@ class CreateGame extends Component<CreateProps, CreateState> {
 }
 
 const mapStateToProps = (state: RootState) => ({
-  createError: state.createError,
+  // A create is really a create followed by a join behind the scenes, so we may
+  // get a join error
+  createError: state.connectError || state.createError || state.joinError,
   connecting: state.connecting,
 });
 
-const mapDispatchToProps = (dispatch: Dispatch) => ({
-  setConnecting: (isConnecting: boolean) => {
-    dispatch(setConnecting(isConnecting));
-  },
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(CreateGame);
+export default connect(mapStateToProps)(CreateGame);
