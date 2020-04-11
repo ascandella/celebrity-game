@@ -9,11 +9,10 @@ type player = {
   name: string;
 };
 
-type GameState = {
-  players: player[];
-};
+type GameState = {};
 
 type GameProps = {
+  players: player[];
   client: CelebrityClient;
   gameCode: string;
   playerName: string;
@@ -25,10 +24,12 @@ const GameHeader = styled.div.attrs({
 
 class Game extends Component<GameProps, GameState> {
   render(): React.ReactNode {
+    const players = this.props.players.map((player) => <li>{player.name}</li>);
     return (
       <GameHeader>
         <div>{this.props.gameCode}</div>
         <ConnectionStatus />
+        <div>{players}</div>
       </GameHeader>
     );
   }
@@ -37,6 +38,7 @@ class Game extends Component<GameProps, GameState> {
 const mapStateToProps = (state) => ({
   gameCode: state.gameCode,
   playerName: state.playerName,
+  players: state.players,
 });
 
 export default connect(mapStateToProps)(Game);
