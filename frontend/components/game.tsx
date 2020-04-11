@@ -24,7 +24,9 @@ const GameHeader = styled.div.attrs({
 
 class Game extends Component<GameProps, GameState> {
   render(): React.ReactNode {
-    const players = this.props.players.map((player) => <li>{player.name}</li>);
+    const players = this.props.players.map((player, i) => (
+      <li key={i}>{player.name}</li>
+    ));
     return (
       <GameHeader>
         <div>{this.props.gameCode}</div>
