@@ -33,3 +33,7 @@
   (respond-json stream data)
   (when (:error data)
     (close-stream stream)))
+
+(defn respond-error
+  [stream msg]
+  (respond-json stream {:error msg}))
