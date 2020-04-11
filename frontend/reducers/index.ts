@@ -57,7 +57,7 @@ const creatingGame = (state = false, action): boolean => {
   }
 };
 
-const joinError = (state = null, action): ?string => {
+const joinError = (state = null, action): string => {
   switch (action.type) {
     case JOIN_ERROR:
       return action.error;
@@ -86,7 +86,7 @@ const connecting = (state = false, action): boolean => {
   }
 };
 
-export default combineReducers({
+const rootReducer = combineReducers({
   gameCode,
   players,
   connectionStatus,
@@ -96,3 +96,6 @@ export default combineReducers({
   lastPongTime,
   connecting,
 });
+export default rootReducer;
+
+export type RootState = ReturnType<typeof rootReducer>;

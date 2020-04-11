@@ -1,7 +1,9 @@
 import React, { Component } from "react";
+import { Dispatch } from "redux";
 import { connect } from "react-redux";
 import { CreateGameRequest, Response } from "../clients/messages";
 import { setConnecting } from "../actions";
+import { RootState } from "../reducers";
 import {
   FormWrapper,
   FormLabel,
@@ -84,12 +86,12 @@ class CreateGame extends Component<CreateProps, CreateState> {
   }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = (state: RootState) => ({
   createError: state.createError,
   connecting: state.connecting,
 });
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = (dispatch: Dispatch) => ({
   setConnecting: (isConnecting: boolean) => {
     dispatch(setConnecting(isConnecting));
   },

@@ -9,7 +9,7 @@ export type CreateGameRequest = {
   maxPlayers: number;
 };
 
-export type Response = {
+export type GameEvent = {
   error?: string;
   code?: string;
   event: string;

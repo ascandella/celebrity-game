@@ -13,9 +13,6 @@ export default class CelebrityClient {
 
   wsClient: WebSocket;
 
-  // TODO: is it a good idea to always queue these?
-  messageQueue = [];
-
   pingInterval: number;
 
   lastPingSent: number;
@@ -72,7 +69,7 @@ export default class CelebrityClient {
     }
     try {
       const message = JSON.parse(event.data);
-      dispatch(receivedMessage(message));
+      this.store.dispatch(receivedMessage(message));
     } catch (err) {
       /* eslint-disable no-console */
       console.error("Unable to parse server response: ", event.data);
@@ -93,17 +90,6 @@ export default class CelebrityClient {
     }
     this.sendCommand("ping", {});
     this.lastPingSent = Date.now();
-  }
-
-  getResponse(): Promise<Response> {
-    // TODO: handle rejection
-    return new Promise((resolve) => {
-      if (this.messageQueue.length === 0) {
-        this.nextMessageCallback = resolve;
-      } else {
-        resolve(this.messageQueue.shift());
-      }
-    });
   }
 
   close(): void {

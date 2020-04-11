@@ -3,6 +3,7 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import CelebrityClient from "../clients/celebrity";
 import ConnectionStatus from "./connection-status";
+import { RootState } from "../reducers";
 
 type player = {
   id: string;
@@ -37,7 +38,7 @@ class Game extends Component<GameProps, GameState> {
   }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = (state: RootState) => ({
   gameCode: state.gameCode,
   playerName: state.playerName,
   players: state.players,

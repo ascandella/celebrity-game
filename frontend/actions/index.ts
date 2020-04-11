@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+import { GameEvent } from "../client/messages";
+
 export const UPDATE_PLAYERS = "UPDATE_PLAYERS";
 export const CONNECTION_STATUS = "CONNECTION_STATUS";
 export const GAME_CODE = "GAME_CODE";
@@ -9,8 +11,6 @@ export const SET_CLIENT_ID = "SET_CLIENT_ID";
 export const RECEIVED_PONG = "RECEIVED_PONG";
 export const JOIN_ERROR = "JOIN_ERROR";
 export const SET_CONNECTING = " SET_CONNECTING";
-
-import { GameEvent } from "../client/messages";
 
 export const updatePlayers = (players) => ({
   type: UPDATE_PLAYERS,
@@ -66,7 +66,7 @@ export const setConnecting = (connecting: boolean) => ({
   connecting,
 });
 
-export const receivedMessage = (event: Response) => {
+export const receivedMessage = (event: GameEvent) => {
   switch (event.event) {
     case "pong":
       return {

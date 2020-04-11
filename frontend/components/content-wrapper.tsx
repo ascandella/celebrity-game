@@ -2,6 +2,7 @@ import React, { FunctionComponent } from "react";
 import { connect } from "react-redux";
 import Head from "next/head";
 import Header from "./header";
+import { RootState } from "../reducers";
 
 type ContentWrapperProps = {
   showHeader: boolean;
@@ -21,7 +22,7 @@ const ContentWrapper: FunctionComponent<ContentWrapperProps> = ({
   </div>
 );
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = (state: RootState) => ({
   showHeader: !state.inGame,
 });
 
