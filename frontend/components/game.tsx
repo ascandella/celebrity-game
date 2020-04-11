@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { connect } from "react-redux";
 import styled from "styled-components";
 import CelebrityClient from "../clients/celebrity";
 import ConnectionStatus from "./connection-status";
@@ -8,14 +9,12 @@ type player = {
   name: string;
 };
 
-type GameState = {
-  connectionStatus: string;
-  players: player[];
-};
+type GameState = {};
 
 type GameProps = {
+  players: player[];
   client: CelebrityClient;
-  roomCode: string;
+  gameCode: string;
   playerName: string;
 };
 
@@ -24,26 +23,24 @@ const GameHeader = styled.div.attrs({
 })``;
 
 class Game extends Component<GameProps, GameState> {
-  constructor(props: GameProps) {
-    super(props);
-    this.state = {
-      connectionStatus: "unknown",
-      players: [],
-    };
-    this.props.client.events.on("connection-status", (status) => {
-      this.setState({ connectionStatus: status });
-    });
-    // TODO: figure out a way to thread players into here
-  }
-
   render(): React.ReactNode {
+    const players = this.props.players.map((player, i) => (
+      <li key={i}>{player.name}</li>
+    ));
     return (
       <GameHeader>
-        <div>{this.props.roomCode}</div>
-        <ConnectionStatus status={this.state.connectionStatus} />
+        <div>{this.props.gameCode}</div>
+        <ConnectionStatus />
+        <div>{players}</div>
       </GameHeader>
     );
   }
 }
 
-export default Game;
+const mapStateToProps = (state) => ({
+  gameCode: state.gameCode,
+  playerName: state.playerName,
+  players: state.players,
+});
+
+export default connect(mapStateToProps)(Game);

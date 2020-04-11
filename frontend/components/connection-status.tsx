@@ -1,4 +1,5 @@
 import React, { FunctionComponent } from "react";
+import { connect } from "react-redux";
 import styled from "styled-components";
 
 const StatusBanner = styled.div.attrs({
@@ -8,7 +9,7 @@ const StatusBanner = styled.div.attrs({
 })``;
 
 type ConnectionStatusProps = {
-  status: string;
+  connectionStatus: string;
 };
 
 const messages = {
@@ -17,14 +18,21 @@ const messages = {
   closed: "Connection lost",
 };
 
-const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
-  status,
-}: ConnectionStatusProps) => {
-  const userMessage = messages[status];
-  if (!userMessage) {
-    return null;
-  }
-  return <StatusBanner>{userMessage}</StatusBanner>;
+const getConnectionStatus = (status): string => {
+  return messages[status];
 };
 
-export default ConnectionStatus;
+const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
+  connectionStatus,
+}: ConnectionStatusProps) => {
+  if (!connectionStatus) {
+    return null;
+  }
+  return <StatusBanner>{connectionStatus}</StatusBanner>;
+};
+
+const mapStateToProps = (state) => ({
+  connectionStatus: getConnectionStatus(state.connectionStatus),
+});
+
+export default connect(mapStateToProps)(ConnectionStatus);
