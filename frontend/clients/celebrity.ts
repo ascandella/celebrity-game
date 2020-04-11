@@ -1,12 +1,13 @@
 import { Store } from "redux";
-import { JoinGameRequest, CreateGameRequest, GameEvent } from "./messages";
+import { JoinGameRequest, CreateGameRequest } from "./messages";
 import {
   connectionStatus,
   connectError,
-  joinedGame,
   setConnecting,
   receivedMessage,
 } from "../actions";
+
+// TODO: is there some better way to expose this?
 import store from "../reducers/store";
 
 function getGameURL(): string {
@@ -28,8 +29,8 @@ export default class CelebrityClient {
 
   store: Store;
 
-  constructor(store: Store) {
-    this.store = store;
+  constructor(gameStore: Store) {
+    this.store = gameStore;
   }
 
   connect(): Promise<Event> {
@@ -80,7 +81,6 @@ export default class CelebrityClient {
     } catch (err) {
       /* eslint-disable no-console */
       console.error("Unable to parse server response: ", event.data);
-      return;
     }
   }
 
@@ -126,7 +126,9 @@ export default class CelebrityClient {
     );
   }
 
-  joinedGame(response: GameEvent): void {
+  joinedGame(): void {
+    // TODO: move this to the connection tatus component
+    //
     // Start a healthcheck, so we can display a UI element
     // if we detect requests failing.
     this.pingInterval = window.setInterval(() => this.ping(), pingTime);
@@ -142,6 +144,7 @@ export default class CelebrityClient {
     });
   }
 
+  // TODO change this logic since we're now surfacing it to the client
   //     if (response.error) {
   //       this.close();
   //       if (response.code == "id-conflict") {

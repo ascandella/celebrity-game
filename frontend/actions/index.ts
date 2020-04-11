@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import { Dispatch } from "redux";
-import { JoinGameRequest, GameEvent } from "../clients/messages";
+import { GameEvent } from "../clients/messages";
 
 export const UPDATE_PLAYERS = "UPDATE_PLAYERS";
 export const CONNECTION_STATUS = "CONNECTION_STATUS";
@@ -74,20 +73,18 @@ export const connectError = (event) => ({
   ...event,
 });
 
-export const joinGame = (request: JoinGameRequest) => {
-  // TODO
-  return function (dispatch: Dispatch) {};
-};
+// export const joinGame = (request: JoinGameRequest) => {
+//   // TODO
+//   return function (dispatch: Dispatch) {};
+// };
 
-export const joinError = (event: GameEvent) => {
-  return {
-    type: JOIN_ERROR,
-    ...event,
-  };
-};
+export const joinError = (event: GameEvent) => ({
+  type: JOIN_ERROR,
+  ...event,
+});
 
 export const receivedMessage = (event: GameEvent) => {
-  console.log("Received message", event);
+  /* eslint-disable default-case */
   switch (event.event) {
     case "pong":
       return {
@@ -97,5 +94,9 @@ export const receivedMessage = (event: GameEvent) => {
       return joinError(event);
     case "joined":
       return joinedGame(event);
+    default:
+      return {
+        type: "UNKNOWN_MESSAGE",
+      };
   }
 };

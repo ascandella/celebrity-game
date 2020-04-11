@@ -119,8 +119,6 @@ const connectError = (state = null, action): string => {
       return null;
     case JOIN_ERROR:
       return null;
-    case CONNECT_ERROR:
-      return null;
     default:
       return state;
   }
