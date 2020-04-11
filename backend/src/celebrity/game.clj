@@ -31,8 +31,8 @@
   (if-let [room-code (:room-code join-data)]
     (if-let [game (get @registry room-code)]
       (connect-client-to-game join-data stream game)
-      {:error "Room not found"})
-    {:error "No room code provided"}))
+      {:error "Room not found" :event "join-error"})
+    {:error "No room code provided" :event "join-error"}))
 
 (def max-create-retries 10)
 
@@ -95,12 +95,13 @@
         [state' join-error] (try-rejoin client-id name state)]
     (if join-error
       (do
-        (a/>!! output join-error)
+        (a/>!! output (assoc join-error :event "join-error"))
         (a/close! input)
         (a/close! output)
         state)
       (do
         (a/>!! output {:room-code code
+                       :event     "joined"
                        :success   true
                        :client-id client-id
                        :players   (:players state')
@@ -150,7 +151,7 @@
             (recur (try-join state msg)))
           (let [client-id (:id msg)
                 out-ch    (get-in state [:clients client-id])]
-            (a/>! out-ch {:pong true :client-id client-id})
+            (a/>! out-ch {:event "pong" :pong true :client-id client-id})
             (recur state)))))))
 
 (defn validate-params

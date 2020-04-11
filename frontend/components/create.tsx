@@ -1,5 +1,7 @@
 import React, { Component } from "react";
-import { CreateGameRequest, Response } from "../clients/messages";
+import { connect } from "react-redux";
+import { CreateGameRequest } from "../clients/messages";
+import { RootState } from "../reducers";
 import {
   FormWrapper,
   FormLabel,
@@ -9,42 +11,32 @@ import {
 } from "./form";
 
 type CreateProps = {
-  createGame: (req: CreateGameRequest) => Promise<Response>;
+  createGame: (req: CreateGameRequest) => void;
+  connecting: boolean;
+  createError: string;
 };
 
 type CreateState = {
   maxPlayers: number;
   name: string;
-  connecting: boolean;
-  createError: string;
 };
 
-export default class CreateGame extends Component<CreateProps, CreateState> {
+class CreateGame extends Component<CreateProps, CreateState> {
   constructor(props: CreateProps) {
     super(props);
     this.state = {
       maxPlayers: 12,
-      connecting: false,
-      createError: "",
       name: "",
     };
   }
 
-  async handleSubmit(event: React.FormEvent<HTMLInputElement>): Promise<void> {
+  handleSubmit(event: React.FormEvent<HTMLInputElement>): void {
     event.preventDefault();
-    this.setState({ connecting: true });
 
-    try {
-      await this.props.createGame({
-        userName: this.state.name,
-        maxPlayers: this.state.maxPlayers,
-      });
-    } catch (err) {
-      this.setState({
-        createError: err.message,
-        connecting: false,
-      });
-    }
+    this.props.createGame({
+      userName: this.state.name,
+      maxPlayers: this.state.maxPlayers,
+    });
   }
 
   render(): React.ReactNode {
@@ -62,7 +54,7 @@ export default class CreateGame extends Component<CreateProps, CreateState> {
                 value={this.state.name}
                 placeholder="Your Name"
                 autoFocus
-                tabIndex="1"
+                tabIndex={1}
                 required
                 onChange={(event): void =>
                   this.setState({ name: event.target.value })
@@ -71,12 +63,12 @@ export default class CreateGame extends Component<CreateProps, CreateState> {
             </FormLabel>
           </div>
 
-          <FormError error={this.state.createError} />
+          <FormError error={this.props.createError} />
 
           <div className="flex justify-center">
             <SubmitButton
               value="Create Game"
-              submitting={this.state.connecting}
+              submitting={this.props.connecting}
             />
           </div>
         </form>
@@ -84,3 +76,12 @@ export default class CreateGame extends Component<CreateProps, CreateState> {
     );
   }
 }
+
+const mapStateToProps = (state: RootState) => ({
+  // A create is really a create followed by a join behind the scenes, so we may
+  // get a join error
+  createError: state.connectError || state.createError || state.joinError,
+  connecting: state.connecting,
+});
+
+export default connect(mapStateToProps)(CreateGame);

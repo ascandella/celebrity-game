@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
 import { toggleCreating } from "../actions";
+import { RootState } from "../reducers";
 import ContentWrapper from "./content-wrapper";
 import CelebrityClient from "../clients/celebrity";
 import Game from "./game";
@@ -62,7 +63,7 @@ class GameContainer extends Component<GameContainerProps, GameContainerState> {
   }
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = (state: RootState) => ({
   creating: state.creatingGame,
   inGame: state.inGame,
 });

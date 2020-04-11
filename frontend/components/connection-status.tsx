@@ -1,6 +1,7 @@
 import React, { FunctionComponent } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
+import { RootState } from "../reducers";
 
 const StatusBanner = styled.div.attrs({
   className:
@@ -10,6 +11,7 @@ const StatusBanner = styled.div.attrs({
 
 type ConnectionStatusProps = {
   connectionStatus: string;
+  lastPongTime: number;
 };
 
 const messages = {
@@ -18,7 +20,7 @@ const messages = {
   closed: "Connection lost",
 };
 
-const getConnectionStatus = (status): string => {
+const getConnectionStatus = (status: string): string => {
   return messages[status];
 };
 
@@ -31,8 +33,9 @@ const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
   return <StatusBanner>{connectionStatus}</StatusBanner>;
 };
 
-const mapStateToProps = (state) => ({
+const mapStateToProps = (state: RootState) => ({
   connectionStatus: getConnectionStatus(state.connectionStatus),
+  lastPongTime: state.lastPongTime,
 });
 
 export default connect(mapStateToProps)(ConnectionStatus);

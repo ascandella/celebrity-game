@@ -1,11 +1,15 @@
 import React, { FunctionComponent } from "react";
 import styled from "styled-components";
 
-export const FormLabel = styled.label.attrs({
+interface FormClassAttrs {
+  className?: string;
+}
+
+export const FormLabel = styled.label.attrs<FormClassAttrs>({
   className: "block text-gray-700 font-bold mb-2",
 })``;
 
-export const FormInput = styled.input.attrs({
+export const FormInput = styled.input.attrs<FormClassAttrs>({
   className:
     "bg-white focus:outline-none focus:shadow-outline border border-gray-300 rounded-lg py-2 px-4 block w-full appearance-none leading-normal9",
 })``;
@@ -37,7 +41,11 @@ type SubmitButtonProps = {
   value: string;
 };
 
-const StyledButton = styled.input.attrs({
+interface StyledButtonProps {
+  className?: string;
+}
+
+const StyledButton = styled.input.attrs<StyledButtonProps>({
   className:
     "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 cursor-pointer rounded focus:outline-none focus:shadow-outline",
 })``;

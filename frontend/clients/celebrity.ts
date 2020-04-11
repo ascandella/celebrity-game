@@ -1,6 +1,14 @@
 import { Store } from "redux";
-import { JoinGameRequest, CreateGameRequest, Response } from "./messages";
-import { connectionStatus, joinedGame } from "../actions";
+import { JoinGameRequest, CreateGameRequest } from "./messages";
+import {
+  connectionStatus,
+  connectError,
+  setConnecting,
+  receivedMessage,
+} from "../actions";
+
+// TODO: is there some better way to expose this?
+import store from "../reducers/store";
 
 function getGameURL(): string {
   return `${process.env.apiBase}/game`;
@@ -13,11 +21,6 @@ export default class CelebrityClient {
 
   wsClient: WebSocket;
 
-  // TODO: is it a good idea to always queue these?
-  messageQueue = [];
-
-  nextMessageCallback?: (Response) => void;
-
   pingInterval: number;
 
   lastPingSent: number;
@@ -26,8 +29,8 @@ export default class CelebrityClient {
 
   store: Store;
 
-  constructor(store: Store) {
-    this.store = store;
+  constructor(gameStore: Store) {
+    this.store = gameStore;
   }
 
   connect(): Promise<Event> {
@@ -68,27 +71,16 @@ export default class CelebrityClient {
 
   onMessage(event): void {
     if (!event.data) {
+      /* eslint-disable no-console */
+      console.error("Got empty websocket message");
       return;
     }
-    let message;
     try {
-      message = JSON.parse(event.data);
+      const message = JSON.parse(event.data);
+      this.store.dispatch(receivedMessage(message));
     } catch (err) {
       /* eslint-disable no-console */
       console.error("Unable to parse server response: ", event.data);
-      return;
-    }
-    if (message.pong) {
-      this.lastPongReceived = Date.now();
-      return;
-    }
-
-    // Somebody is awaiting a response
-    if (this.nextMessageCallback) {
-      this.nextMessageCallback(message);
-      this.nextMessageCallback = null;
-    } else {
-      this.messageQueue.push(message);
     }
   }
 
@@ -107,17 +99,6 @@ export default class CelebrityClient {
     this.lastPingSent = Date.now();
   }
 
-  getResponse(): Promise<Response> {
-    // TODO: handle rejection
-    return new Promise((resolve) => {
-      if (this.messageQueue.length === 0) {
-        this.nextMessageCallback = resolve;
-      } else {
-        resolve(this.messageQueue.shift());
-      }
-    });
-  }
-
   close(): void {
     this.wsClient.close();
     this.connected = false;
@@ -126,9 +107,15 @@ export default class CelebrityClient {
   async sendCommand(
     command: string,
     data: { [key: string]: any }
-  ): Promise<Response> {
+  ): Promise<void> {
     if (!this.connected) {
-      await this.connect();
+      this.store.dispatch(setConnecting(true));
+      try {
+        await this.connect();
+      } catch (err) {
+        this.store.dispatch(connectError(err));
+      }
+      this.store.dispatch(setConnecting(false));
     }
 
     this.wsClient.send(
@@ -137,67 +124,49 @@ export default class CelebrityClient {
         command,
       })
     );
-
-    const response = await this.getResponse();
-    // TODO(aiden): have a development mode switch here
-    /* eslint-disable no-console */
-    console.log("Response: ", response);
-    if (response.error) {
-      throw new Error(response.error);
-    }
-
-    return response;
   }
 
-  joinedGame(response: Response): void {
-    this.store.dispatch(joinedGame(response));
-
-    window.localStorage.setItem("client-id", response.clientId);
-    window.localStorage.setItem("client-name", response.name);
-    window.localStorage.setItem("room-code", response.roomCode);
-
+  joinedGame(): void {
+    // TODO: move this to the connection tatus component
+    //
     // Start a healthcheck, so we can display a UI element
     // if we detect requests failing.
     this.pingInterval = window.setInterval(() => this.ping(), pingTime);
   }
 
-  async joinGame({
-    userName,
-    roomCode,
-    clientID,
-  }: JoinGameRequest): Promise<Response> {
-    // TODO make this a const
-    try {
-      const response = await this.sendCommand("join", {
-        join: {
-          name: userName,
-          clientId: clientID,
-          roomCode,
-        },
-      });
-
-      this.joinedGame(response);
-      return response;
-    } catch (err) {
-      this.close();
-      if (err.message.indexOf("already exists") !== -1 && clientID) {
-        return this.joinGame({ userName, roomCode });
-      }
-      throw err;
-    }
+  joinGame({ userName, roomCode, clientID }: JoinGameRequest): void {
+    this.sendCommand("join", {
+      join: {
+        name: userName,
+        clientId: clientID,
+        roomCode,
+      },
+    });
   }
 
-  async createGame({
-    userName,
-    maxPlayers,
-  }: CreateGameRequest): Promise<Response> {
-    const response = await this.sendCommand("create", {
+  // TODO change this logic since we're now surfacing it to the client
+  //     if (response.error) {
+  //       this.close();
+  //       if (response.code == "id-conflict") {
+  //         return this.joinGame({ userName, roomCode });
+  //       }
+  //       throw new Error(response.error);
+  //     }
+
+  //     this.joinedGame(response);
+  //     return response;
+  //   } catch (err) {
+  //   }
+  // }
+
+  createGame({ userName, maxPlayers }: CreateGameRequest): void {
+    this.sendCommand("create", {
       create: {
         name: userName,
         maxPlayers,
       },
     });
-    this.joinedGame(response);
-    return response;
   }
 }
+
+export const client = new CelebrityClient(store);

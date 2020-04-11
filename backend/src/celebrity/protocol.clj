@@ -23,14 +23,17 @@
     (log/info "Responding: " data-json)
     (s/put! stream data-json)))
 
-(defn respond-error
-  [stream error-message]
-  (respond-json stream {:error error-message})
+(defn close-stream
+  [stream]
   (log/debug "Closing stream due to error" stream)
   (s/close! stream))
 
 (defn respond-message
   [stream data]
-  (if-let [error (:error data)]
-    (respond-error stream error)
-    (respond-json stream data)))
+  (respond-json stream data)
+  (when (:error data)
+    (close-stream stream)))
+
+(defn respond-error
+  [stream msg]
+  (respond-json stream {:error msg}))
