@@ -52,22 +52,38 @@
      (s/sink-only conn))
     [in-ch out-ch]))
 
+(defn player-by
+  [key players needle]
+  (first (filter #(= (get % key) needle) players)))
+
+(defn player-by-name
+  [name players]
+  (player-by :name players name))
+
+(defn player-by-id
+  [id players]
+  (player-by :id players id))
+
+(defn add-player
+  [state client-id name]
+  (update state :players conj {:id client-id :name name}))
+
 (defn try-rejoin
   [client-id name {players :players :as state}]
   ;; is there a player here with that name already
-  (if-let [existing-player (first (filter #(= (:name %) name) players))]
-    (do
-      (log/info "Found existing player: " existing-player)
-      (if (= client-id (:id existing-player))
-        (do
-          (log/info "Reconnecting client by id: " client-id "name: " name)
-          [state nil])
-        (do
-          (log/warn "Name " name " client ID " client-id "tried to connect but name already taken:" (:id existing-player))
-          [state (str "Name '" name "' already taken")])))
-    (if (some #(= (:id %) client-id) players)
-      [state (str "Client already exists with that ID")]
-      [(update state :players conj {:id client-id :name name}) nil])))
+  (if-let [existing-player (player-by-name name players)]
+    (if (= client-id (:id existing-player))
+      (do
+        (log/info "Reconnecting client by id: " client-id "name: " name)
+        [state nil])
+      (do
+        (log/warn "Name " name " client ID " client-id "tried to connect but name already taken:" (:id existing-player))
+        [state {:error (str "Name '" name "' already taken")
+                :code  "name-taken"}]))
+    (if (player-by-id client-id players)
+      [state {:error "Client already exists with that ID"
+              :code "id-conflict"}]
+      [(add-player state client-id name) nil])))
 
 (defn try-join
   "If the client with join message `msg` can join, return updated state a"
@@ -79,8 +95,7 @@
         [state' join-error] (try-rejoin client-id name state)]
     (if join-error
       (do
-        (a/>!! output {:success false
-                       :error join-error})
+        (a/>!! output join-error)
         (a/close! input)
         (a/close! output)
         state)
