@@ -1,5 +1,6 @@
-import { EventEmitter } from "events";
+import { Store } from "redux";
 import { JoinGameRequest, CreateGameRequest, Response } from "./messages";
+import { connectionStatus, joinedGame } from "../actions";
 
 function getGameURL(): string {
   return `${process.env.apiBase}/game`;
@@ -17,18 +18,16 @@ export default class CelebrityClient {
 
   nextMessageCallback?: (Response) => void;
 
-  events: EventEmitter;
-
   pingInterval: number;
 
   lastPingSent: number;
 
   lastPongReceived: number;
 
-  playerName?: string;
+  store: Store;
 
-  constructor() {
-    this.events = new EventEmitter();
+  constructor(store: Store) {
+    this.store = store;
   }
 
   connect(): Promise<Event> {
@@ -40,7 +39,7 @@ export default class CelebrityClient {
       this.wsClient = new WebSocket(getGameURL());
       this.wsClient.addEventListener("close", () => {
         this.connected = false;
-        this.events.emit("connection-status", "closed");
+        this.store.dispatch(connectionStatus("closed"));
         if (this.pingInterval) {
           window.clearInterval(this.pingInterval);
         }
@@ -49,7 +48,7 @@ export default class CelebrityClient {
 
       this.wsClient.addEventListener("error", () => {
         reject(new Error("Unable to connect to server"));
-        this.events.emit("connection-status", "error");
+        this.store.dispatch(connectionStatus("error"));
         if (this.pingInterval) {
           window.clearTimeout(this.pingInterval);
         }
@@ -61,6 +60,7 @@ export default class CelebrityClient {
 
       this.wsClient.addEventListener("open", (event) => {
         this.connected = true;
+        this.store.dispatch(connectionStatus("connected"));
         resolve(event);
       });
     });
@@ -98,12 +98,12 @@ export default class CelebrityClient {
         !this.lastPongReceived ||
         this.lastPingSent - this.lastPongReceived > pingTime
       ) {
-        this.events.emit("connection-status", "pong-timeout");
+        this.store.dispatch(connectionStatus("pong-timeout"));
       } else {
-        this.events.emit("connection-status", "pong-ok");
+        this.store.dispatch(connectionStatus("pong-ok"));
       }
     }
-    this.sendCommand("ping", { name: this.playerName });
+    this.sendCommand("ping", {});
     this.lastPingSent = Date.now();
   }
 
@@ -150,8 +150,8 @@ export default class CelebrityClient {
   }
 
   joinedGame(response: Response): void {
-    this.events.emit("join", response);
-    this.playerName = response.name;
+    this.store.dispatch(joinedGame(response));
+
     window.localStorage.setItem("client-id", response.clientId);
     window.localStorage.setItem("client-name", response.name);
     window.localStorage.setItem("room-code", response.roomCode);

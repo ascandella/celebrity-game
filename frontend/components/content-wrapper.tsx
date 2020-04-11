@@ -1,4 +1,5 @@
 import React, { FunctionComponent } from "react";
+import { connect } from "react-redux";
 import Head from "next/head";
 import Header from "./header";
 
@@ -20,4 +21,8 @@ const ContentWrapper: FunctionComponent<ContentWrapperProps> = ({
   </div>
 );
 
-export default ContentWrapper;
+const mapStateToProps = (state) => ({
+  showHeader: !state.inGame,
+});
+
+export default connect(mapStateToProps)(ContentWrapper);

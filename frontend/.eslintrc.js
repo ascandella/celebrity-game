@@ -44,4 +44,12 @@ module.exports = {
     ],
     "@typescript-eslint/no-explicit-any": "off",
   },
+  overrides: [
+    {
+      files: ["*.tsx"],
+      rules: {
+        "@typescript-eslint/explicit-function-return-type": ["off"],
+      },
+    },
+  ],
 };
