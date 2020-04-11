@@ -82,8 +82,9 @@
     (let [client-id "test-id"
           new-name "new-name"
           state {:players [{:id client-id :name "old-name"}]}
-          [state join-error] (try-rejoin client-id name state)]
-      (is (= join-error "Client already exists with that ID")))))
+          [state {:keys [error code]}] (try-rejoin client-id name state)]
+      (is (= code "id-conflict"))
+      (is (= error "Client already exists with that ID")))))
 
 (deftest try-rejoin-same-id
   (testing "rejoining with the same name and ID works"
