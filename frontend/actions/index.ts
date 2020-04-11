@@ -5,6 +5,12 @@ export const GAME_CODE = "GAME_CODE";
 export const PLAYER_NAME = "PLAYER_NAME";
 export const CREATING_GAME = "CREATING_GAME";
 export const JOINED_GAME = "JOINED_GAME";
+export const SET_CLIENT_ID = "SET_CLIENT_ID";
+export const RECEIVED_PONG = "RECEIVED_PONG";
+export const JOIN_ERROR = "JOIN_ERROR";
+export const SET_CONNECTING = " SET_CONNECTING";
+
+import { GameEvent } from "../client/messages";
 
 export const updatePlayers = (players) => ({
   type: UPDATE_PLAYERS,
@@ -36,10 +42,42 @@ export const toggleCreating = (creatingGame) => ({
   creatingGame,
 });
 
-export const joinedGame = (event) => ({
-  type: JOINED_GAME,
-  roomCode: event.roomCode,
-  playerName: event.name,
+export const joinedGame = (event) => {
+  window.localStorage.setItem("client-id", event.clientId);
+  window.localStorage.setItem("client-name", event.name);
+  window.localStorage.setItem("room-code", event.roomCode);
+
+  return {
+    type: JOINED_GAME,
+    roomCode: event.roomCode,
+    playerName: event.name,
+    clientID: event.clientId,
+    players: event.players,
+  };
+};
+
+export const setClientID = (event) => ({
+  type: SET_CLIENT_ID,
   clientID: event.clientId,
-  players: event.players,
 });
+
+export const setConnecting = (connecting: boolean) => ({
+  type: SET_CONNECTING,
+  connecting,
+});
+
+export const receivedMessage = (event: Response) => {
+  switch (event.event) {
+    case "pong":
+      return {
+        type: RECEIVED_PONG,
+      };
+    case "join-error":
+      return {
+        type: JOIN_ERROR,
+        ...event,
+      };
+    case "joined":
+      return joinedGame(event);
+  }
+};

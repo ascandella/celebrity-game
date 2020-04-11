@@ -3,7 +3,7 @@ export type JoinGameRequest = {
   roomCode: string;
   clientID?: string;
 };
-  
+
 export type CreateGameRequest = {
   userName: string;
   maxPlayers: number;
@@ -11,5 +11,7 @@ export type CreateGameRequest = {
 
 export type Response = {
   error?: string;
+  code?: string;
+  event: string;
   [key: string]: any;
 };

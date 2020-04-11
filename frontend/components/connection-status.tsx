@@ -10,6 +10,7 @@ const StatusBanner = styled.div.attrs({
 
 type ConnectionStatusProps = {
   connectionStatus: string;
+  lastPongTime: number;
 };
 
 const messages = {
@@ -33,6 +34,7 @@ const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
 
 const mapStateToProps = (state) => ({
   connectionStatus: getConnectionStatus(state.connectionStatus),
+  lastPongTime: state.lastPongTime,
 });
 
 export default connect(mapStateToProps)(ConnectionStatus);

@@ -4,6 +4,9 @@ import {
   CONNECTION_STATUS,
   JOINED_GAME,
   CREATING_GAME,
+  JOIN_ERROR,
+  RECEIVED_PONG,
+  SET_CONNECTING,
 } from "../actions";
 
 // TODO make a type for players?
@@ -54,10 +57,42 @@ const creatingGame = (state = false, action): boolean => {
   }
 };
 
+const joinError = (state = null, action): ?string => {
+  switch (action.type) {
+    case JOIN_ERROR:
+      return action.error;
+    case JOINED_GAME:
+      return null;
+    default:
+      return state;
+  }
+};
+
+const lastPongTime = (state = 0, action): number => {
+  switch (action.type) {
+    case RECEIVED_PONG:
+      return Date.now();
+    default:
+      return state;
+  }
+};
+
+const connecting = (state = false, action): boolean => {
+  switch (action.type) {
+    case SET_CONNECTING:
+      return action.connecting;
+    default:
+      return state;
+  }
+};
+
 export default combineReducers({
   gameCode,
   players,
   connectionStatus,
   inGame,
   creatingGame,
+  joinError,
+  lastPongTime,
+  connecting,
 });
