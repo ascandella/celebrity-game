@@ -113,23 +113,21 @@
 
 (defn two-sided-stream
   []
-  (let [client-stream (s/stream)
-        server-stream (s/stream)
-        to-client     (a/chan)
-        to-server     (a/chan)]
-    (s/connect
-     to-server
-     server-stream)
-    (s/connect
-     to-client
-     client-stream)
-    (s/connect
-     client-stream
-     to-server)
-    (s/connect
-     server-stream
-     to-client)
-    [client-stream server-stream]))
+  (let [client-to-server (s/stream)
+        server-to-client (s/stream)]
+
+    [(s/splice (s/sink-only server-to-client) (s/source-only client-to-server))
+     (s/splice (s/sink-only client-to-server) (s/source-only server-to-client))]))
+
+(deftest two-sided-stream-is-ok
+  (testing "Two sided stream won't read your own writes"
+    (let [[client server] (two-sided-stream)]
+      (s/put! client "hello")
+      (is (nil? @(s/try-take! client 100)))
+      (is (= "hello" @(s/try-take! server 100)))
+      (s/put! server "response")
+      (is (nil? @(s/try-take! server 100)))
+      (is (= "response" @(s/try-take! client 100))))))
 
 (deftest created-game-can-be-joined
   (testing "After creating a game, another client can join"
