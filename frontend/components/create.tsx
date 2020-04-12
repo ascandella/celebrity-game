@@ -13,6 +13,7 @@ import {
 type CreateProps = {
   createGame: (req: CreateGameRequest) => void;
   connecting: boolean;
+  creating: boolean;
   createError: string;
 };
 
@@ -40,6 +41,9 @@ class CreateGame extends Component<CreateProps, CreateState> {
   }
 
   render(): React.ReactNode {
+    if (!this.props.creating) {
+      return null;
+    }
     return (
       <FormWrapper>
         <form
@@ -82,6 +86,7 @@ const mapStateToProps = (state: RootState) => ({
   // get a join error
   createError: state.connectError || state.createError || state.joinError,
   connecting: state.connecting,
+  creating: state.creatingGame,
 });
 
 export default connect(mapStateToProps)(CreateGame);

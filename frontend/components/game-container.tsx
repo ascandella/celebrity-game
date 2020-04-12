@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { FunctionComponent } from "react";
 import { connect } from "react-redux";
 import { toggleCreating } from "../actions";
 import { RootState } from "../reducers";
@@ -8,60 +8,37 @@ import Game from "./game";
 import JoinGame from "./join";
 import CreateGame from "./create";
 
-type GameContainerState = {
-  client: CelebrityClient;
-};
-
-type GameContainerProps = {
-  client: CelebrityClient;
+type JoinOrCreateProps = {
   inGame: boolean;
+  client: CelebrityClient;
+  toggleIsCreating: (isCreating: boolean) => void;
   creating: boolean;
-  toggleCreating: (isCreating: boolean) => void;
 };
 
-class GameContainer extends Component<GameContainerProps, GameContainerState> {
-  constructor(props: GameContainerProps) {
-    super(props);
-    this.state = {
-      client: props.client,
-    };
+const JoinOrCreate: FunctionComponent<JoinOrCreateProps> = ({
+  inGame,
+  client,
+  creating,
+  toggleIsCreating,
+}: JoinOrCreateProps) => {
+  if (inGame) {
+    return null;
   }
+  return (
+    <div>
+      <div className="flex justify-center">
+        <JoinGame joinGame={client.joinGame.bind(client)} />
+        <CreateGame createGame={client.createGame.bind(client)} />
+      </div>
 
-  renderForState(): React.ReactNode {
-    if (this.props.inGame) {
-      return <Game client={this.state.client} />;
-    }
-
-    if (this.props.creating) {
-      return (
-        <CreateGame
-          createGame={this.state.client.createGame.bind(this.state.client)}
-        />
-      );
-    }
-
-    return (
-      <JoinGame joinGame={this.state.client.joinGame.bind(this.state.client)} />
-    );
-  }
-
-  render(): React.ReactNode {
-    const content: React.ReactNode = this.renderForState();
-
-    return (
-      <ContentWrapper>
-        {content}
-        {!this.props.inGame && (
-          <div className="flex justify-center">
-            <a onClick={() => this.props.toggleCreating(!this.props.creating)}>
-              {this.props.creating ? "Join" : "Create"} Game
-            </a>
-          </div>
-        )}
-      </ContentWrapper>
-    );
-  }
-}
+      <div className="flex justify-center">
+        <a onClick={() => toggleIsCreating(!creating)}>
+          {creating ? "Join" : "Create"} Game
+        </a>
+      </div>
+    </div>
+  );
+};
 
 const mapStateToProps = (state: RootState) => ({
   creating: state.creatingGame,
@@ -69,9 +46,27 @@ const mapStateToProps = (state: RootState) => ({
 });
 
 const mapDispatchToProps = (dispatch) => ({
-  toggleCreating: (isCreating: boolean) => {
+  toggleIsCreating: (isCreating: boolean) => {
     dispatch(toggleCreating(isCreating));
   },
 });
 
-export default connect(mapStateToProps, mapDispatchToProps)(GameContainer);
+const JoinOrCreateContainer = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(JoinOrCreate);
+
+type GameContainerProps = {
+  client: CelebrityClient;
+};
+
+const GameContainer: FunctionComponent<GameContainerProps> = ({
+  client,
+}: GameContainerProps) => (
+  <ContentWrapper>
+    <JoinOrCreateContainer client={client} />
+    <Game client={client} />
+  </ContentWrapper>
+);
+
+export default GameContainer;
