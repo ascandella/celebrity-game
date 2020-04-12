@@ -101,12 +101,12 @@
       (let [[input output] (create-client-channel ch client-id')
             players'       (add-player players {:id client-id' :name name})]
         (do
-          (a/>!! output {:room-code code
-                         :event     "joined"
-                         :success   true
-                         :client-id client-id'
-                         :players   players'
-                         :name      name})
+          (proto/respond-message ch {:room-code code
+                                     :event     "joined"
+                                     :success   true
+                                     :client-id client-id'
+                                     :players   players'
+                                     :name      name})
 
           (-> state
               (assoc :players players')
