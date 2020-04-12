@@ -137,4 +137,4 @@
           (is (= 2 (count players)))
           (is (= "joiner" (:name (nth players 1)))))
         (s/close! creator)
-        (s/close! joiner))))))
+        (s/close! joiner)))))
