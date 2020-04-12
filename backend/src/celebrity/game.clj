@@ -138,7 +138,7 @@
           [msg channel] (a/alts! (vec (conj (:inputs state) timeout-ch client-in)))]
       (if (identical? channel timeout-ch)
         (do
-          (log/info "Last client disconnected from: " code)
+          (log/info "Cancelling event loop for " code " due to no activity in " (/ server-timeout-after 1000))
           (deregister-server code registry)
           (a/close! client-in))
         (if (nil? msg)
