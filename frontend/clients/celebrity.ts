@@ -141,21 +141,6 @@ export default class CelebrityClient {
     });
   }
 
-  // TODO change this logic since we're now surfacing it to the client
-  //     if (response.error) {
-  //       this.close();
-  //       if (response.code == "id-conflict") {
-  //         return this.joinGame({ userName, roomCode });
-  //       }
-  //       throw new Error(response.error);
-  //     }
-
-  //     this.joinedGame(response);
-  //     return response;
-  //   } catch (err) {
-  //   }
-  // }
-
   createGame({ userName, maxPlayers }: CreateGameRequest): void {
     this.sendCommand("create", {
       create: {

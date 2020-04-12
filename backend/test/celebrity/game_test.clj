@@ -62,38 +62,37 @@
   (testing "trying to rejoin with a taken name fails"
     (let [client-id "test-id"
           name "tester-taken"
-          state {:players [{:id "foo" :name name}]}
-          [_ join-error] (try-rejoin client-id name state)]
+          players [{:id "foo" :name name}]
+          [_ join-error] (try-rejoin client-id name players)]
       (is (string/includes? join-error "already taken"))
       (is (string/includes? join-error name)))))
 
 (deftest try-rejoin-name-empty
-  (testing "trying to rejoin with a taken name fails"
+  (testing "trying to rejoin with a new player succeeds"
     (let [client-id "test-id"
           name "not-taken"
-          state {:players []}
-          [{players :players} join-error] (try-rejoin client-id name state)]
+          players []
+          [accepted-uuid join-error] (try-rejoin client-id name players)]
       (is (nil? join-error))
-      (is (= 1 (count players)))
-      (is (= "not-taken" (:name (first players)))))))
+      (is (= client-id accepted-uuid)))))
 
 (deftest try-rejoin-overlapping-id
-  (testing "overlapping IDs are rejected"
+  (testing "overlapping IDs are regenerated"
     (let [client-id "test-id"
           new-name "new-name"
-          state {:players [{:id client-id :name "old-name"}]}
-          [state {:keys [error code]}] (try-rejoin client-id name state)]
-      (is (= code "id-conflict"))
-      (is (= error "Client already exists with that ID")))))
+          players [{:id client-id :name "old-name"}]
+          [accepted-uuid join-error] (try-rejoin client-id name players)]
+      (is (nil? join-error))
+      (is (not (= client-id accepted-uuid))))))
 
 (deftest try-rejoin-same-id
   (testing "rejoining with the same name and ID works"
     (let [client-id "test-id"
           name "not-taken"
-          state {:players [{:id client-id :name name}]}
-          [{players :players} join-error] (try-rejoin client-id name state)]
+          players [{:id client-id :name name}]
+          [join-uuid join-error] (try-rejoin client-id name players)]
       (is (nil? join-error))
-      (is (= 1 (count players))))))
+      (is (= join-uuid client-id)))))
 
 (deftest client-last-player
   (testing "We cull old games when the last client disconnects"
