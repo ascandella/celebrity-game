@@ -1,4 +1,4 @@
-import { Store } from "redux";
+import { Dispatch } from "redux";
 import { JoinGameRequest, CreateGameRequest } from "./messages";
 import {
   connectionStatus,
@@ -6,9 +6,6 @@ import {
   setConnecting,
   receivedMessage,
 } from "../actions";
-
-// TODO: is there some better way to expose this?
-import store from "../reducers/store";
 
 function getGameURL(): string {
   return `${process.env.apiBase}/game`;
@@ -27,10 +24,10 @@ export default class CelebrityClient {
 
   lastPongReceived: number;
 
-  store: Store;
+  dispatch: Dispatch;
 
-  constructor(gameStore: Store) {
-    this.store = gameStore;
+  constructor(dispatch: Dispatch) {
+    this.dispatch = dispatch;
   }
 
   connect(): Promise<Event> {
@@ -42,7 +39,7 @@ export default class CelebrityClient {
       this.wsClient = new WebSocket(getGameURL());
       this.wsClient.addEventListener("close", () => {
         this.connected = false;
-        this.store.dispatch(connectionStatus("closed"));
+        this.dispatch(connectionStatus("closed"));
         if (this.pingInterval) {
           window.clearInterval(this.pingInterval);
         }
@@ -51,7 +48,7 @@ export default class CelebrityClient {
 
       this.wsClient.addEventListener("error", () => {
         reject(new Error("Unable to connect to server"));
-        this.store.dispatch(connectionStatus("error"));
+        this.dispatch(connectionStatus("error"));
         if (this.pingInterval) {
           window.clearTimeout(this.pingInterval);
         }
@@ -63,7 +60,7 @@ export default class CelebrityClient {
 
       this.wsClient.addEventListener("open", (event) => {
         this.connected = true;
-        this.store.dispatch(connectionStatus("connected"));
+        this.dispatch(connectionStatus("connected"));
         resolve(event);
       });
     });
@@ -77,7 +74,7 @@ export default class CelebrityClient {
     }
     try {
       const message = JSON.parse(event.data);
-      this.store.dispatch(receivedMessage(message));
+      this.dispatch(receivedMessage(message));
     } catch (err) {
       /* eslint-disable no-console */
       console.error("Unable to parse server response: ", event.data);
@@ -90,9 +87,9 @@ export default class CelebrityClient {
         !this.lastPongReceived ||
         this.lastPingSent - this.lastPongReceived > pingTime
       ) {
-        this.store.dispatch(connectionStatus("pong-timeout"));
+        this.dispatch(connectionStatus("pong-timeout"));
       } else {
-        this.store.dispatch(connectionStatus("pong-ok"));
+        this.dispatch(connectionStatus("pong-ok"));
       }
     }
     this.sendCommand("ping", {});
@@ -109,13 +106,13 @@ export default class CelebrityClient {
     data: { [key: string]: any }
   ): Promise<void> {
     if (!this.connected) {
-      this.store.dispatch(setConnecting(true));
+      this.dispatch(setConnecting(true));
       try {
         await this.connect();
       } catch (err) {
-        this.store.dispatch(connectError(err));
+        this.dispatch(connectError(err));
       }
-      this.store.dispatch(setConnecting(false));
+      this.dispatch(setConnecting(false));
     }
 
     this.wsClient.send(
@@ -168,5 +165,3 @@ export default class CelebrityClient {
     });
   }
 }
-
-export const client = new CelebrityClient(store);

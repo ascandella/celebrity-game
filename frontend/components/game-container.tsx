@@ -1,4 +1,5 @@
 import React, { FunctionComponent } from "react";
+import { Dispatch } from "redux";
 import { connect } from "react-redux";
 import { toggleCreating } from "../actions";
 import { RootState } from "../reducers";
@@ -45,7 +46,7 @@ const mapStateToProps = (state: RootState) => ({
   inGame: state.inGame,
 });
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = (dispatch: Dispatch) => ({
   toggleIsCreating: (isCreating: boolean) => {
     dispatch(toggleCreating(isCreating));
   },
@@ -69,4 +70,8 @@ const GameContainer: FunctionComponent<GameContainerProps> = ({
   </ContentWrapper>
 );
 
-export default GameContainer;
+const mapGameDispatchToProps = (dispatch: Dispatch) => ({
+  client: new CelebrityClient(dispatch),
+});
+
+export default connect(null, mapGameDispatchToProps)(GameContainer);
