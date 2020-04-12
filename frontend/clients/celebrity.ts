@@ -24,8 +24,6 @@ export default class CelebrityClient {
 
   lastPongReceived: number;
 
-  store: Store;
-
   dispatch: Dispatch;
 
   constructor(dispatch: Dispatch) {
