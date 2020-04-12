@@ -128,34 +128,32 @@
 (def server-timeout-after 60000)
 
 (defn game-state-machine
-  [code client-in game-config registry]
-  (a/go-loop [state {:inputs #{}
+  [code client-in game-config deregister]
+  (a/go-loop [state {:inputs  #{}
                      :players []
-                     :config game-config}]
+                     :config  game-config}]
     ;; wait for messages from clients connecting, clients sending message, or a
     ;; timeout indicating nobody is here anymore
     (let [timeout-ch    (a/timeout server-timeout-after)
-          [msg channel] (a/alts! (vec (conj (:inputs state) timeout-ch client-in)))
-          is-client-in  (identical? channel client-in)]
-      (if (nil? msg)
-        ;; one of the channels was closed, see if it was a client that disconnected
-        (let [new-state (disconnect-from-server channel state)]
-          (if (empty? (:inputs new-state))
+          [msg channel] (a/alts! (vec (conj (:inputs state) timeout-ch client-in)))]
+      (if (identical? channel timeout-ch)
+        (do
+          (log/info "Cancelling event loop for " code " due to no activity in " (/ server-timeout-after 1000))
+          (deregister)
+          (a/close! client-in))
+        (if (nil? msg)
+          ;; one of the channels was closed, remove from :inputs if it's ac lient
+          (recur (disconnect-from-server channel state))
+          ;; we received a message on one of the channels
+          (if (identical? channel client-in)
             (do
-              (log/info "Last client disconnected from: " code)
-              (deregister-server code registry)
-              (a/close! client-in))
-            (recur new-state)))
-        ;; we received a message on one of the channels
-        (if is-client-in
-          (do
-            (log/info "Received client connection: " (dissoc msg :ch))
-            (recur (try-join state msg)))
-          (let [client-id (:id msg)
-                out-ch    (get-in state [:clients client-id])]
-            (log/info "Responding pong to " client-id "for message " msg)
-            (a/>! out-ch {:event "pong" :pong true :client-id client-id})
-            (recur state)))))))
+              (log/info "Received client connection: " (dissoc msg :ch))
+              (recur (try-join state msg)))
+            (let [client-id (:id msg)
+                  out-ch    (get-in state [:clients client-id])]
+              (log/info "Responding pong to " client-id "for message " msg)
+              (a/>! out-ch {:event "pong" :pong true :client-id client-id})
+              (recur state))))))))
 
 (defn validate-params
   [params]
@@ -187,9 +185,9 @@
                    registry registry'
                    (assoc registry' code server-chan))
                 ;; it was added, now create the game
-                (do
+                (let [deregister #(deregister-server code registry)]
                   (log/info "Game code created with code: " code "config: " params)
-                  (game-state-machine code server-chan params registry)
+                  (game-state-machine code server-chan params deregister)
                   ;; connect the client to the server handler
                   (connect-client-to-game (assoc params :room-code code) stream server-chan))
                 (recur (inc count))))))))))
