@@ -68,7 +68,7 @@
   (player-by :id players id))
 
 (defn add-player
-  [players {:keys [id name] :as player}]
+  [players {:keys [id] :as player}]
   (if (player-by-id id players)
     players
     (conj players player)))
