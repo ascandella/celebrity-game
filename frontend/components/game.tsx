@@ -25,10 +25,6 @@ const Game: FunctionComponent<GameProps> = ({
   gameCode,
   inGame,
 }: GameProps) => {
-  const playerItems = players.map((player, i) => (
-    <li key={i}>{player.name}</li>
-  ));
-
   if (!inGame) {
     return null;
   }
@@ -39,7 +35,11 @@ const Game: FunctionComponent<GameProps> = ({
 
       <div>
         <h2>Players</h2>
-        <ul>{playerItems}</ul>
+        <ul>
+          {players.map((player, i) => (
+            <li key={i}>{player.name}</li>
+          ))}
+        </ul>
       </div>
     </GameHeader>
   );
