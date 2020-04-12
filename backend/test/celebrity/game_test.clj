@@ -94,29 +94,6 @@
       (is (nil? join-error))
       (is (= join-uuid client-id)))))
 
-(deftest client-disconnect-reconnect
-  (testing "We can reconnect if we disconnect"
-    (let [client   (s/stream)
-          name     "spotty-connection"
-          params   {:name name}
-          registry (atom {})
-          created  (create-game params client {:registry registry})
-          response @(s/take! client)
-          parsed   (proto/parse-message response)]
-      (is (= :pending created))
-      (s/close! client)
-      (let [new-conn (s/stream)
-            rejoin (join new-conn {:name name
-                                   :client-id (:client-id parsed)
-                                   :room-code (:room-code parsed)}
-                         {:registry registry})
-            rejoin-response @(s/take! new-conn)
-            rejoin-json (proto/parse-message rejoin-response)]
-        (is (= :pending rejoin))
-        (is (nil? (:error rejoin-json)))
-        (is (= "joined" (:event rejoin-json)))
-        (is (= 1 (count (:players rejoin-json))))))))
-
 (defn two-sided-stream
   []
   (let [client-to-server (s/stream)
@@ -134,6 +111,29 @@
       (s/put! server "response")
       (is (nil? @(s/try-take! server 100)))
       (is (= "response" @(s/try-take! client 100))))))
+
+(deftest client-disconnect-reconnect
+  (testing "We can reconnect if we disconnect"
+    (let [[client server] (two-sided-stream)
+          name            "spotty-connection"
+          params          {:name name}
+          registry        (atom {})
+          created         (create-game params server {:registry registry})
+          response        @(s/take! client)
+          parsed          (proto/parse-message response)]
+      (is (= :pending created))
+      (s/close! client)
+      (let [[new-client new-server] (two-sided-stream)
+            rejoin                  (join new-server {:name      name
+                                                      :client-id (:client-id parsed)
+                                                      :room-code (:room-code parsed)}
+                                          {:registry registry})
+            rejoin-response         @(s/take! new-client)
+            rejoin-json             (proto/parse-message rejoin-response)]
+        (is (= :pending rejoin))
+        (is (nil? (:error rejoin-json)))
+        (is (= "joined" (:event rejoin-json)))
+        (is (= 1 (count (:players rejoin-json))))))))
 
 (deftest created-game-can-be-joined
   (testing "After creating a game, another client can join"
