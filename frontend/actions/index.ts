@@ -13,6 +13,7 @@ export const JOIN_ERROR = "JOIN_ERROR";
 export const CREATE_ERROR = "CREATE_ERROR";
 export const SET_CONNECTING = "SET_CONNECTING";
 export const CONNECT_ERROR = "CONNECT_ERROR";
+export const CONNECTED = "CONNECTED";
 
 export const updatePlayers = (players) => ({
   type: UPDATE_PLAYERS,
@@ -71,6 +72,10 @@ export const setConnecting = (connecting: boolean) => ({
 export const connectError = (error: Error) => ({
   type: CONNECT_ERROR,
   error,
+});
+
+export const connected = () => ({
+  type: CONNECTED,
 });
 
 // export const joinGame = (request: JoinGameRequest) => {

@@ -8,6 +8,7 @@ import {
   CREATE_ERROR,
   RECEIVED_PONG,
   SET_CONNECTING,
+  CONNECTED,
   CONNECT_ERROR,
 } from "../actions";
 
@@ -97,6 +98,7 @@ type ConnectionStatus = {
   error?: string;
   code?: string;
   lastPong?: number;
+  connectError?: boolean;
 };
 
 const InitialConnectionStatus: ConnectionStatus = {
@@ -110,21 +112,21 @@ const connection = (
   switch (action.type) {
     case SET_CONNECTING:
       return {
+        ...state,
         status: "connecting",
-        error: null,
       };
     case CONNECT_ERROR:
       return {
         // if we received a join or a connect, we can clear it out
-        error: "Could not connect to server",
         status: "error",
+        error: "Could not connect to server",
+        connectError: true,
       };
     case JOINED_GAME:
       return {
         status: "joined",
         error: null,
       };
-      return null;
     case JOIN_ERROR:
       return {
         status: "error",
@@ -136,8 +138,15 @@ const connection = (
         ...state,
         lastPong: Date.now(),
       };
+    case CONNECTED:
+      return {
+        ...state,
+        status: "connected",
+        error: null,
+      };
     case CONNECTION_STATUS:
       return {
+        ...state,
         status: action.status,
       };
     default:
