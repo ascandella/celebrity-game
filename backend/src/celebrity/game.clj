@@ -128,7 +128,7 @@
 (def server-timeout-after 60000)
 
 (defn game-state-machine
-  [code client-in game-config registry]
+  [code client-in game-config deregister]
   (a/go-loop [state {:inputs  #{}
                      :players []
                      :config  game-config}]
@@ -139,7 +139,7 @@
       (if (identical? channel timeout-ch)
         (do
           (log/info "Cancelling event loop for " code " due to no activity in " (/ server-timeout-after 1000))
-          (deregister-server code registry)
+          (deregister)
           (a/close! client-in))
         (if (nil? msg)
           ;; one of the channels was closed, remove from :inputs if it's ac lient
@@ -185,9 +185,9 @@
                    registry registry'
                    (assoc registry' code server-chan))
                 ;; it was added, now create the game
-                (do
+                (let [deregister #(deregister-server code registry)]
                   (log/info "Game code created with code: " code "config: " params)
-                  (game-state-machine code server-chan params registry)
+                  (game-state-machine code server-chan params deregister)
                   ;; connect the client to the server handler
                   (connect-client-to-game (assoc params :room-code code) stream server-chan))
                 (recur (inc count))))))))))
