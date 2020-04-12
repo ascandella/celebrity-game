@@ -69,9 +69,9 @@ export const setConnecting = (connecting: boolean) => ({
   connecting,
 });
 
-export const connectError = (error: Error) => ({
+export const connectError = () => ({
   type: CONNECT_ERROR,
-  error,
+  error: "Could not connect to server",
 });
 
 export const connected = () => ({
