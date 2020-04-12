@@ -122,8 +122,8 @@ export class JoinGame extends Component<JoinProps, JoinState> {
 }
 
 const mapStateToProps = (state: RootState) => ({
-  joinError: state.connectError || state.joinError,
-  connecting: state.connecting,
+  joinError: state.connection.error || state.joinError,
+  connecting: state.connection.status === "connecting",
   creating: state.creatingGame,
 });
 

@@ -84,8 +84,8 @@ class CreateGame extends Component<CreateProps, CreateState> {
 const mapStateToProps = (state: RootState) => ({
   // A create is really a create followed by a join behind the scenes, so we may
   // get a join error
-  createError: state.connectError || state.createError || state.joinError,
-  connecting: state.connecting,
+  createError: state.connection.error || state.createError || state.joinError,
+  connecting: state.connection.status === "connecting",
   creating: state.creatingGame,
 });
 

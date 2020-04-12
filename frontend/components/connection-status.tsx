@@ -21,10 +21,6 @@ const messages = {
   closed: "Connection lost",
 };
 
-const getConnectionStatus = (status: string): string => {
-  return messages[status];
-};
-
 const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
   connectionStatus,
   inGame,
@@ -36,8 +32,8 @@ const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
 };
 
 const mapStateToProps = (state: RootState) => ({
-  connectionStatus: getConnectionStatus(state.connectionStatus),
-  lastPongTime: state.lastPongTime,
+  connectionStatus: messages[state.connection.status],
+  lastPongTime: state.connection.lastPong,
   inGame: state.inGame,
 });
 

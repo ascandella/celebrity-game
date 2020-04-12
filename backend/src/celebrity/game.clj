@@ -12,9 +12,12 @@
   ([len]
     (apply str (take len (repeatedly #(char (+ (rand 26) 65)))))))
 
+(defn generate-uuid []
+  (.toString (java.util.UUID/randomUUID)))
+
 (defn connect-client-to-game
   [join-data client game-bus]
-  (let [uuid (or (:client-id join-data) (.toString (java.util.UUID/randomUUID)))]
+  (let [uuid (or (:client-id join-data) (generate-uuid))]
     ;; send a message to the server handler that a new client has connected
     (log/info "Connecting client to game: " join-data)
     (a/>!! game-bus {:id uuid :ch client :join join-data})
@@ -65,51 +68,50 @@
   (player-by :id players id))
 
 (defn add-player
-  [state client-id name]
-  (update state :players conj {:id client-id :name name}))
+  [players {:keys [id] :as player}]
+  (if (player-by-id id players)
+    players
+    (conj players player)))
 
 (defn try-rejoin
-  [client-id name {players :players :as state}]
+  [client-id name players]
   ;; is there a player here with that name already
   (if-let [existing-player (player-by-name name players)]
     (if (= client-id (:id existing-player))
       (do
         (log/info "Reconnecting client by id: " client-id "name: " name)
-        [state nil])
+        [client-id nil])
       (do
         (log/warn "Name " name " client ID " client-id "tried to connect but name already taken:" (:id existing-player))
-        [state {:error (str "Name '" name "' already taken")
-                :code  "name-taken"}]))
+        [client-id {:error (str "Name '" name "' already taken")
+                    :code  "name-taken"}]))
     (if (player-by-id client-id players)
-      [state {:error "Client already exists with that ID"
-              :code "id-conflict"}]
-      [(add-player state client-id name) nil])))
+      [(generate-uuid) nil]
+      [client-id nil])))
 
 (defn try-join
   "If the client with join message `msg` can join, return updated state a"
-  [state {client-id    :id
-          ch           :ch
-          {code :room-code
-           name :name} :join}]
-  (let [[input output] (create-client-channel ch client-id)
-        [state' join-error] (try-rejoin client-id name state)]
+  [{:keys [players] :as state} {client-id    :id
+                                ch           :ch
+                                {code :room-code
+                                 name :name} :join}]
+  (let [[client-id' join-error] (try-rejoin client-id name players)]
     (if join-error
-      (do
-        (a/>!! output (assoc join-error :event "join-error"))
-        (a/close! input)
-        (a/close! output)
-        state)
-      (do
-        (a/>!! output {:room-code code
-                       :event     "joined"
-                       :success   true
-                       :client-id client-id
-                       :players   (:players state')
-                       :name      name})
+      (proto/respond-message ch (assoc join-error :event "join-error"))
+      (let [[input output] (create-client-channel ch client-id')
+            players'       (add-player players {:id client-id' :name name})]
+        (do
+          (proto/respond-message ch {:room-code code
+                                     :event     "joined"
+                                     :success   true
+                                     :client-id client-id'
+                                     :players   players'
+                                     :name      name})
 
-        (-> state'
-              (assoc-in [:clients client-id] output)
-              (update :inputs conj input))))))
+          (-> state
+              (assoc :players players')
+              (assoc-in [:clients client-id'] output)
+              (update :inputs conj input)))))))
 
 (defn deregister-server
   [code registry]
@@ -136,7 +138,7 @@
           [msg channel] (a/alts! (vec (conj (:inputs state) timeout-ch client-in)))
           is-client-in  (identical? channel client-in)]
       (if (nil? msg)
-        ;; one of the channels was closed, see if it was a clietn that disconnected
+        ;; one of the channels was closed, see if it was a client that disconnected
         (let [new-state (disconnect-from-server channel state)]
           (if (empty? (:inputs new-state))
             (do
@@ -151,6 +153,7 @@
             (recur (try-join state msg)))
           (let [client-id (:id msg)
                 out-ch    (get-in state [:clients client-id])]
+            (log/info "Responding pong to " client-id "for message " msg)
             (a/>! out-ch {:event "pong" :pong true :client-id client-id})
             (recur state)))))))
 

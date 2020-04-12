@@ -8,6 +8,7 @@ import {
   CREATE_ERROR,
   RECEIVED_PONG,
   SET_CONNECTING,
+  CONNECTED,
   CONNECT_ERROR,
 } from "../actions";
 
@@ -36,15 +37,6 @@ const clientID = (state = null, action): string => {
   switch (action.type) {
     case JOINED_GAME:
       return action.clientID;
-    default:
-      return state;
-  }
-};
-
-const connectionStatus = (state = "unknown", action): string => {
-  switch (action.type) {
-    case CONNECTION_STATUS:
-      return action.status;
     default:
       return state;
   }
@@ -101,33 +93,62 @@ const createError = (state = null, action): string => {
   }
 };
 
-const lastPongTime = (state = 0, action): number => {
-  switch (action.type) {
-    case RECEIVED_PONG:
-      return Date.now();
-    default:
-      return state;
-  }
+type ConnectionStatus = {
+  status: string;
+  error?: string;
+  code?: string;
+  lastPong?: number;
+  connectError?: boolean;
 };
 
-const connectError = (state = null, action): string => {
-  switch (action.type) {
-    case CONNECT_ERROR:
-      return "Could not connect to server";
-    // if we received a join or a connect, we can clear it out
-    case JOINED_GAME:
-      return null;
-    case JOIN_ERROR:
-      return null;
-    default:
-      return state;
-  }
+const InitialConnectionStatus: ConnectionStatus = {
+  status: "disconnected",
 };
 
-const connecting = (state = false, action): boolean => {
+const connection = (
+  state = InitialConnectionStatus,
+  action
+): ConnectionStatus => {
   switch (action.type) {
     case SET_CONNECTING:
-      return action.connecting;
+      return {
+        ...state,
+        status: "connecting",
+      };
+    case CONNECT_ERROR:
+      return {
+        // if we received a join or a connect, we can clear it out
+        status: "error",
+        error: "Could not connect to server",
+        connectError: true,
+      };
+    case JOINED_GAME:
+      return {
+        status: "joined",
+        error: null,
+      };
+    case JOIN_ERROR:
+      return {
+        status: "error",
+        error: action.error,
+        code: action.code,
+      };
+    case RECEIVED_PONG:
+      return {
+        ...state,
+        lastPong: Date.now(),
+      };
+    case CONNECTED:
+      return {
+        ...state,
+        status: "connected",
+        error: null,
+      };
+    case CONNECTION_STATUS:
+      return {
+        ...state,
+        status: action.status,
+      };
     default:
       return state;
   }
@@ -145,10 +166,7 @@ const rootReducer = combineReducers({
   joinError,
   createError,
 
-  lastPongTime,
-  connectionStatus,
-  connecting,
-  connectError,
+  connection,
 });
 export default rootReducer;
 
