@@ -111,23 +111,43 @@
           ;; NOTE: this will block
           (is (false? (a/>!! bus "test message"))))))))
 
+(defn two-sided-stream
+  []
+  (let [client-stream (s/stream)
+        server-stream (s/stream)
+        to-client     (a/chan)
+        to-server     (a/chan)]
+    (s/connect
+     to-server
+     server-stream)
+    (s/connect
+     to-client
+     client-stream)
+    (s/connect
+     client-stream
+     to-server)
+    (s/connect
+     server-stream
+     to-client)
+    [client-stream server-stream]))
+
 (deftest created-game-can-be-joined
   (testing "After creating a game, another client can join"
-    (let [creator  (s/stream)
-          joiner   (s/stream)
-          params   {:name "creator"}
-          registry (atom {})
-          _        (create-game params creator {:registry registry})
-          response @(s/take! creator)
-          parsed   (proto/parse-message response)
-          code     (:room-code parsed)]
+    (let [[creator-c creator-s] (two-sided-stream)
+          [joiner-c joiner-s]   (two-sided-stream)
+          params                {:name "creator"}
+          registry              (atom {})
+          _                     (create-game params creator-s {:registry registry})
+          response              @(s/take! creator-c)
+          parsed                (proto/parse-message response)
+          code                  (:room-code parsed)]
       (is (= "joined" (:event parsed)))
       (when (= "joined" (:event parsed))
         (is (= :pending
-               (join joiner {:room-code code
-                             :name      "joiner"}
+               (join joiner-s {:room-code code
+                               :name      "joiner"}
                      {:registry registry})))
-        (let [join-response @(s/take! joiner)
+        (let [join-response @(s/take! joiner-c)
               parsed-join   (proto/parse-message join-response)
               players       (:players parsed-join)]
           (is (= "joined" (:event parsed-join)))
@@ -135,5 +155,5 @@
           (is (= code (:room-code parsed-join)))
           (is (= 2 (count players)))
           (is (= "joiner" (:name (nth players 1)))))
-        (s/close! creator)
-        (s/close! joiner)))))
+        (s/close! creator-s)
+        (s/close! joiner-s)))))
