@@ -47,6 +47,8 @@ export class JoinGame extends Component<JoinProps, JoinState> {
       playerName: window.localStorage.getItem("client-name"),
       roomCode: window.localStorage.getItem("room-code"),
     });
+    // This one is only valid once
+    window.localStorage.removeItem("room-code");
   }
 
   /* eslint-disable class-methods-use-this */
@@ -122,7 +124,7 @@ export class JoinGame extends Component<JoinProps, JoinState> {
 }
 
 const mapStateToProps = (state: RootState) => ({
-  joinError: state.connection.error || state.joinError,
+  joinError: state.joinError,
   connecting: state.connection.status === "connecting",
   creating: state.creatingGame,
 });

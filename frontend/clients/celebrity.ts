@@ -110,7 +110,7 @@ export default class CelebrityClient {
       try {
         await this.connect();
       } catch (err) {
-        this.dispatch(connectError(err));
+        this.dispatch(connectError());
       }
       this.dispatch(setConnecting(false));
     }

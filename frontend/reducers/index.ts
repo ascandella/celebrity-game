@@ -73,6 +73,8 @@ const joinError = (state = null, action): string => {
   switch (action.type) {
     case JOIN_ERROR:
       return action.error;
+    case CONNECT_ERROR:
+      return action.error;
     case JOINED_GAME:
       return null;
     case CREATING_GAME:
@@ -85,6 +87,8 @@ const joinError = (state = null, action): string => {
 const createError = (state = null, action): string => {
   switch (action.type) {
     case CREATE_ERROR:
+      return action.error;
+    case CONNECT_ERROR:
       return action.error;
     case JOINED_GAME:
       return null;
@@ -119,7 +123,7 @@ const connection = (
       return {
         // if we received a join or a connect, we can clear it out
         status: "error",
-        error: "Could not connect to server",
+        error: action.error,
         connectError: true,
       };
     case JOINED_GAME:
