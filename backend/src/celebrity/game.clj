@@ -136,7 +136,7 @@
           [msg channel] (a/alts! (vec (conj (:inputs state) timeout-ch client-in)))
           is-client-in  (identical? channel client-in)]
       (if (nil? msg)
-        ;; one of the channels was closed, see if it was a clietn that disconnected
+        ;; one of the channels was closed, see if it was a client that disconnected
         (let [new-state (disconnect-from-server channel state)]
           (if (empty? (:inputs new-state))
             (do
@@ -151,7 +151,7 @@
             (recur (try-join state msg)))
           (let [client-id (:id msg)
                 out-ch    (get-in state [:clients client-id])]
-            (log/info "Responding pong to " client-id)
+            (log/info "Responding pong to " client-id "for message " msg)
             (a/>! out-ch {:event "pong" :pong true :client-id client-id})
             (recur state)))))))
 

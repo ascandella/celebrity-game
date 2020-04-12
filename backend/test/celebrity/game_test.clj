@@ -123,17 +123,18 @@
           parsed   (proto/parse-message response)
           code     (:room-code parsed)]
       (is (= "joined" (:event parsed)))
-      (is (= :pending
-             (join joiner {:room-code code
-                           :name "joiner"}
-                   {:registry registry})))
-      (let [join-response @(s/take! joiner)
-            parsed-join   (proto/parse-message join-response)
-            players       (:players parsed-join)]
-        (is (= "joined" (:event parsed-join)))
-        (is (= "joiner" (:name parsed-join)))
-        (is (= code (:room-code parsed-join)))
-        (is (= 2 (count players)))
-        (is (= "joiner" (:name (nth players 1)))))
-      (s/close! creator)
-      (s/close! joiner))))
+      (when (= "joined" (:event parsed))
+        (is (= :pending
+               (join joiner {:room-code code
+                             :name      "joiner"}
+                     {:registry registry})))
+        (let [join-response @(s/take! joiner)
+              parsed-join   (proto/parse-message join-response)
+              players       (:players parsed-join)]
+          (is (= "joined" (:event parsed-join)))
+          (is (= "joiner" (:name parsed-join)))
+          (is (= code (:room-code parsed-join)))
+          (is (= 2 (count players)))
+          (is (= "joiner" (:name (nth players 1)))))
+        (s/close! creator)
+        (s/close! joiner))))))
