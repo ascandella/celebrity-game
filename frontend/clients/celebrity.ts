@@ -1,4 +1,4 @@
-import { Dispatch, Store } from "redux";
+import { Dispatch } from "redux";
 import { JoinGameRequest, CreateGameRequest } from "./messages";
 import {
   connectionStatus,
