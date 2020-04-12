@@ -92,7 +92,7 @@ export default class CelebrityClient {
       ) {
         this.store.dispatch(connectionStatus("pong-timeout"));
       } else {
-        this.store.dispatch(connectionStatus("pong-ok"));
+        this.store.dispatch(connectionStatus("connected"));
       }
     }
     this.sendCommand("ping", {});

@@ -68,9 +68,9 @@ export const setConnecting = (connecting: boolean) => ({
   connecting,
 });
 
-export const connectError = (event) => ({
+export const connectError = (error: Error) => ({
   type: CONNECT_ERROR,
-  ...event,
+  error,
 });
 
 // export const joinGame = (request: JoinGameRequest) => {
