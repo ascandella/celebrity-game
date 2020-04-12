@@ -42,7 +42,7 @@
         (is (not (nil? code)))
         (is (= (:name json-response) "aiden"))
         (is (contains? @registry code))
-        (is @(s/put! client "{\"ping\" true}"))
+        (is @(proto/respond-json client {:ping true}))
 
         (let [ping-response @(s/take! client)
               result-parsed (proto/parse-message ping-response)]
@@ -94,22 +94,28 @@
       (is (nil? join-error))
       (is (= join-uuid client-id)))))
 
-(deftest client-last-player
-  (testing "We cull old games when the last client disconnects"
+(deftest client-disconnect-reconnect
+  (testing "We can reconnect if we disconnect"
     (let [client   (s/stream)
-          params   {}
+          name     "spotty-connection"
+          params   {:name name}
           registry (atom {})
           created  (create-game params client {:registry registry})
           response @(s/take! client)
           parsed   (proto/parse-message response)]
       (is (= :pending created))
       (s/close! client)
-      (Thread/sleep 50)
-      ;; either the game is deregistered, or the server conn should be closed
-      (when-let [game-state (get @registry (:room-code parsed))]
-        (let [bus (:bus game-state)]
-          ;; NOTE: this will block
-          (is (false? (a/>!! bus "test message"))))))))
+      (let [new-conn (s/stream)
+            rejoin (join new-conn {:name name
+                                   :client-id (:client-id parsed)
+                                   :room-code (:room-code parsed)}
+                         {:registry registry})
+            rejoin-response @(s/take! new-conn)
+            rejoin-json (proto/parse-message rejoin-response)]
+        (is (= :pending rejoin))
+        (is (nil? (:error rejoin-json)))
+        (is (= "joined" (:event rejoin-json)))
+        (is (= 1 (count (:players rejoin-json))))))))
 
 (deftest created-game-can-be-joined
   (testing "After creating a game, another client can join"
