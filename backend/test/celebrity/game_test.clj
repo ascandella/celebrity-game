@@ -44,7 +44,7 @@
         (is (contains? @registry code))
         (is @(s/put! client "{\"ping\" true}"))
 
-        (let [ping-response @(s/try-take! client 500)
+        (let [ping-response @(s/take! client)
               result-parsed (proto/parse-message ping-response)]
           (is (:pong result-parsed))
           (is (> (count (:client-id result-parsed)) 20)))))))
@@ -122,7 +122,6 @@
           response @(s/take! creator)
           parsed   (proto/parse-message response)
           code     (:room-code parsed)]
-      (is (:success parsed))
       (is (= "joined" (:event parsed)))
       (is (= :pending
              (join joiner {:room-code code

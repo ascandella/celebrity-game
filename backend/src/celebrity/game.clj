@@ -151,6 +151,7 @@
             (recur (try-join state msg)))
           (let [client-id (:id msg)
                 out-ch    (get-in state [:clients client-id])]
+            (log/info "Responding pong to " client-id)
             (a/>! out-ch {:event "pong" :pong true :client-id client-id})
             (recur state)))))))
 
