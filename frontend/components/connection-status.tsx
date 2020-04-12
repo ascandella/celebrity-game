@@ -11,6 +11,7 @@ const StatusBanner = styled.div.attrs({
 
 type ConnectionStatusProps = {
   connectionStatus: string;
+  inGame: boolean;
   lastPongTime: number;
 };
 
@@ -26,8 +27,9 @@ const getConnectionStatus = (status: string): string => {
 
 const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
   connectionStatus,
+  inGame,
 }: ConnectionStatusProps) => {
-  if (!connectionStatus) {
+  if (!connectionStatus || !inGame) {
     return null;
   }
   return <StatusBanner>{connectionStatus}</StatusBanner>;
@@ -36,6 +38,7 @@ const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
 const mapStateToProps = (state: RootState) => ({
   connectionStatus: getConnectionStatus(state.connectionStatus),
   lastPongTime: state.lastPongTime,
+  inGame: state.inGame,
 });
 
 export default connect(mapStateToProps)(ConnectionStatus);

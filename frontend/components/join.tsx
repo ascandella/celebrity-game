@@ -16,6 +16,7 @@ type JoinProps = {
   joinGame: (req: JoinGameRequest) => void;
   joinError: string;
   connecting: boolean;
+  creating: boolean;
 };
 
 type JoinState = {
@@ -66,6 +67,9 @@ export class JoinGame extends Component<JoinProps, JoinState> {
   }
 
   render(): React.ReactNode {
+    if (this.props.creating) {
+      return null;
+    }
     return (
       <FormWrapper>
         <form
@@ -120,6 +124,7 @@ export class JoinGame extends Component<JoinProps, JoinState> {
 const mapStateToProps = (state: RootState) => ({
   joinError: state.connectError || state.joinError,
   connecting: state.connecting,
+  creating: state.creatingGame,
 });
 
 export default connect(mapStateToProps)(JoinGame);

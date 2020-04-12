@@ -36,13 +36,13 @@
           val      (create-game params client {:registry registry})]
       (is (= val :pending))
       ;; this should succeed because the server is listening
-      (let [create-response @(s/try-take! client 500)
+      (let [create-response @(s/take! client)
             json-response   (proto/parse-message create-response)
             code            (:room-code json-response)]
         (is (not (nil? code)))
         (is (= (:name json-response) "aiden"))
         (is (contains? @registry code))
-        (is @(s/try-put! client "{\"ping\" true}" 500))
+        (is @(s/put! client "{\"ping\" true}"))
 
         (let [ping-response @(s/try-take! client 500)
               result-parsed (proto/parse-message ping-response)]
@@ -119,7 +119,7 @@
           params   {:name "creator"}
           registry (atom {})
           _        (create-game params creator {:registry registry})
-          response @(s/try-take! creator 500)
+          response @(s/take! creator)
           parsed   (proto/parse-message response)
           code     (:room-code parsed)]
       (is (= :pending
