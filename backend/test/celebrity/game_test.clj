@@ -122,6 +122,8 @@
           response @(s/take! creator)
           parsed   (proto/parse-message response)
           code     (:room-code parsed)]
+      (is (:success parsed))
+      (is (= "joined" (:event parsed)))
       (is (= :pending
              (join joiner {:room-code code
                            :name "joiner"}
@@ -129,7 +131,7 @@
       (let [join-response @(s/take! joiner)
             parsed-join   (proto/parse-message join-response)
             players       (:players parsed-join)]
-        (is (:success parsed-join))
+        (is (= "joined" (:event parsed-join)))
         (is (= "joiner" (:name parsed-join)))
         (is (= code (:room-code parsed-join)))
         (is (= 2 (count players)))
