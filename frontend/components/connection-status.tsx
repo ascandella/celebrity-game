@@ -29,7 +29,7 @@ const messages = {
 const pingTime = 10000;
 
 const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
-  connectionStatus,
+  status,
   inGame,
   client,
   lastPongTime,
@@ -37,7 +37,7 @@ const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
 }: ConnectionStatusProps) => {
   useEffect(() => {
     if (!inGame) {
-      return;
+      return null;
     }
 
     let lastPingSent: number;
@@ -60,7 +60,7 @@ const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
 
   // TODO try to reconnect to server on pong-timeout
 
-  const connectionStatusMessage = messages[connectionStatus];
+  const connectionStatusMessage = messages[status];
   if (!connectionStatusMessage || !inGame) {
     return null;
   }
@@ -68,7 +68,7 @@ const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
 };
 
 const mapStateToProps = (state: RootState) => ({
-  connectionStatus: state.connection.status,
+  status: state.connection.status,
   lastPongTime: state.connection.lastPong,
   inGame: state.inGame,
 });
