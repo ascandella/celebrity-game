@@ -83,23 +83,10 @@ export const connected = () => ({
   type: CONNECTED,
 });
 
-// export const joinGame = (request: JoinGameRequest) => {
-//   // TODO
-//   return function (dispatch: Dispatch) {};
-// };
-
 export const joinError = (event: GameEvent) => ({
   type: JOIN_ERROR,
   ...event,
 });
-
-// const joinGame = (data) => {
-//   return async(dispatch, getState) => {
-//     // check if connected, if not register dispatch to the wsclient
-//     const isConnected = getState().isConnected;
-
-//   }
-// }
 
 export const receivedMessage = (event: GameEvent) => {
   /* eslint-disable default-case */
