@@ -3,6 +3,7 @@ import { connect } from "react-redux";
 import styled from "styled-components";
 import ConnectionStatus from "./connection-status";
 import { RootState } from "../reducers";
+import CelebrityClient from "../clients/celebrity";
 
 type player = {
   id: string;
@@ -14,6 +15,7 @@ type GameProps = {
   gameCode: string;
   playerName: string;
   inGame: boolean;
+  client: CelebrityClient;
 };
 
 const GameHeader = styled.div.attrs({
@@ -24,6 +26,7 @@ const Game: FunctionComponent<GameProps> = ({
   players,
   gameCode,
   inGame,
+  client,
 }: GameProps) => {
   if (!inGame) {
     return null;
@@ -31,7 +34,7 @@ const Game: FunctionComponent<GameProps> = ({
   return (
     <GameHeader>
       <div>{gameCode}</div>
-      <ConnectionStatus />
+      <ConnectionStatus client={client} />
 
       <div>
         <h2>Players</h2>

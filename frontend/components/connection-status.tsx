@@ -1,7 +1,10 @@
-import React, { FunctionComponent } from "react";
+import React, { FunctionComponent, useEffect } from "react";
+import { Dispatch } from "redux";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import { RootState } from "../reducers";
+import CelebrityClient from "../clients/celebrity";
+import { connectionStatus } from "../actions";
 
 const StatusBanner = styled.div.attrs({
   className:
@@ -13,6 +16,8 @@ type ConnectionStatusProps = {
   connectionStatus: string;
   inGame: boolean;
   lastPongTime: number;
+  client: CelebrityClient;
+  pongTimeout: () => void;
 };
 
 const messages = {
@@ -21,20 +26,55 @@ const messages = {
   closed: "Connection lost",
 };
 
+const pingTime = 10000;
+
 const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
   connectionStatus,
   inGame,
+  client,
+  lastPongTime,
+  pongTimeout,
 }: ConnectionStatusProps) => {
-  if (!connectionStatus || !inGame) {
+  useEffect(() => {
+    if (!inGame) {
+      return;
+    }
+
+    let lastPingSent: number;
+
+    const pingInterval = window.setInterval(() => {
+      lastPingSent = Date.now();
+      client.sendCommand("ping", {});
+      if (
+        (lastPingSent && !lastPongTime) ||
+        lastPingSent - lastPongTime > pingTime + 1000
+      ) {
+        pongTimeout();
+      }
+    }, pingTime);
+
+    return () => {
+      window.clearInterval(pingInterval);
+    };
+  });
+
+  // TODO try to reconnect to server on pong-timeout
+
+  const connectionStatusMessage = messages[connectionStatus];
+  if (!connectionStatusMessage || !inGame) {
     return null;
   }
-  return <StatusBanner>{connectionStatus}</StatusBanner>;
+  return <StatusBanner>{connectionStatusMessage}</StatusBanner>;
 };
 
 const mapStateToProps = (state: RootState) => ({
-  connectionStatus: messages[state.connection.status],
+  connectionStatus: state.connection.status,
   lastPongTime: state.connection.lastPong,
   inGame: state.inGame,
 });
 
-export default connect(mapStateToProps)(ConnectionStatus);
+const mapDispatchToProps = (dispatch: Dispatch) => ({
+  pongTimeout: () => dispatch(connectionStatus("pong-timeout")),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(ConnectionStatus);

@@ -11,18 +11,10 @@ function getGameURL(): string {
   return `${process.env.apiBase}/game`;
 }
 
-const pingTime = 10000;
-
 export default class CelebrityClient {
   connected = false;
 
   wsClient: WebSocket;
-
-  pingInterval: number;
-
-  lastPingSent: number;
-
-  lastPongReceived: number;
 
   dispatch: Dispatch;
 
@@ -39,19 +31,16 @@ export default class CelebrityClient {
       this.wsClient = new WebSocket(getGameURL());
       this.wsClient.addEventListener("close", () => {
         this.connected = false;
-        this.dispatch(connectionStatus("closed"));
-        if (this.pingInterval) {
-          window.clearInterval(this.pingInterval);
-        }
-        // TODO: try to reconnect after a backoff
+        // wait 50ms so the connection status doesn't flicker
+        // when reloading the page
+        setTimeout(() => {
+          this.dispatch(connectionStatus("closed"));
+        }, 50);
       });
 
       this.wsClient.addEventListener("error", () => {
         reject(new Error("Unable to connect to server"));
         this.dispatch(connectionStatus("error"));
-        if (this.pingInterval) {
-          window.clearTimeout(this.pingInterval);
-        }
       });
 
       this.wsClient.addEventListener("message", (event) => {
@@ -81,21 +70,6 @@ export default class CelebrityClient {
     }
   }
 
-  ping(): void {
-    if (this.lastPingSent) {
-      if (
-        !this.lastPongReceived ||
-        this.lastPingSent - this.lastPongReceived > pingTime
-      ) {
-        this.dispatch(connectionStatus("pong-timeout"));
-      } else {
-        this.dispatch(connectionStatus("connected"));
-      }
-    }
-    this.sendCommand("ping", {});
-    this.lastPingSent = Date.now();
-  }
-
   close(): void {
     this.wsClient.close();
     this.connected = false;
@@ -121,14 +95,6 @@ export default class CelebrityClient {
         command,
       })
     );
-  }
-
-  joinedGame(): void {
-    // TODO: move this to the connection tatus component
-    //
-    // Start a healthcheck, so we can display a UI element
-    // if we detect requests failing.
-    this.pingInterval = window.setInterval(() => this.ping(), pingTime);
   }
 
   joinGame({ userName, roomCode, clientID }: JoinGameRequest): void {

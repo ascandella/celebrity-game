@@ -128,8 +128,11 @@ const connection = (
       };
     case JOINED_GAME:
       return {
+        ...state,
         status: "joined",
         error: null,
+        connectError: false,
+        lastPong: Date.now(),
       };
     case JOIN_ERROR:
       return {

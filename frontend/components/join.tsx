@@ -43,9 +43,9 @@ export class JoinGame extends Component<JoinProps, JoinState> {
 
   componentDidMount(): void {
     this.setState({
-      clientID: window.localStorage.getItem("client-id"),
-      playerName: window.localStorage.getItem("client-name"),
-      roomCode: window.localStorage.getItem("room-code"),
+      clientID: window.localStorage.getItem("client-id") || null,
+      playerName: window.localStorage.getItem("client-name") || "",
+      roomCode: window.localStorage.getItem("room-code") || "",
     });
     // This one is only valid once
     window.localStorage.removeItem("room-code");

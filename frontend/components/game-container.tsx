@@ -66,7 +66,7 @@ const GameContainer: FunctionComponent<GameContainerProps> = ({
 }: GameContainerProps) => (
   <ContentWrapper>
     <JoinOrCreateContainer client={client} />
-    <Game />
+    <Game client={client} />
   </ContentWrapper>
 );
 
