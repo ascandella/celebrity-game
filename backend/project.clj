@@ -17,6 +17,8 @@
 
   :target-path "target/%s"
 
+  :plugins [[jonase/eastwood "0.3.11"]]
+
   :profiles
   {:uberjar {:aot :all}
    :test {:dependencies [[ring/ring-mock "0.4.0"]]}})

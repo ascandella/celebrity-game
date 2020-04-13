@@ -26,6 +26,11 @@ jobs:
           cd backend
           lein test
 
+      - name: Run Eastwood linter
+        run: |
+          cd backend
+          lein with-profile test eastwood
+
   frontend-tests:
     runs-on: ubuntu-latest
     steps:
