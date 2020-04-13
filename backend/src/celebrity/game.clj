@@ -2,6 +2,7 @@
   (:require [taoensso.timbre :as log]
             [celebrity.protocol :as proto]
             [clojure.core.async :as a]
+            [clojure.string]
             [manifold.stream :as s]))
 
 (def room-code-length 4)
@@ -10,10 +11,10 @@
   "Generates an alphabet-only code"
   ([] (generate-room-code room-code-length))
   ([len]
-    (apply str (take len (repeatedly #(char (+ (rand 26) 65)))))))
+    (clojure.string/join (repeatedly len #(char (+ (rand 26) 65))))))
 
 (defn generate-uuid []
-  (.toString (java.util.UUID/randomUUID)))
+  (str (java.util.UUID/randomUUID)))
 
 (defn connect-client-to-game
   [join-data client game-bus]
@@ -120,8 +121,7 @@
 (defn disconnect-from-server
   [in-ch state]
   (log/info "Disconnecting client from server")
-  (-> state
-      (update-in [:inputs] disj in-ch)))
+  (update-in state [:inputs] disj in-ch))
 
 (defn broadcast-state
   [{:keys [clients room-code players]}]

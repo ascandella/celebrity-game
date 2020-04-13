@@ -17,13 +17,11 @@
 
 (defn game-handler
   [req]
-  (->
-   (d/let-flow
-    [conn (http/websocket-connection req)]
-    (connect/handle-connect conn))
-   (d/catch
-       (fn [_]
-         non-websocket-request))))
+  (d/catch
+      (d/let-flow
+       [conn (http/websocket-connection req)]
+       (connect/handle-connect conn))
+      (fn [_] non-websocket-request)))
 
 (defn health-handler
   [req]

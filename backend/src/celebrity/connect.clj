@@ -23,7 +23,7 @@
         ;; the creation had some sort of immediate error
         (proto/respond-message stream response))
       (proto/respond-error stream "Unable to create game"))
-    (proto/respond-error "Invalid request")))
+    (proto/respond-error stream "Invalid request")))
 
 (def command-map
   {"join"   handle-join
