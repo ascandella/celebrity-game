@@ -17,7 +17,8 @@
 
   :target-path "target/%s"
 
-  :plugins [[jonase/eastwood "0.3.11"]]
+  :plugins [[jonase/eastwood "0.3.11"]
+            [lein-kibit "0.1.5"]]
 
   :profiles
   {:uberjar {:aot :all}
