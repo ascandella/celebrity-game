@@ -13,7 +13,7 @@ const StatusBanner = styled.div.attrs({
 })``;
 
 type ConnectionStatusProps = {
-  connectionStatus: string;
+  status: string;
   inGame: boolean;
   lastPongTime: number;
   client: CelebrityClient;
