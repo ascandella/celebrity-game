@@ -58,11 +58,15 @@
         (is (not (nil? code)))
         (is (= (:name json-response) "aiden"))
         (is (contains? @registry code))
+        (is @(proto/respond-json client {:pong true}))
 
         (let [broadcast-response @(s/take! client)
-              result-parsed (proto/parse-message broadcast-response)]
+              result-parsed (proto/parse-message broadcast-response)
+              ping-response @(s/take! client)
+              ping-parsed (proto/parse-message ping-response)]
           (is (= "broadcast" (:event result-parsed)))
-          (is (> (count (:client-id result-parsed)) 20)))))))
+          (is (> (count (:client-id result-parsed)) 20))
+          (is (= "pong" (:event ping-parsed))))))))
 
 (deftest join-game-does-not-exist
   (testing "try to join a game that doesn't exist"
