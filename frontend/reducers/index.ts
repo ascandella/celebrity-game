@@ -1,6 +1,5 @@
 import { combineReducers } from "redux";
 import {
-  UPDATE_PLAYERS,
   CONNECTION_STATUS,
   JOINED_GAME,
   CREATING_GAME,
@@ -10,12 +9,13 @@ import {
   SET_CONNECTING,
   CONNECTED,
   CONNECT_ERROR,
+  BROADCAST,
 } from "../actions";
 
 // TODO make a type for players?
 const players = (state = [], action): any[] => {
   switch (action.type) {
-    case UPDATE_PLAYERS:
+    case BROADCAST:
       return action.players;
     case JOINED_GAME:
       return action.players;

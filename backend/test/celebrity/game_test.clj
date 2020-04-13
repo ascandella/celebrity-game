@@ -2,10 +2,26 @@
   (:require [celebrity.game :refer :all]
             [celebrity.protocol :as proto]
             [clojure.test :refer :all]
-            [clojure.core.async :as a]
             [clojure.string :as string]
-            [manifold.deferred :as d]
             [manifold.stream :as s]))
+
+(defn two-sided-stream
+  []
+  (let [client-to-server (s/stream)
+        server-to-client (s/stream)]
+
+    [(s/splice (s/sink-only server-to-client) (s/source-only client-to-server))
+     (s/splice (s/sink-only client-to-server) (s/source-only server-to-client))]))
+
+(deftest two-sided-stream-is-ok
+  (testing "Two sided stream won't read your own writes"
+    (let [[client server] (two-sided-stream)]
+      (s/put! client "hello")
+      (is (nil? @(s/try-take! client 100)))
+      (is (= "hello" @(s/try-take! server 100)))
+      (s/put! server "response")
+      (is (nil? @(s/try-take! server 100)))
+      (is (= "response" @(s/try-take! client 100))))))
 
 (deftest generate-code-no-args
   (testing "generate room code with no arguments"
@@ -29,11 +45,11 @@
 
 (deftest create-game-connects-client
   (testing "we can create a new game"
-    (let [client   (s/stream)
+    (let [[client server] (two-sided-stream)
           params   {:name   "aiden"
                     :config {:foo "bar"}}
           registry (atom {})
-          val      (create-game params client {:registry registry})]
+          val      (create-game params server {:registry registry})]
       (is (= val :pending))
       ;; this should succeed because the server is listening
       (let [create-response @(s/take! client)
@@ -42,11 +58,10 @@
         (is (not (nil? code)))
         (is (= (:name json-response) "aiden"))
         (is (contains? @registry code))
-        (is @(proto/respond-json client {:ping true}))
 
-        (let [ping-response @(s/take! client)
-              result-parsed (proto/parse-message ping-response)]
-          (is (:pong result-parsed))
+        (let [broadcast-response @(s/take! client)
+              result-parsed (proto/parse-message broadcast-response)]
+          (is (= "broadcast" (:event result-parsed)))
           (is (> (count (:client-id result-parsed)) 20)))))))
 
 (deftest join-game-does-not-exist
@@ -93,24 +108,6 @@
           [join-uuid join-error] (try-rejoin client-id name players)]
       (is (nil? join-error))
       (is (= join-uuid client-id)))))
-
-(defn two-sided-stream
-  []
-  (let [client-to-server (s/stream)
-        server-to-client (s/stream)]
-
-    [(s/splice (s/sink-only server-to-client) (s/source-only client-to-server))
-     (s/splice (s/sink-only client-to-server) (s/source-only server-to-client))]))
-
-(deftest two-sided-stream-is-ok
-  (testing "Two sided stream won't read your own writes"
-    (let [[client server] (two-sided-stream)]
-      (s/put! client "hello")
-      (is (nil? @(s/try-take! client 100)))
-      (is (= "hello" @(s/try-take! server 100)))
-      (s/put! server "response")
-      (is (nil? @(s/try-take! server 100)))
-      (is (= "response" @(s/try-take! client 100))))))
 
 (deftest client-disconnect-reconnect
   (testing "We can reconnect if we disconnect"
