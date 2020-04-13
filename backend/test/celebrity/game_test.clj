@@ -58,12 +58,13 @@
         (is (not (nil? code)))
         (is (= (:name json-response) "aiden"))
         (is (contains? @registry code))
-        (is @(proto/respond-json client {:pong true}))
 
         (let [broadcast-response @(s/take! client)
               result-parsed (proto/parse-message broadcast-response)
+              pong-success @(proto/respond-json client {:pong true})
               ping-response @(s/take! client)
               ping-parsed (proto/parse-message ping-response)]
+          (is pong-success)
           (is (= "broadcast" (:event result-parsed)))
           (is (> (count (:client-id result-parsed)) 20))
           (is (= "pong" (:event ping-parsed))))))))
