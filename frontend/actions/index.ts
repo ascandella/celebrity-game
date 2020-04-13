@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { GameEvent } from "../clients/messages";
 
-export const UPDATE_PLAYERS = "UPDATE_PLAYERS";
 export const CONNECTION_STATUS = "CONNECTION_STATUS";
 export const GAME_CODE = "GAME_CODE";
 export const PLAYER_NAME = "PLAYER_NAME";
@@ -14,11 +13,7 @@ export const CREATE_ERROR = "CREATE_ERROR";
 export const SET_CONNECTING = "SET_CONNECTING";
 export const CONNECT_ERROR = "CONNECT_ERROR";
 export const CONNECTED = "CONNECTED";
-
-export const updatePlayers = (players) => ({
-  type: UPDATE_PLAYERS,
-  players,
-});
+export const BROADCAST = "BROADCAST";
 
 export const connectionStatus = (status) => ({
   type: CONNECTION_STATUS,
@@ -52,6 +47,16 @@ export const joinedGame = (event) => {
 
   return {
     type: JOINED_GAME,
+    roomCode: event.roomCode,
+    playerName: event.name,
+    clientID: event.clientId,
+    players: event.players,
+  };
+};
+
+export const broadcast = (event) => {
+  return {
+    type: BROADCAST,
     roomCode: event.roomCode,
     playerName: event.name,
     clientID: event.clientId,
@@ -105,6 +110,8 @@ export const receivedMessage = (event: GameEvent) => {
       };
     case "join-error":
       return joinError(event);
+    case "broadcast":
+      return broadcast(event);
     case "joined":
       return joinedGame(event);
     default:

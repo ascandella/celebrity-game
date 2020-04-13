@@ -100,18 +100,17 @@
       (proto/respond-message ch (assoc join-error :event "join-error"))
       (let [[input output] (create-client-channel ch client-id')
             players'       (add-player players {:id client-id' :name name})]
-        (do
-          (proto/respond-message ch {:room-code code
-                                     :event     "joined"
-                                     :success   true
-                                     :client-id client-id'
-                                     :players   players'
-                                     :name      name})
-
-          (-> state
-              (assoc :players players')
-              (assoc-in [:clients client-id'] output)
-              (update :inputs conj input)))))))
+        (proto/respond-message ch {:room-code code
+                                   :event     "joined"
+                                   :success   true
+                                   :client-id client-id'
+                                   :players   players'
+                                   :name      name})
+        (-> state
+            (assoc :players players')
+            (assoc-in [:clients client-id'] {:output output
+                                             :name   name})
+            (update :inputs conj input))))))
 
 (defn deregister-server
   [code registry]
@@ -124,14 +123,25 @@
   (-> state
       (update-in [:inputs] disj in-ch)))
 
+(defn broadcast-state
+  [{:keys [clients room-code players]}]
+  (a/go
+    (doseq [[client-id {:keys [name output]}] clients]
+      (a/>! output {:client-id client-id
+                    :players   players
+                    :event     "broadcast"
+                    :name      name
+                    :room-code room-code}))))
+
 ;; TODO increase this, maybe 5 minutes?
 (def server-timeout-after 60000)
 
 (defn game-state-machine
   [code client-in game-config deregister]
-  (a/go-loop [state {:inputs  #{}
-                     :players []
-                     :config  game-config}]
+  (a/go-loop [state {:inputs    #{}
+                     :players   []
+                     :room-code code
+                     :config    game-config}]
     ;; wait for messages from clients connecting, clients sending message, or a
     ;; timeout indicating nobody is here anymore
     (let [timeout-ch    (a/timeout server-timeout-after)
@@ -146,13 +156,17 @@
           (recur (disconnect-from-server channel state))
           ;; we received a message on one of the channels
           (if (identical? channel client-in)
-            (do
+            (let [new-state (try-join state msg)]
               (log/info "Received client connection: " (dissoc msg :ch))
-              (recur (try-join state msg)))
+              ;; let clients know a new player has joined
+              (broadcast-state new-state)
+              (recur new-state))
             (let [client-id (:id msg)
-                  out-ch    (get-in state [:clients client-id])]
-              (log/info "Responding pong to " client-id "for message " msg)
-              (a/>! out-ch {:event "pong" :pong true :client-id client-id})
+                  {:keys [name output]}    (get-in state [:clients client-id])]
+              (log/info "Responding pong to " client-id ": " name " for message " msg)
+              (a/>! output {:event "pong"
+                            :pong true
+                            :client-id client-id})
               (recur state))))))))
 
 (defn validate-params
