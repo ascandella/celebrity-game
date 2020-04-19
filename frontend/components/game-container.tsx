@@ -28,6 +28,18 @@ const JoinOrCreate: FunctionComponent<JoinOrCreateProps> = ({
   return (
     <div>
       <div className="flex justify-center">
+        <div role="alert" className="mb-4">
+          <div className="bg-orange-500 text-white font-bold px-4 py-2">
+            Under Development
+          </div>
+          <div className="border border-t-0 border-orange-400 bg-yellow-100 px-4 py-2 text-orange-700">
+            <p className="pt-0">
+              This game is still being developed and does not fully work yet.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="flex justify-center">
         <JoinGame joinGame={client.joinGame.bind(client)} />
         <CreateGame createGame={client.createGame.bind(client)} />
       </div>
