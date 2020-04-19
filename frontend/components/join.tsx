@@ -68,6 +68,12 @@ export class JoinGame extends Component<JoinProps, JoinState> {
     });
   }
 
+  focusCode(component: HTMLInputElement): void {
+    if (component) {
+      component.focus();
+    }
+  }
+
   render(): React.ReactNode {
     if (this.props.creating) {
       return null;
@@ -76,7 +82,7 @@ export class JoinGame extends Component<JoinProps, JoinState> {
       <FormWrapper>
         <form
           onSubmit={this.handleSubmit.bind(this)}
-          className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+          className="bg-white shadow-md px-8 pt-6 pb-8 mb-4"
         >
           <div className="mb-4">
             <FormLabel>
@@ -84,7 +90,7 @@ export class JoinGame extends Component<JoinProps, JoinState> {
               <FormInput
                 type="text"
                 value={this.state.roomCode}
-                autoFocus
+                ref={this.focusCode}
                 required
                 tabIndex={1}
                 maxLength={this.props.maxCodeLength}

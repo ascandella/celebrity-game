@@ -11,7 +11,7 @@ export const FormLabel = styled.label.attrs<FormClassAttrs>({
 
 export const FormInput = styled.input.attrs<FormClassAttrs>({
   className:
-    "bg-white focus:outline-none focus:shadow-outline border border-gray-300 rounded-lg py-2 px-4 block w-full appearance-none leading-normal9",
+    "bg-white focus:outline-none focus:shadow-outline border border-gray-300 rounded-sm py-2 px-4 block w-full appearance-none leading-normal9",
 })``;
 
 type FormErrorProps = {
@@ -27,7 +27,7 @@ export const FormError: FunctionComponent<FormErrorProps> = ({
   return (
     <div className="flex justify-center mb-4">
       <div
-        className="bg-red-100 border border-red-400 text-red-700 p-2 rounded relative"
+        className="bg-red-100 border border-red-400 text-red-700 p-2 relative"
         role="alert"
       >
         <span className="block sm:inline">{error}</span>
@@ -47,7 +47,7 @@ interface StyledButtonProps {
 
 const StyledButton = styled.input.attrs<StyledButtonProps>({
   className:
-    "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 cursor-pointer rounded focus:outline-none focus:shadow-outline",
+    "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 cursor-pointer focus:outline-none focus:shadow-outline",
 })``;
 
 export const SubmitButton: FunctionComponent<SubmitButtonProps> = ({
