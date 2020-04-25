@@ -88,6 +88,11 @@ export const joinError = (event: GameEvent) => ({
   ...event,
 });
 
+export const createError = (event: GameEvent) => ({
+  type: CREATE_ERROR,
+  ...event,
+});
+
 export const receivedMessage = (event: GameEvent) => {
   /* eslint-disable default-case */
   switch (event.event) {
@@ -97,6 +102,8 @@ export const receivedMessage = (event: GameEvent) => {
       };
     case "join-error":
       return joinError(event);
+    case "create-error":
+      return createError(event);
     case "broadcast":
       return broadcast(event);
     case "joined":

@@ -170,9 +170,12 @@
               (recur state))))))))
 
 (defn validate-params
-  [params]
-  ;; TODO
-  nil)
+  [{:keys [teams] :as params}]
+  (if (< (count teams) 2)
+    {:error "Need at least two teams"}
+    (if (not (= (count teams) (count (distinct teams))))
+      {:error "Duplicate team names"}
+      nil)))
 
 (defn create-game
   "Creates a new game, returns a game code"
@@ -182,7 +185,7 @@
   (if-let [error (validate-params params)]
     (do
       (log/info "Param validation failed on " params " : " error)
-      error)
+      (assoc error :event "create-error"))
     (loop [count 0]
       (if (> count max-create-retries)
         ;; return nil if we can't get it in 10 tries to avoid an infinite loop

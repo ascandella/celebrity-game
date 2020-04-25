@@ -35,19 +35,35 @@
          (count (generate-room-code 10))
          10))))
 
+
+(def default-game-params
+  {:teams ["guys" "girls"]
+   :name  "my-name"})
+
+(defn make-create-params
+  [params]
+  (merge default-game-params params))
+
 (deftest create-game-gives-up
   (testing "no infinite loop if codes never change"
-    (let [registry (atom {"KEY" true})
-          params {}
-          game-data (create-game params "sentinel-stream" {:registry registry
+    (let [registry  (atom {"KEY" true})
+          params    default-game-params
+          game-data (create-game params "sentinel-stream" {:registry       registry
                                                            :code-generator #(str "KEY")})]
       (is (nil? game-data)))))
+
+(deftest create-game-validates-params
+  (testing "we return validation errors from create"
+    (let [registry  (atom {"KEY" true})
+          params    {:teams [] :name "my-name"}
+          game-data (create-game params "sentinel-stream" {:registry registry})]
+      (is (= (:event game-data) "create-error")))))
 
 (deftest create-game-connects-client
   (testing "we can create a new game"
     (let [[client server] (two-sided-stream)
-          params   {:name   "aiden"
-                    :config {:foo "bar"}}
+          params   (make-create-params {:name   "aiden"
+                                        :config {:foo "bar"}})
           registry (atom {})
           val      (create-game params server {:registry registry})]
       (is (= val :pending))
@@ -118,7 +134,7 @@
   (testing "We can reconnect if we disconnect"
     (let [[client server] (two-sided-stream)
           name            "spotty-connection"
-          params          {:name name}
+          params          (make-create-params {:name name})
           registry        (atom {})
           created         (create-game params server {:registry registry})
           response        @(s/take! client)
@@ -141,7 +157,7 @@
   (testing "After creating a game, another client can join"
     (let [[creator-c creator-s] (two-sided-stream)
           [joiner-c joiner-s]   (two-sided-stream)
-          params                {:name "creator"}
+          params                (make-create-params {:name "creator"})
           registry              (atom {})
           _                     (create-game params creator-s {:registry registry})
           response              @(s/take! creator-c)
@@ -163,3 +179,18 @@
           (is (= "joiner" (:name (nth players 1)))))
         (s/close! creator-s)
         (s/close! joiner-s)))))
+
+(deftest validate-params-detects-duplicates
+  (testing "Validate game params detects duplicates"
+    (let [error (validate-params {:teams ["dup" "dup"]})]
+      (is (= (:error error) "Duplicate team names")))))
+
+(deftest validate-params-ok
+  (testing "Validate game params with OK params"
+    (let [params {:teams ["a" "b"]}]
+      (is (nil? (validate-params params))))))
+
+(deftest validate-params-one-team
+  (testing "Validate game params with 1 team fails"
+    (let [params {:teams ["a"]}]
+      (is (not (nil? (validate-params params)))))))

@@ -77,6 +77,9 @@ class CreateGame extends Component<CreateProps, CreateState> {
       />
     ));
 
+    const addDisabled = this.state.teams.length >= 4;
+    const removeDisabled = this.state.teams.length < 3;
+
     return (
       <FormWrapper>
         <form
@@ -101,46 +104,29 @@ class CreateGame extends Component<CreateProps, CreateState> {
           </div>
 
           <div className="mb-4">
-            <FormLabel>
-              <div className="flex justify-between">
-                Teams
-                <div className="flex">
-                  {this.state.teams.length < 4 && (
-                    <a
-                      className="hover:text-blue-500 text-blue-700"
-                      onClick={this.addTeam.bind(this)}
-                    >
-                      <svg
-                        className="fill-current"
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z" />
-                      </svg>
-                    </a>
-                  )}
-                  {this.state.teams.length > 2 && (
-                    <a
-                      className="ml-2 text-red-700 hover:text-red-500"
-                      onClick={this.removeTeam.bind(this)}
-                    >
-                      <svg
-                        className="fill-current"
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm6 13h-12v-2h12v2z" />
-                      </svg>
-                    </a>
-                  )}
-                </div>
-              </div>
-              {teamInputs}
-            </FormLabel>
+            <FormLabel>Teams</FormLabel>
+            {teamInputs}
+
+            <div className="flex justify-between">
+              <button
+                className={`bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent ${
+                  addDisabled && "opacity-50 cursor-not-allowed"
+                }`}
+                onClick={this.addTeam.bind(this)}
+                disabled={addDisabled}
+              >
+                Add Team
+              </button>
+              <button
+                className={`bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent ${
+                  removeDisabled && "opacity-50 cursor-not-allowed"
+                }`}
+                onClick={this.removeTeam.bind(this)}
+                disabled={removeDisabled}
+              >
+                Remove Team
+              </button>
+            </div>
           </div>
 
           <FormError error={this.props.createError} />
