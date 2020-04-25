@@ -5,8 +5,9 @@ export type JoinGameRequest = {
 };
 
 export type CreateGameRequest = {
-  userName: string;
+  name: string;
   maxPlayers: number;
+  teams: string[];
 };
 
 export type GameEvent = {

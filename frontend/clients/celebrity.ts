@@ -107,12 +107,9 @@ export default class CelebrityClient {
     });
   }
 
-  createGame({ userName, maxPlayers }: CreateGameRequest): void {
+  createGame(request: CreateGameRequest): void {
     this.sendCommand("create", {
-      create: {
-        name: userName,
-        maxPlayers,
-      },
+      create: request,
     });
   }
 }
