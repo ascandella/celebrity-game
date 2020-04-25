@@ -173,9 +173,8 @@
   [{:keys [teams] :as params}]
   (if (< (count teams) 2)
     {:error "Need at least two teams"}
-    (if (not (= (count teams) (count (distinct teams))))
-      {:error "Duplicate team names"}
-      nil)))
+    (when-not (= (count teams) (count (distinct teams)))
+      {:error "Duplicate team names"})))
 
 (defn create-game
   "Creates a new game, returns a game code"
