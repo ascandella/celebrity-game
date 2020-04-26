@@ -109,7 +109,7 @@
                                    :name      name})
         (-> state
             (assoc :players players')
-            (assoc-in [:screens client-id'] "pick-team")
+            (update-in [:screens client-id] #(or % "pick-team"))
             (assoc-in [:clients client-id'] {:output output
                                              :name   name})
             (update :inputs conj input))))))
