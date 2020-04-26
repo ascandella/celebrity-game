@@ -44,12 +44,18 @@ class CreateGame extends Component<CreateProps, CreateState> {
   }
 
   addTeam(): void {
+    if (this.state.teams.length > 4) {
+      return;
+    }
     const { teams } = this.state;
     teams.push("");
     this.setState({ teams });
   }
 
   removeTeam(): void {
+    if (this.state.teams.length < 3) {
+      return;
+    }
     const { teams } = this.state;
     teams.pop();
     this.setState({ teams });
@@ -70,6 +76,7 @@ class CreateGame extends Component<CreateProps, CreateState> {
         type="text"
         className="mb-2"
         defaultValue={team}
+        tabIndex={index + 1}
         key={index}
         required
         placeholder={`Team ${index + 1}`}
@@ -108,24 +115,22 @@ class CreateGame extends Component<CreateProps, CreateState> {
             {teamInputs}
 
             <div className="flex justify-between">
-              <button
+              <a
                 className={`bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent ${
                   addDisabled && "opacity-50 cursor-not-allowed"
                 }`}
                 onClick={this.addTeam.bind(this)}
-                disabled={addDisabled}
               >
                 Add Team
-              </button>
-              <button
+              </a>
+              <a
                 className={`bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent ${
                   removeDisabled && "opacity-50 cursor-not-allowed"
                 }`}
                 onClick={this.removeTeam.bind(this)}
-                disabled={removeDisabled}
               >
                 Remove Team
-              </button>
+              </a>
             </div>
           </div>
 

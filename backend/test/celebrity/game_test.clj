@@ -83,6 +83,7 @@
           (is pong-success)
           (is (= "broadcast" (:event result-parsed)))
           (is (> (count (:client-id result-parsed)) 20))
+          (is (= "pick-team" (:screen result-parsed)))
           (is (= "pong" (:event ping-parsed))))))))
 
 (deftest join-game-does-not-exist

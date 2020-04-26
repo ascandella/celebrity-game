@@ -2,6 +2,7 @@ import React, { FunctionComponent } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import ConnectionStatus from "./connection-status";
+import TeamPicker from "./team-picker";
 import { RootState } from "../reducers";
 import CelebrityClient from "../clients/celebrity";
 
@@ -11,7 +12,6 @@ type player = {
 };
 
 type GameProps = {
-  players: player[];
   gameCode: string;
   playerName: string;
   inGame: boolean;
@@ -23,7 +23,6 @@ const GameHeader = styled.div.attrs({
 })``;
 
 const Game: FunctionComponent<GameProps> = ({
-  players,
   gameCode,
   inGame,
   client,
@@ -32,26 +31,19 @@ const Game: FunctionComponent<GameProps> = ({
     return null;
   }
   return (
-    <GameHeader>
-      <div>{gameCode}</div>
-      <ConnectionStatus client={client} />
-
-      <div>
-        <h2>Players</h2>
-        <ul>
-          {players.map((player, i) => (
-            <li key={i}>{player.name}</li>
-          ))}
-        </ul>
-      </div>
-    </GameHeader>
+    <div>
+      <GameHeader>
+        <div>{gameCode}</div>
+        <ConnectionStatus client={client} />
+      </GameHeader>
+      <TeamPicker client={client} />
+    </div>
   );
 };
 
 const mapStateToProps = (state: RootState) => ({
   gameCode: state.gameCode,
   playerName: state.playerName,
-  players: state.players,
   inGame: state.inGame,
 });
 

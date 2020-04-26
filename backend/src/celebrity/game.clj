@@ -109,6 +109,7 @@
                                    :name      name})
         (-> state
             (assoc :players players')
+            (assoc-in [:screens client-id'] "pick-team")
             (assoc-in [:clients client-id'] {:output output
                                              :name   name})
             (update :inputs conj input))))))
@@ -124,23 +125,30 @@
   (update-in state [:inputs] disj in-ch))
 
 (defn broadcast-state
-  [{:keys [clients room-code players]}]
+  [{:keys [clients room-code players screens teams]}]
   (a/go
     (doseq [[client-id {:keys [name output]}] clients]
       (a/>! output {:client-id client-id
                     :players   players
                     :event     "broadcast"
                     :name      name
+                    :teams     teams
+                    :screen    (get screens client-id)
                     :room-code room-code}))))
 
 ;; TODO increase this, maybe 5 minutes?
 (def server-timeout-after 60000)
+
+(defn create-teams
+  [team-names]
+  (map (fn [name] {:name name :players []}) team-names))
 
 (defn game-state-machine
   [code client-in game-config deregister]
   (a/go-loop [state {:inputs    #{}
                      :players   []
                      :room-code code
+                     :teams     (create-teams (:teams game-config))
                      :config    game-config}]
     ;; wait for messages from clients connecting, clients sending message, or a
     ;; timeout indicating nobody is here anymore
