@@ -7,6 +7,7 @@ import { Team } from "../types/team";
 type TeamPickerProps = {
   screen: string;
   teams: Team[];
+  teamName: string;
   client: CelebrityClient;
 };
 
@@ -14,6 +15,7 @@ const TeamPicker: FunctionComponent<TeamPickerProps> = ({
   screen,
   teams,
   client,
+  teamName,
 }: TeamPickerProps) => {
   const isPicking = screen === "pick-team";
   if (!isPicking && screen !== "select-words") {
@@ -34,7 +36,9 @@ const TeamPicker: FunctionComponent<TeamPickerProps> = ({
           {teams.map((team, index) => (
             <div key={index} className="max-w-md p-4">
               <button
-                className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded"
+                className={`${
+                  team.name === teamName && "opacity-50 cursor-not-allowed"
+                } bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded`}
                 onClick={() => joinTeam(team.name)}
                 key={index}
               >
@@ -59,6 +63,7 @@ const TeamPicker: FunctionComponent<TeamPickerProps> = ({
 const mapStateToProps = (state: RootState) => ({
   screen: state.screen,
   teams: state.teams,
+  teamName: state.teamName,
 });
 
 export default connect(mapStateToProps)(TeamPicker);

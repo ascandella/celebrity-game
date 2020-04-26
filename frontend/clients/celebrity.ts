@@ -72,7 +72,7 @@ export default class CelebrityClient {
       this.dispatch(receivedMessage(message));
     } catch (err) {
       /* eslint-disable no-console */
-      console.error("Unable to parse server response: ", event.data);
+      console.error("Unable to parse server response: ", err, event.data);
     }
   }
 

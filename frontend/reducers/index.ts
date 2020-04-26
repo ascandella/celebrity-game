@@ -33,6 +33,27 @@ const teams = (state = [], action): Team[] => {
   }
 };
 
+const findMatchingTeam = (action): string => {
+  const { clientID } = action;
+  const allTeams = action.teams;
+  const matchingTeam = allTeams.find((team) => {
+    return team.players.find((player) => player.id === clientID);
+  });
+  if (matchingTeam) {
+    return matchingTeam.name;
+  }
+  return null;
+};
+
+const teamName = (state = null, action): string => {
+  switch (action.type) {
+    case BROADCAST:
+      return findMatchingTeam(action) || state;
+    default:
+      return state;
+  }
+};
+
 const playerName = (state = null, action): string => {
   switch (action.type) {
     case JOINED_GAME:
@@ -185,6 +206,7 @@ const rootReducer = combineReducers({
   players,
   teams,
   screen,
+  teamName,
   clientID,
 
   inGame,
