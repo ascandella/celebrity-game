@@ -146,7 +146,7 @@
 
 (defn add-player-to-team
   [{:keys [players] :as team}  id name]
-  (if (some #{id} (map #(:id %) players))
+  (if (some #{id} (map :id players))
     team
     (update team :players conj {:id id :name name})))
 
