@@ -33,6 +33,15 @@ class CreateGame extends Component<CreateProps, CreateState> {
     };
   }
 
+  componentDidMount(): void {
+    const previousName = window.localStorage.getItem("client-name");
+    if (previousName) {
+      this.setState({
+        name: previousName,
+      });
+    }
+  }
+
   handleSubmit(event: React.FormEvent<HTMLInputElement>): void {
     event.preventDefault();
 
