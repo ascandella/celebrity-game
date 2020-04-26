@@ -43,7 +43,7 @@ const TeamPicker: FunctionComponent<TeamPickerProps> = ({
               {team.players.length === 0 && (
                 <p className="italic">No Players</p>
               )}
-              <ul>
+              <ul className="pt-4">
                 {team.players.map((player, j) => (
                   <li key={j}>{player.name}</li>
                 ))}
