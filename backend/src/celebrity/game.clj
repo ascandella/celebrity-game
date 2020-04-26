@@ -26,7 +26,7 @@
     :pending))
 
 ;; global mapping of code:string -> a/chan (connection channel)
-(def games (atom {}))
+(defonce games (atom {}))
 
 (defn join
   "Join player on websocket 'stream' with join-data to the room identified by room-code"
@@ -125,7 +125,7 @@
   (update-in state [:inputs] disj in-ch))
 
 (defn broadcast-state
-  [{:keys [clients room-code players screens teams]}]
+  [{:keys [clients room-code players screens teams] :as state}]
   (a/go
     (doseq [[client-id {:keys [name output]}] clients]
       (a/>! output {:client-id client-id
@@ -134,7 +134,8 @@
                     :name      name
                     :teams     teams
                     :screen    (get screens client-id)
-                    :room-code room-code}))))
+                    :room-code room-code})))
+  state)
 
 ;; TODO increase this, maybe 5 minutes?
 (def server-timeout-after 60000)
@@ -142,6 +143,49 @@
 (defn create-teams
   [team-names]
   (map (fn [name] {:name name :players []}) team-names))
+
+(defn add-player-to-team
+  [{:keys [players] :as team}  id name]
+  (if (some #{id} (map :id players))
+    team
+    (update team :players conj {:id id :name name})))
+
+(defn remove-player-from-team
+  [{:keys [players] :as team} id]
+  (assoc team :players
+          (remove #(= id (:id %)) players)))
+
+(defn move-player-to-team
+  [team id name team-name]
+  (if (= (:name team) team-name)
+    (add-player-to-team team id name)
+    (remove-player-from-team team id)))
+
+(defn handle-team-join
+  [client-id client-name team-name {:keys [teams] :as state}]
+  (let [new-teams (map #(move-player-to-team % client-id client-name team-name) teams)]
+    (broadcast-state
+     (-> state
+         (assoc-in [:screens client-id] "select-words")
+         (assoc :teams new-teams)))))
+
+(defn handle-client-message
+  [{:keys [id command] :as msg} state]
+  (let [{:keys [name output]} (get-in state [:clients id])]
+    (log/info "Responding to command" command "for client" id ": " name " for message " msg)
+    (if (= command "ping")
+      (do
+        (a/>!! output {:event     "pong"
+                       :pong      true
+                       :client-id id})
+        state)
+      (if (= command "join-team")
+        (handle-team-join id name (get-in msg [:team :name]) state)
+        (do
+          (log/error "Unknown command " command )
+          (a/>!! output {:error (str "Unknown command: " command)
+                         :event "command-error"})
+          state)))))
 
 (defn game-state-machine
   [code client-in game-config deregister]
@@ -167,15 +211,8 @@
             (let [new-state (try-join state msg)]
               (log/info "Received client connection: " (dissoc msg :ch))
               ;; let clients know a new player has joined
-              (broadcast-state new-state)
-              (recur new-state))
-            (let [client-id (:id msg)
-                  {:keys [name output]}    (get-in state [:clients client-id])]
-              (log/info "Responding pong to " client-id ": " name " for message " msg)
-              (a/>! output {:event "pong"
-                            :pong true
-                            :client-id client-id})
-              (recur state))))))))
+              (recur (broadcast-state new-state)))
+            (recur (handle-client-message msg state))))))))
 
 (defn validate-params
   [{:keys [teams] :as params}]

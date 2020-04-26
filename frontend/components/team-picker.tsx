@@ -5,23 +5,29 @@ import CelebrityClient from "../clients/celebrity";
 import { Team } from "../types/team";
 
 type TeamPickerProps = {
-  isPicking: boolean;
+  screen: string;
   teams: Team[];
   client: CelebrityClient;
 };
 
 const TeamPicker: FunctionComponent<TeamPickerProps> = ({
-  isPicking,
+  screen,
   teams,
+  client,
 }: TeamPickerProps) => {
-  if (!isPicking) {
+  const isPicking = screen === "pick-team";
+  if (!isPicking && screen !== "select-words") {
     return null;
   }
+
+  const joinTeam = (name: string): void => {
+    client.joinTeam({ name });
+  };
 
   return (
     <div>
       <div>
-        <h3 className="text-center">Pick a Team</h3>
+        <h3 className="text-center">{isPicking ? "Join" : "Change"} Team</h3>
       </div>
       <div className="flex justify-center">
         <div className="flex flex-between justify-center flex-wrap max-w-lg">
@@ -29,6 +35,7 @@ const TeamPicker: FunctionComponent<TeamPickerProps> = ({
             <div key={index} className="max-w-md p-4">
               <button
                 className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded"
+                onClick={() => joinTeam(team.name)}
                 key={index}
               >
                 {team.name}
@@ -36,9 +43,11 @@ const TeamPicker: FunctionComponent<TeamPickerProps> = ({
               {team.players.length === 0 && (
                 <p className="italic">No Players</p>
               )}
-              {team.players.map((player, j) => (
-                <span key={j}>{player.name}</span>
-              ))}
+              <ul>
+                {team.players.map((player, j) => (
+                  <li key={j}>{player.name}</li>
+                ))}
+              </ul>
             </div>
           ))}
         </div>
@@ -48,7 +57,7 @@ const TeamPicker: FunctionComponent<TeamPickerProps> = ({
 };
 
 const mapStateToProps = (state: RootState) => ({
-  isPicking: state.screen === "pick-team",
+  screen: state.screen,
   teams: state.teams,
 });
 
