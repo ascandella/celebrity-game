@@ -69,7 +69,11 @@ export class JoinGame extends Component<JoinProps, JoinState> {
   }
 
   componentDidUpdate(): void {
-    if (this.props.joinError && this.codeInput) {
+    if (
+      this.props.joinError &&
+      this.props.joinError.includes("not found") &&
+      this.codeInput
+    ) {
       this.codeInput.select();
     }
   }
