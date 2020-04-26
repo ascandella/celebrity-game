@@ -61,10 +61,16 @@ export class JoinGame extends Component<JoinProps, JoinState> {
       roomCode,
     });
 
-    if (roomCode && this.nameInput) {
+    if (roomCode && this.nameInput && !this.props.joinError) {
       this.nameInput.focus();
     } else if (this.codeInput) {
       this.codeInput.focus();
+    }
+  }
+
+  componentDidUpdate(): void {
+    if (this.props.joinError && this.codeInput) {
+      this.codeInput.select();
     }
   }
 
