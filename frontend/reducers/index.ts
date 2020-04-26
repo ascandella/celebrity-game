@@ -11,14 +11,23 @@ import {
   CONNECT_ERROR,
   BROADCAST,
 } from "../actions";
+import { Player, Team } from "../types/team";
 
-// TODO make a type for players?
-const players = (state = [], action): any[] => {
+const players = (state = [], action): Player[] => {
   switch (action.type) {
     case BROADCAST:
       return action.players;
     case JOINED_GAME:
       return action.players;
+    default:
+      return state;
+  }
+};
+
+const teams = (state = [], action): Team[] => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.teams;
     default:
       return state;
   }
@@ -161,10 +170,21 @@ const connection = (
   }
 };
 
+const screen = (state = null, action): string => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.screen;
+    default:
+      return state;
+  }
+};
+
 const rootReducer = combineReducers({
   gameCode,
   playerName,
   players,
+  teams,
+  screen,
   clientID,
 
   inGame,

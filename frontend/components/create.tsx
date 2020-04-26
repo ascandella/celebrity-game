@@ -70,6 +70,7 @@ class CreateGame extends Component<CreateProps, CreateState> {
         type="text"
         className="mb-2"
         defaultValue={team}
+        tabIndex={index + 1}
         key={index}
         required
         placeholder={`Team ${index + 1}`}

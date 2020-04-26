@@ -61,6 +61,8 @@ export const broadcast = (event) => {
     playerName: event.name,
     clientID: event.clientId,
     players: event.players,
+    screen: event.screen,
+    teams: event.teams,
   };
 };
 
