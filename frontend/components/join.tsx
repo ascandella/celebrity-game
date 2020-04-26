@@ -45,21 +45,22 @@ export class JoinGame extends Component<JoinProps, JoinState> {
     this.setState({
       clientID: window.localStorage.getItem("client-id") || null,
       playerName: window.localStorage.getItem("client-name") || "",
-      roomCode: window.localStorage.getItem("room-code") || "",
+      roomCode: window.location.hash.substr(1),
     });
-    // This one is only valid once
-    window.localStorage.removeItem("room-code");
   }
 
   /* eslint-disable class-methods-use-this */
   async handleSubmit(event: React.FormEvent<HTMLInputElement>): Promise<void> {
     event.preventDefault();
 
+    const roomCode = this.state.roomCode.toUpperCase();
+
     this.props.joinGame({
       userName: this.state.playerName,
-      roomCode: this.state.roomCode.toUpperCase(),
       clientID: this.state.clientID,
+      roomCode,
     });
+    window.location.hash = roomCode;
   }
 
   handleCodeChange(event: React.ChangeEvent<HTMLInputElement>): void {
@@ -69,7 +70,13 @@ export class JoinGame extends Component<JoinProps, JoinState> {
   }
 
   focusCode(component: HTMLInputElement): void {
-    if (component) {
+    if (component && !this.state.roomCode) {
+      component.focus();
+    }
+  }
+
+  focusName(component: HTMLInputElement): void {
+    if (component && this.state.roomCode) {
       component.focus();
     }
   }
@@ -90,7 +97,7 @@ export class JoinGame extends Component<JoinProps, JoinState> {
               <FormInput
                 type="text"
                 value={this.state.roomCode}
-                ref={this.focusCode}
+                ref={this.focusCode.bind(this)}
                 required
                 tabIndex={1}
                 maxLength={this.props.maxCodeLength}
@@ -104,6 +111,7 @@ export class JoinGame extends Component<JoinProps, JoinState> {
               <FormInput
                 type="text"
                 value={this.state.playerName}
+                ref={this.focusName.bind(this)}
                 placeholder="Your Name"
                 required
                 tabIndex={2}
