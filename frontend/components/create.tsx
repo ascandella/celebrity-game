@@ -40,10 +40,24 @@ class CreateGame extends Component<CreateProps, CreateState> {
         name: previousName,
       });
     }
+
+    const previousTeams = window.localStorage.getItem("team-names");
+    if (previousTeams) {
+      try {
+        const parsedNames = JSON.parse(previousTeams);
+        this.setState({
+          teams: parsedNames,
+        });
+      } catch (err) {
+        window.localStorage.removeItem("team-names");
+      }
+    }
   }
 
   handleSubmit(event: React.FormEvent<HTMLInputElement>): void {
     event.preventDefault();
+
+    window.localStorage.setItem("team-names", JSON.stringify(this.state.teams));
 
     this.props.createGame({
       name: this.state.name,
