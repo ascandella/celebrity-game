@@ -1,5 +1,9 @@
 import { Dispatch } from "redux";
-import { JoinGameRequest, CreateGameRequest } from "./messages";
+import {
+  JoinGameRequest,
+  CreateGameRequest,
+  JoinTeamRequest,
+} from "./messages";
 import {
   connectionStatus,
   connectError,
@@ -110,6 +114,14 @@ export default class CelebrityClient {
   createGame(request: CreateGameRequest): void {
     this.sendCommand("create", {
       create: request,
+    });
+  }
+
+  joinTeam({ name }: JoinTeamRequest): void {
+    this.sendCommand("join-team", {
+      team: {
+        name,
+      },
     });
   }
 }

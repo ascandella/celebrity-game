@@ -16,3 +16,7 @@ export type GameEvent = {
   event: string;
   [key: string]: any;
 };
+
+export type JoinTeamRequest = {
+  name: string;
+};
