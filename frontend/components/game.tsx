@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import React, { useEffect, FunctionComponent } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import ConnectionStatus from "./connection-status";
@@ -30,6 +30,10 @@ const Game: FunctionComponent<GameProps> = ({
   if (!inGame) {
     return null;
   }
+  useEffect(() => {
+    window.location.hash = gameCode;
+  });
+
   return (
     <div>
       <GameHeader>
