@@ -211,8 +211,7 @@
             (let [new-state (try-join state msg)]
               (log/info "Received client connection: " (dissoc msg :ch))
               ;; let clients know a new player has joined
-              (broadcast-state new-state)
-              (recur new-state))
+              (recur (broadcast-state new-state)))
             (recur (handle-client-message msg state))))))))
 
 (defn validate-params
