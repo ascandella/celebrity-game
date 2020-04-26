@@ -196,33 +196,3 @@
   (testing "Validate game params with 1 team fails"
     (let [params {:teams ["a"]}]
       (is (not (nil? (validate-params params)))))))
-
-(deftest handle-client-message-unknown
-  (testing "Handle client message rejects unknown"
-    (let [client (a/chan)
-          id                  "fake-id"
-          state               {:clients {id {:output client}}}
-          state'              (a/go (handle-client-message {:id id :command "bar"} state))
-          client-response     (a/<!! client)]
-      (is (= "command-error" (:event client-response)))
-      (a/close! client))))
-
-(deftest handle-team-join-empty
-  (testing "Handle team join with no players yet"
-    (let [teams [{:name "ghosts" :players []}
-                 {:name "ghouls" :players []}]
-          state (handle-team-join "id" "name" "ghosts" {:teams teams})
-          ghost-players (:players (nth (:teams state) 0))]
-      (is (= 1 (count ghost-players)))
-      (is (= {:id "id" :name "name"} (nth ghost-players 0))))))
-
-(deftest handle-team-join-switch
-  (testing "Handle team join with switching teams"
-    (let [teams [{:name "ghosts" :players []}
-                 {:name "ghouls" :players [{:id "id" :name "name-diff"}]}]
-          state (handle-team-join "id" "name" "ghosts" {:teams teams})
-          ghost-players (:players (nth (:teams state) 0))
-          ghoul-players (:players (nth (:teams state) 1))]
-      (is (= 1 (count ghost-players)))
-      (is (= 0 (count ghoul-players)))
-      (is (= {:id "id" :name "name"} (nth ghost-players 0))))))

@@ -1,6 +1,7 @@
 (ns celebrity.game
   (:require [taoensso.timbre :as log]
             [celebrity.protocol :as proto]
+            [celebrity.commands :as commands]
             [clojure.core.async :as a]
             [clojure.string]
             [manifold.stream :as s]))
@@ -56,28 +57,10 @@
      (s/sink-only conn))
     [in-ch out-ch]))
 
-(defn player-by
-  [key players needle]
-  (first (filter #(= (get % key) needle) players)))
-
-(defn player-by-name
-  [name players]
-  (player-by :name players name))
-
-(defn player-by-id
-  [id players]
-  (player-by :id players id))
-
-(defn add-player
-  [players {:keys [id] :as player}]
-  (if (player-by-id id players)
-    players
-    (conj players player)))
-
 (defn try-rejoin
   [client-id name players]
   ;; is there a player here with that name already
-  (if-let [existing-player (player-by-name name players)]
+  (if-let [existing-player (commands/player-by-name name players)]
     (if (= client-id (:id existing-player))
       (do
         (log/info "Reconnecting client by id: " client-id "name: " name)
@@ -86,7 +69,7 @@
         (log/warn "Name " name " client ID " client-id "tried to connect but name already taken:" (:id existing-player))
         [client-id {:error (str "Name '" name "' already taken")
                     :code  "name-taken"}]))
-    (if (player-by-id client-id players)
+    (if (commands/player-by-id client-id players)
       [(generate-uuid) nil]
       [client-id nil])))
 
@@ -100,7 +83,7 @@
     (if join-error
       (proto/respond-message ch (assoc join-error :event "join-error"))
       (let [[input output] (create-client-channel ch client-id')
-            players'       (add-player players {:id client-id' :name name})]
+            players'       (commands/add-player players {:id client-id' :name name})]
         (proto/respond-message ch {:room-code code
                                    :event     "joined"
                                    :success   true
@@ -109,7 +92,7 @@
                                    :name      name})
         (-> state
             (assoc :players players')
-            (update-in [:screens client-id] #(or % "pick-team"))
+            (update-in [:screens client-id] #(or % commands/initial-screen))
             (assoc-in [:clients client-id'] {:output output
                                              :name   name})
             (update :inputs conj input))))))
@@ -124,68 +107,12 @@
   (log/info "Disconnecting client from server")
   (update-in state [:inputs] disj in-ch))
 
-(defn broadcast-state
-  [{:keys [clients room-code players screens teams] :as state}]
-  (a/go
-    (doseq [[client-id {:keys [name output]}] clients]
-      (a/>! output {:client-id client-id
-                    :players   players
-                    :event     "broadcast"
-                    :name      name
-                    :teams     teams
-                    :screen    (get screens client-id)
-                    :room-code room-code})))
-  state)
-
 ;; TODO increase this, maybe 5 minutes?
 (def server-timeout-after 60000)
 
 (defn create-teams
   [team-names]
   (map (fn [name] {:name name :players []}) team-names))
-
-(defn add-player-to-team
-  [{:keys [players] :as team}  id name]
-  (if (some #{id} (map :id players))
-    team
-    (update team :players conj {:id id :name name})))
-
-(defn remove-player-from-team
-  [{:keys [players] :as team} id]
-  (assoc team :players
-          (remove #(= id (:id %)) players)))
-
-(defn move-player-to-team
-  [team id name team-name]
-  (if (= (:name team) team-name)
-    (add-player-to-team team id name)
-    (remove-player-from-team team id)))
-
-(defn handle-team-join
-  [client-id client-name team-name {:keys [teams] :as state}]
-  (let [new-teams (map #(move-player-to-team % client-id client-name team-name) teams)]
-    (broadcast-state
-     (-> state
-         (assoc-in [:screens client-id] "select-words")
-         (assoc :teams new-teams)))))
-
-(defn handle-client-message
-  [{:keys [id command] :as msg} state]
-  (let [{:keys [name output]} (get-in state [:clients id])]
-    (log/info "Responding to command" command "for client" id ": " name " for message " msg)
-    (if (= command "ping")
-      (do
-        (a/>!! output {:event     "pong"
-                       :pong      true
-                       :client-id id})
-        state)
-      (if (= command "join-team")
-        (handle-team-join id name (get-in msg [:team :name]) state)
-        (do
-          (log/error "Unknown command " command )
-          (a/>!! output {:error (str "Unknown command: " command)
-                         :event "command-error"})
-          state)))))
 
 (defn game-state-machine
   [code client-in game-config deregister]
@@ -211,8 +138,8 @@
             (let [new-state (try-join state msg)]
               (log/info "Received client connection: " (dissoc msg :ch))
               ;; let clients know a new player has joined
-              (recur (broadcast-state new-state)))
-            (recur (handle-client-message msg state))))))))
+              (recur (commands/broadcast-state new-state)))
+            (recur (commands/handle-client-message msg state))))))))
 
 (defn validate-params
   [{:keys [teams] :as params}]
