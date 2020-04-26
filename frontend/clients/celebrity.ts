@@ -12,7 +12,9 @@ import {
 } from "../actions";
 
 function getGameURL(): string {
-  return `${process.env.apiBase}/game`;
+  const base = `${process.env.apiBase}/game`;
+  // For remote debugging in development
+  return base.replace("localhost", window.location.host.split(":")[0]);
 }
 
 export default class CelebrityClient {

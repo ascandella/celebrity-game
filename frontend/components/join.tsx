@@ -31,6 +31,10 @@ export class JoinGame extends Component<JoinProps, JoinState> {
     maxNameLength: 12,
   };
 
+  codeInput: HTMLInputElement;
+
+  nameInput: HTMLInputElement;
+
   constructor(props: JoinProps) {
     super(props);
     this.state = {
@@ -41,12 +45,37 @@ export class JoinGame extends Component<JoinProps, JoinState> {
     this.handleCodeChange = this.handleCodeChange.bind(this);
   }
 
+  setCodeInput(element: HTMLInputElement): void {
+    this.codeInput = element;
+  }
+
+  setNameInput(element: HTMLInputElement): void {
+    this.nameInput = element;
+  }
+
   componentDidMount(): void {
+    const roomCode = window.location.hash.substr(1);
     this.setState({
       clientID: window.localStorage.getItem("client-id") || null,
       playerName: window.localStorage.getItem("client-name") || "",
-      roomCode: window.location.hash.substr(1),
+      roomCode,
     });
+
+    if (roomCode && this.nameInput && !this.props.joinError) {
+      this.nameInput.focus();
+    } else if (this.codeInput) {
+      this.codeInput.focus();
+    }
+  }
+
+  componentDidUpdate(): void {
+    if (
+      this.props.joinError &&
+      this.props.joinError.includes("not found") &&
+      this.codeInput
+    ) {
+      this.codeInput.select();
+    }
   }
 
   /* eslint-disable class-methods-use-this */
@@ -67,17 +96,12 @@ export class JoinGame extends Component<JoinProps, JoinState> {
     this.setState({
       roomCode: event.target.value,
     });
-  }
-
-  focusCode(component: HTMLInputElement): void {
-    if (component && !this.state.roomCode) {
-      component.focus();
-    }
-  }
-
-  focusName(component: HTMLInputElement): void {
-    if (component && this.state.roomCode) {
-      component.focus();
+    if (
+      event.target.value &&
+      event.target.value.length === this.props.maxCodeLength &&
+      this.nameInput
+    ) {
+      this.nameInput.focus();
     }
   }
 
@@ -97,7 +121,7 @@ export class JoinGame extends Component<JoinProps, JoinState> {
               <FormInput
                 type="text"
                 value={this.state.roomCode}
-                ref={this.focusCode.bind(this)}
+                ref={(el) => this.setCodeInput(el)}
                 required
                 tabIndex={1}
                 maxLength={this.props.maxCodeLength}
@@ -111,7 +135,7 @@ export class JoinGame extends Component<JoinProps, JoinState> {
               <FormInput
                 type="text"
                 value={this.state.playerName}
-                ref={this.focusName.bind(this)}
+                ref={(el) => this.setNameInput(el)}
                 placeholder="Your Name"
                 required
                 tabIndex={2}
