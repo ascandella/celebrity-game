@@ -5,5 +5,5 @@ export interface Player {
 
 export interface Team {
   name: string;
-  players: player[];
+  players: Player[];
 }
