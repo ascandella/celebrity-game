@@ -26,13 +26,15 @@
   [{:keys [clients room-code players screens teams] :as state}]
   (a/go
     (doseq [[client-id {:keys [name output]}] clients]
-      (a/>! output {:client-id client-id
-                    :players   players
-                    :event     "broadcast"
-                    :name      name
-                    :teams     teams
-                    :screen    (get screens client-id)
-                    :room-code room-code})))
+      (if (nil? output)
+        (log/error "Nil output for client " client-id ", name:" name)
+        (a/>! output {:client-id client-id
+                      :players   players
+                      :event     "broadcast"
+                      :name      name
+                      :teams     teams
+                      :screen    (get screens client-id)
+                      :room-code room-code}))))
   state)
 
 (defn add-player-to-team

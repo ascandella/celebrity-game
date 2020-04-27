@@ -30,6 +30,20 @@
       (is (= 0 (count ghoul-players)))
       (is (= {:id "id" :name "name"} (nth ghost-players 0))))))
 
+(deftest handle-team-join-same-team
+  (testing "Handle team join with the same team"
+    (let [teams         [{:name "ghosts" :players []}
+                         {:name "ghouls" :players [{:id "id" :name "old-name"}]}]
+          msg           {:team {:name "ghouls"}}
+          start-state   {:teams teams
+                         :clients {"id" {:name "new-name"}}}
+          state         (handle-team-join "id" msg start-state)
+          ghost-players (:players (nth (:teams state) 0))
+          ghoul-players (:players (nth (:teams state) 1))]
+      (is (= 0 (count ghost-players)))
+      (is (= 1 (count ghoul-players)))
+      (is (= {:id "id" :name "old-name"} (nth ghoul-players 0))))))
+
 (deftest handle-client-message-unknown
   (testing "Handle client message rejects unknown"
     (let [client (a/chan)
