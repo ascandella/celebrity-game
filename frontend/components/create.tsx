@@ -7,6 +7,7 @@ import {
   FormLabel,
   FormInput,
   FormError,
+  ShortFormInput,
   SubmitButton,
 } from "./form";
 
@@ -21,6 +22,8 @@ type CreateState = {
   maxPlayers: number;
   name: string;
   teams: string[];
+  maxSubmissions: number;
+  unlimited: boolean;
 };
 
 class CreateGame extends Component<CreateProps, CreateState> {
@@ -28,8 +31,10 @@ class CreateGame extends Component<CreateProps, CreateState> {
     super(props);
     this.state = {
       maxPlayers: 12,
+      maxSubmissions: 5,
       name: "",
       teams: ["", ""],
+      unlimited: false,
     };
   }
 
@@ -63,6 +68,7 @@ class CreateGame extends Component<CreateProps, CreateState> {
       name: this.state.name,
       maxPlayers: this.state.maxPlayers,
       teams: this.state.teams,
+      maxSubmissions: this.state.unlimited ? 0 : this.state.maxSubmissions,
     });
   }
 
@@ -88,6 +94,23 @@ class CreateGame extends Component<CreateProps, CreateState> {
     const { teams } = this.state;
     teams[index] = event.target.value;
     this.setState({ teams });
+  }
+
+  toggleUnlimited(): void {
+    this.setState({
+      unlimited: !this.state.unlimited,
+    });
+  }
+
+  updateSubmissionCount(event: React.ChangeEvent<HTMLInputElement>): void {
+    try {
+      const parsed = parseInt(event.target.value);
+      this.setState({
+        maxSubmissions: parsed,
+      });
+    } catch (err) {
+      // ignore it
+    }
   }
 
   render(): React.ReactNode {
@@ -155,6 +178,30 @@ class CreateGame extends Component<CreateProps, CreateState> {
                 Remove Team
               </a>
             </div>
+          </div>
+
+          <div className="mb-4">
+            <FormLabel>Rules</FormLabel>
+
+            <label className="flex justify-between items-center">
+              Max Submissions
+              <ShortFormInput
+                className={`w-1/2 ${this.state.unlimited && "opacity-50"}`}
+                type="number"
+                disabled={this.state.unlimited}
+                value={this.state.maxSubmissions}
+                onChange={this.updateSubmissionCount.bind(this)}
+              />
+            </label>
+            <label className="flex pt-2">
+              <span className="w-1/2">Unlimited?</span>
+              <input
+                type="checkbox"
+                name="unlimited"
+                checked={this.state.unlimited}
+                onChange={this.toggleUnlimited.bind(this)}
+              />
+            </label>
           </div>
 
           <FormError error={this.props.createError} />
