@@ -104,7 +104,7 @@ class CreateGame extends Component<CreateProps, CreateState> {
 
   updateSubmissionCount(event: React.ChangeEvent<HTMLInputElement>): void {
     try {
-      const parsed = parseInt(event.target.value);
+      const parsed = parseInt(event.target.value, 10);
       this.setState({
         maxSubmissions: parsed,
       });
