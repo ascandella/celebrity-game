@@ -2,7 +2,6 @@
   (:require [taoensso.timbre :as log]
             [clojure.core.async :as a]))
 
-
 (def initial-screen "pick-team")
 
 (defn player-by
@@ -27,13 +26,15 @@
   [{:keys [clients room-code players screens teams] :as state}]
   (a/go
     (doseq [[client-id {:keys [name output]}] clients]
-      (a/>! output {:client-id client-id
-                    :players   players
-                    :event     "broadcast"
-                    :name      name
-                    :teams     teams
-                    :screen    (get screens client-id)
-                    :room-code room-code})))
+      (if (nil? output)
+        (log/error "Nil output for client " client-id ", name:" name)
+        (a/>! output {:client-id client-id
+                      :players   players
+                      :event     "broadcast"
+                      :name      name
+                      :teams     teams
+                      :screen    (get screens client-id)
+                      :room-code room-code}))))
   state)
 
 (defn add-player-to-team
@@ -51,28 +52,43 @@
     (add-player-to-team team id name)
     (remove-player-from-team team id)))
 
+(defn get-output
+  [state client-id]
+  (get-in state [:clients client-id :output]))
+
+(defn get-name
+  [state client-id]
+  (get-in state [:clients client-id :name]))
+
 (defn handle-team-join
-  [client-id client-name team-name {:keys [teams] :as state}]
-  (let [new-teams (map #(move-player-to-team % client-id client-name team-name) teams)]
+  [client-id msg {:keys [teams] :as state}]
+  (let [client-name (get-name state client-id)
+        team-name   (get-in msg [:team :name])
+        new-teams   (map #(move-player-to-team % client-id client-name team-name) teams)]
     (broadcast-state
      (-> state
          (assoc-in [:screens client-id] "select-words")
          (assoc :teams new-teams)))))
 
+(defn handle-ping
+  [client-id msg state]
+  (a/>!!
+   (get-output state client-id)
+   {:event     "pong"
+    :pong      true
+    :client-id client-id}))
+
+(def command-handlers
+  {"join-team" handle-team-join
+   "ping"      handle-ping})
+
 (defn handle-client-message
   [{:keys [id command] :as msg} state]
-  (let [{:keys [name output]} (get-in state [:clients id])]
+  (let [name (get-name state id)]
     (log/info "Responding to command" command "for client" id ": " name " for message " msg)
-    (if (= command "ping")
-      (do
-        (a/>!! output {:event     "pong"
-                       :pong      true
-                       :client-id id})
-        state)
-      (if (= command "join-team")
-        (handle-team-join id name (get-in msg [:team :name]) state)
-        (do
+    (if-let [handler (get command-handlers command)]
+      (handler id msg state)
+      (let [output (get-output state id)]
           (log/error "Unknown command " command )
           (a/>!! output {:error (str "Unknown command: " command)
-                         :event "command-error"})
-          state)))))
+                         :event "command-error"})))))
