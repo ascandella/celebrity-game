@@ -78,8 +78,7 @@ export class JoinGame extends Component<JoinProps, JoinState> {
     }
   }
 
-  /* eslint-disable class-methods-use-this */
-  async handleSubmit(event: React.FormEvent<HTMLInputElement>): Promise<void> {
+  handleSubmit(event: React.FormEvent<HTMLInputElement>): void {
     event.preventDefault();
 
     const roomCode = this.state.roomCode.toUpperCase();

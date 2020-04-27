@@ -23,7 +23,7 @@
     (conj players player)))
 
 (defn broadcast-state
-  [{:keys [clients room-code players screens teams] :as state}]
+  [{:keys [clients room-code players screens teams config] :as state}]
   (a/go
     (doseq [[client-id {:keys [name output]}] clients]
       (if (nil? output)
@@ -34,6 +34,7 @@
                       :name      name
                       :teams     teams
                       :screen    (get screens client-id)
+                      :max-words (:max-submissions config)
                       :room-code room-code}))))
   state)
 
@@ -76,7 +77,8 @@
    (get-output state client-id)
    {:event     "pong"
     :pong      true
-    :client-id client-id}))
+    :client-id client-id})
+  state)
 
 (def command-handlers
   {"join-team" handle-team-join
