@@ -72,7 +72,7 @@
          (assoc :teams new-teams)))))
 
 (defn handle-ping
-  [client-id msg state]
+  [client-id _ state]
   (a/>!!
    (get-output state client-id)
    {:event     "pong"
