@@ -9,6 +9,7 @@ type TeamPickerProps = {
   teams: Team[];
   teamName: string;
   client: CelebrityClient;
+  wordCounts: {};
 };
 
 const TeamPicker: FunctionComponent<TeamPickerProps> = ({
@@ -16,6 +17,7 @@ const TeamPicker: FunctionComponent<TeamPickerProps> = ({
   teams,
   client,
   teamName,
+  wordCounts,
 }: TeamPickerProps) => {
   const isPicking = screen === "pick-team";
   if (!isPicking && screen !== "select-words") {
@@ -42,9 +44,26 @@ const TeamPicker: FunctionComponent<TeamPickerProps> = ({
             </button>
             {team.players.length === 0 && <p className="italic">No Players</p>}
             <ul className="pt-4">
-              {team.players.map((player, j) => (
-                <li key={j}>{player.name}</li>
-              ))}
+              {team.players.map((player, j) => {
+                const playerWordCount =
+                  (wordCounts && wordCounts[player.id]) || 0;
+
+                return (
+                  <li key={j}>
+                    <span className="mr-2">{player.name}</span>
+                    {Array.from({ length: playerWordCount }, (x, i) => (
+                      <svg
+                        key={i}
+                        height="8"
+                        width="8"
+                        className="fill-current text-teal-400 inline"
+                      >
+                        <circle cx="4" cy="4" r="3" />
+                      </svg>
+                    ))}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         ))}
@@ -57,6 +76,7 @@ const mapStateToProps = (state: RootState) => ({
   screen: state.screen,
   teams: state.teams,
   teamName: state.teamName,
+  wordCounts: state.wordCounts,
 });
 
 export default connect(mapStateToProps)(TeamPicker);
