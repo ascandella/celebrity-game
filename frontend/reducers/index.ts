@@ -200,10 +200,32 @@ const screen = (state = null, action): string => {
   }
 };
 
-const maxWords = (state = 0, action): number => {
+type GameConfig = {
+  maxSubmissions?: number;
+};
+
+const gameConfig = (state: GameConfig = {}, action): GameConfig => {
   switch (action.type) {
     case BROADCAST:
-      return action.maxWords;
+      return action.config;
+    default:
+      return state;
+  }
+};
+
+const wordCounts = (state = {}, action): {} => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.wordCounts;
+    default:
+      return state;
+  }
+};
+
+const myWords = (state = [], action): {} => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.words;
     default:
       return state;
   }
@@ -214,9 +236,11 @@ const rootReducer = combineReducers({
   playerName,
   players,
   teams,
+  wordCounts,
   screen,
   teamName,
-  maxWords,
+  gameConfig,
+  myWords,
   clientID,
 
   inGame,

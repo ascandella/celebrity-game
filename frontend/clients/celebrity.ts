@@ -126,4 +126,10 @@ export default class CelebrityClient {
       },
     });
   }
+
+  setWords(words: string[]): void {
+    this.sendCommand("set-words", {
+      words,
+    });
+  }
 }

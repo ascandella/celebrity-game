@@ -56,13 +56,10 @@ export const joinedGame = (event) => {
 export const broadcast = (event) => {
   return {
     type: BROADCAST,
-    roomCode: event.roomCode,
+    ...event,
     playerName: event.name,
+    roomCode: event.roomCode,
     clientID: event.clientId,
-    players: event.players,
-    screen: event.screen,
-    teams: event.teams,
-    maxWords: event.maxWords,
   };
 };
 

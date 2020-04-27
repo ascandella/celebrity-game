@@ -13,9 +13,16 @@
         (log/warn (str "Unable to parse JSON: " (.getMessage e) ": " message))
                   default-val))))
 
+
+(defn camelcase-if-not-uuid
+  [key]
+  (if (= 36 (count (str key)))
+    key
+    (csk/->camelCaseString key)))
+
 (defn encode-message
   [msg]
-  (json/write-str msg :key-fn csk/->camelCaseString))
+  (json/write-str msg :key-fn camelcase-if-not-uuid))
 
 (defn respond-json
   [stream data]

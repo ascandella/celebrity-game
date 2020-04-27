@@ -28,12 +28,14 @@
     (doseq [[client-id {:keys [name output]}] clients]
       (if (nil? output)
         (log/error "Nil output for client " client-id ", name:" name)
-        (a/>! output {:client-id client-id
-                      :players   players
-                      :event     "broadcast"
-                      :teams     teams
-                      :screen    (get screens client-id)
-                      :max-words (:max-submissions config)}))))
+        (a/>! output {:client-id   client-id
+                      :players     players
+                      :event       "broadcast"
+                      :teams       teams
+                      :screen      (get screens client-id)
+                      :word-counts (:word-counts state)
+                      :words       (get-in state [:words client-id])
+                      :config      config}))))
   state)
 
 (defn add-player-to-team
@@ -59,7 +61,7 @@
   [state client-id]
   (get-in state [:clients client-id :name]))
 
-(defn handle-team-join
+(defn handle-join-team
   [client-id msg {:keys [teams] :as state}]
   (let [client-name (get-name state client-id)
         team-name   (get-in msg [:team :name])
@@ -68,6 +70,13 @@
      (-> state
          (assoc-in [:screens client-id] "select-words")
          (assoc :teams new-teams)))))
+
+(defn handle-set-words
+  [client-id {:keys [words]} state]
+  (broadcast-state
+   (-> state
+       (assoc-in [:words client-id] words)
+       (assoc-in [:word-counts client-id] (count words)))))
 
 (defn handle-ping
   [client-id _ state]
@@ -79,7 +88,8 @@
   state)
 
 (def command-handlers
-  {"join-team" handle-team-join
+  {"join-team" handle-join-team
+   "set-words" handle-set-words
    "ping"      handle-ping})
 
 (defn handle-client-message

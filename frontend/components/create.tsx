@@ -31,7 +31,7 @@ class CreateGame extends Component<CreateProps, CreateState> {
     super(props);
     this.state = {
       maxPlayers: 12,
-      maxSubmissions: 5,
+      maxSubmissions: 4,
       name: "",
       teams: ["", ""],
       unlimited: false,
