@@ -6,7 +6,6 @@ import { Team } from "../types/team";
 
 type TeamPickerProps = {
   screen: string;
-
   teams: Team[];
   teamName: string;
   client: CelebrityClient;
