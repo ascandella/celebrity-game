@@ -2,7 +2,6 @@
   (:require [taoensso.timbre :as log]
             [clojure.core.async :as a]))
 
-
 (def initial-screen "pick-team")
 
 (defn player-by
@@ -50,8 +49,6 @@
   (if (= (:name team) team-name)
     (add-player-to-team team id name)
     (remove-player-from-team team id)))
-
-
 
 (defn get-output
   [state client-id]
