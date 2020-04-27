@@ -200,6 +200,15 @@ const screen = (state = null, action): string => {
   }
 };
 
+const maxWords = (state = 0, action): number => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.maxWords;
+    default:
+      return state;
+  }
+};
+
 const rootReducer = combineReducers({
   gameCode,
   playerName,
@@ -207,6 +216,7 @@ const rootReducer = combineReducers({
   teams,
   screen,
   teamName,
+  maxWords,
   clientID,
 
   inGame,

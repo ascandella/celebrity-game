@@ -43,7 +43,6 @@ export const toggleCreating = (creatingGame) => ({
 export const joinedGame = (event) => {
   window.localStorage.setItem("client-id", event.clientId);
   window.localStorage.setItem("client-name", event.name);
-  window.localStorage.setItem("room-code", event.roomCode);
 
   return {
     type: JOINED_GAME,
@@ -63,6 +62,7 @@ export const broadcast = (event) => {
     players: event.players,
     screen: event.screen,
     teams: event.teams,
+    maxWords: event.maxWords,
   };
 };
 

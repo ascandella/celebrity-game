@@ -28,33 +28,26 @@ const TeamPicker: FunctionComponent<TeamPickerProps> = ({
 
   return (
     <div>
-      <div>
-        <h3 className="text-center">{isPicking ? "Join" : "Change"} Team</h3>
-      </div>
-      <div className="flex justify-center">
-        <div className="flex flex-between justify-center flex-wrap max-w-lg">
-          {teams.map((team, index) => (
-            <div key={index} className="max-w-md p-4">
-              <button
-                className={`${
-                  team.name === teamName && "opacity-50 cursor-not-allowed"
-                } bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded`}
-                onClick={() => joinTeam(team.name)}
-                key={index}
-              >
-                {team.name}
-              </button>
-              {team.players.length === 0 && (
-                <p className="italic">No Players</p>
-              )}
-              <ul className="pt-4">
-                {team.players.map((player, j) => (
-                  <li key={j}>{player.name}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
+      <div className="flex flex-between justify-center flex-wrap">
+        {teams.map((team, index) => (
+          <div key={index} className="max-w-md p-4 w-1/2 text-center">
+            <button
+              className={`${
+                team.name === teamName && "opacity-50 cursor-not-allowed"
+              } bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded`}
+              onClick={() => joinTeam(team.name)}
+              key={index}
+            >
+              Join <em>{team.name}</em>
+            </button>
+            {team.players.length === 0 && <p className="italic">No Players</p>}
+            <ul className="pt-4">
+              {team.players.map((player, j) => (
+                <li key={j}>{player.name}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
     </div>
   );

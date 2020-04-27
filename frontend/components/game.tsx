@@ -2,6 +2,7 @@ import React, { useEffect, FunctionComponent } from "react";
 import { connect } from "react-redux";
 import styled from "styled-components";
 import ConnectionStatus from "./connection-status";
+import WordChooser from "./word-chooser";
 import TeamPicker from "./team-picker";
 import { RootState } from "../reducers";
 import CelebrityClient from "../clients/celebrity";
@@ -40,6 +41,7 @@ const Game: FunctionComponent<GameProps> = ({
         <div>{gameCode}</div>
         <ConnectionStatus client={client} />
       </GameHeader>
+      <WordChooser client={client} />
       <TeamPicker client={client} />
     </div>
   );
