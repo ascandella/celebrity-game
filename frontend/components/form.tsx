@@ -14,6 +14,11 @@ export const FormInput = styled.input.attrs<FormClassAttrs>({
     "bg-white focus:outline-none focus:shadow-outline border border-gray-300 rounded-sm py-2 px-4 block w-full appearance-none leading-normal9",
 })``;
 
+export const ShortFormInput = styled.input.attrs<FormClassAttrs>({
+  className:
+    "bg-white focus:outline-none focus:shadow-outline border border-gray-300 rounded-sm py-2 px-4 appearance-none leading-normal9",
+})``;
+
 type FormErrorProps = {
   error: string;
 };

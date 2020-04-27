@@ -28,7 +28,7 @@ const JoinOrCreate: FunctionComponent<JoinOrCreateProps> = ({
   return (
     <div>
       <div className="flex justify-center">
-        <div role="alert" className="mb-4">
+        <div role="alert" className="mb-4 max-w-md">
           <div className="bg-orange-500 text-white font-bold px-4 py-2">
             Under Development
           </div>

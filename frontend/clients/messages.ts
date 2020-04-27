@@ -7,6 +7,7 @@ export type JoinGameRequest = {
 export type CreateGameRequest = {
   name: string;
   maxPlayers: number;
+  maxSubmissions: number;
   teams: string[];
 };
 
