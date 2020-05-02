@@ -10,7 +10,7 @@ type EditableWordProps = {
   changeHandler: (value: string) => void;
   toggleEdit: () => void;
   editing: boolean;
-  isLast: boolean;
+  isFocused: boolean;
 };
 
 const EditableWord: FunctionComponent<EditableWordProps> = ({
@@ -19,7 +19,7 @@ const EditableWord: FunctionComponent<EditableWordProps> = ({
   changeHandler,
   editing,
   toggleEdit,
-  isLast,
+  isFocused,
 }: EditableWordProps) => {
   return (
     <div className="flex justify-between items-center mb-2">
@@ -32,7 +32,7 @@ const EditableWord: FunctionComponent<EditableWordProps> = ({
           onChange={(event) => changeHandler(event.target.value)}
           onBlur={toggleEdit}
           onKeyPress={(event) => event.key === "Enter" && toggleEdit()}
-          autoFocus={isLast}
+          autoFocus={isFocused}
         />
       ) : (
         <span className="leading-8 w-full" onClick={toggleEdit}>
@@ -101,7 +101,9 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
     } else {
       newWords[index].editing = !wasEditing;
     }
-    newWords = newWords.filter((word) => normalizeWord(word.value).length > 0);
+    newWords = newWords.filter((word, j) => {
+      return normalizeWord(word.value).length > 0 || j === newWords.length - 1;
+    });
     if (wasEditing && (maxWords === 0 || newWords.length < maxWords)) {
       newWords.push({ value: "", editing: true });
     }
@@ -115,6 +117,8 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
     event.preventDefault();
     persistWords(words);
   };
+
+  const editIndex = words.findIndex((word) => word.editing);
 
   return (
     <FormWrapper>
@@ -133,9 +137,9 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
             index={index}
             key={index}
             value={word.value}
-            editing={word.editing}
+            editing={word.editing || word.value.length === 0}
             toggleEdit={() => toggleEditing(index)}
-            isLast={index === words.length - 1}
+            isFocused={index === editIndex}
             changeHandler={(value) => setWordAtIndex(index, value)}
           />
         ))}
