@@ -1,4 +1,4 @@
-import React, { useState, useRef, FunctionComponent } from "react";
+import React, { useState, FunctionComponent } from "react";
 import { connect } from "react-redux";
 import { RootState } from "../reducers";
 import CelebrityClient from "../clients/celebrity";
@@ -92,7 +92,7 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
 
     const existingWords = newWords
       .map((item, j) => {
-        return j == index ? null : normalizeWord(item.value);
+        return j === index ? null : normalizeWord(item.value);
       })
       .filter(Boolean);
     const normalizedWord = normalizeWord(newWords[index].value);
