@@ -5,47 +5,41 @@ import CelebrityClient from "../clients/celebrity";
 import { ShortFormInput, FormWrapper } from "./form";
 
 type EditableWordProps = {
-  index: number;
   value: string;
   changeHandler: (value: string) => void;
-  toggleEdit: () => void;
-  editing: boolean;
+  finishEdit: () => void;
+  startEdit: () => void;
+  isEditing: boolean;
   isFocused: boolean;
 };
 
 const EditableWord: FunctionComponent<EditableWordProps> = ({
-  index,
   value,
   changeHandler,
-  editing,
-  toggleEdit,
+  finishEdit,
+  startEdit,
+  isEditing,
   isFocused,
 }: EditableWordProps) => {
   return (
     <div className="flex justify-between items-center mb-2">
-      {editing ? (
+      {isEditing ? (
         <ShortFormInput
           type="text"
           className="w-full"
-          key={index}
           value={value}
           onChange={(event) => changeHandler(event.target.value)}
-          onBlur={toggleEdit}
-          onKeyPress={(event) => event.key === "Enter" && toggleEdit()}
+          onBlur={finishEdit}
+          onKeyPress={(event) => event.key === "Enter" && finishEdit()}
           autoFocus={isFocused}
         />
       ) : (
-        <span className="leading-8 w-full" onClick={toggleEdit}>
+        <span className="leading-8 w-full" onClick={startEdit}>
           {value}
         </span>
       )}
     </div>
   );
-};
-
-type Word = {
-  value: string;
-  editing: boolean;
 };
 
 type WordChooserProps = {
@@ -65,60 +59,63 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
     return null;
   }
 
-  const initialWords = (myWords || [""]).map((word) => ({
-    value: word,
-    editing: word === "",
-  }));
+  const initialWords = myWords || [];
+  if (initialWords.length < maxWords) {
+    initialWords.push("");
+  }
 
   const [words, setWords] = useState(initialWords);
+  const [editIndex, setEditIndex] = useState(Math.max(0, words.length - 1));
+
   const setWordAtIndex = (index: number, word: string): void => {
     const newWords = words.splice(0);
-    newWords[index].value = word;
+    newWords[index] = word;
     setWords(newWords);
   };
 
-  const persistWords = (newWords: Word[]) => {
-    const values = newWords.map((word) => word.value).filter(Boolean);
-    client.setWords(values);
+  const persistWords = (newWords: string[]) => {
+    client.setWords(newWords);
   };
 
   const normalizeWord = (word: string): string => {
     return word.toLowerCase().replace(/\.|-| /g, "");
   };
 
-  const toggleEditing = (index: number): void => {
-    let newWords = words.splice(0);
-    const wasEditing = newWords[index].editing;
+  const finishEditing = (index: number): void => {
+    let newWords = [...words];
 
-    const existingWords = newWords
-      .map((item, j) => {
-        return j === index ? null : normalizeWord(item.value);
-      })
-      .filter(Boolean);
-    const normalizedWord = normalizeWord(newWords[index].value);
-    if (existingWords.includes(normalizedWord)) {
-      newWords = newWords.splice(0, index).concat(newWords.splice(index));
-    } else {
-      newWords[index].editing = !wasEditing;
+    // This stupid spreading is necessary because otherwise referencing the state
+    // zeroes out the old value
+    const otherWords = [...words]
+      .splice(0, index)
+      .concat([...words].splice(index + 1));
+
+    const normalizedWords = otherWords.map(normalizeWord);
+
+    if (newWords[index]) {
+      const normalizedWord = normalizeWord(newWords[index]);
+      if (normalizedWords.includes(normalizedWord)) {
+        newWords = otherWords;
+      }
     }
     newWords = newWords.filter((word, j) => {
-      return normalizeWord(word.value).length > 0 || j === newWords.length - 1;
+      return normalizeWord(word).length > 0 || j === newWords.length - 1;
     });
-    if (wasEditing && (maxWords === 0 || newWords.length < maxWords)) {
-      newWords.push({ value: "", editing: true });
+    persistWords([...newWords]);
+    const isFull = newWords.length === maxWords;
+    if (newWords.length < maxWords) {
+      newWords.push("");
     }
     setWords(newWords);
-    if (wasEditing) {
-      persistWords(newWords);
-    }
+    // If we just finished editing the last word, set index to -2 to indicate
+    // that *no* words should be selected.
+    setEditIndex(isFull ? -2 : -1);
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
     persistWords(words);
   };
-
-  const editIndex = words.findIndex((word) => word.editing);
 
   return (
     <FormWrapper>
@@ -132,17 +129,21 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
             {maxWords && `(${maxWords} max.)`}
           </span>
         </h3>
-        {words.map((word, index) => (
-          <EditableWord
-            index={index}
-            key={index}
-            value={word.value}
-            editing={word.editing || word.value.length === 0}
-            toggleEdit={() => toggleEditing(index)}
-            isFocused={index === editIndex}
-            changeHandler={(value) => setWordAtIndex(index, value)}
-          />
-        ))}
+        {words.map((word, index) => {
+          const isLast = index === words.length - 1;
+          const isFocused = index === editIndex;
+          return (
+            <EditableWord
+              key={index}
+              value={word}
+              finishEdit={() => finishEditing(index)}
+              startEdit={() => setEditIndex(index)}
+              isFocused={editIndex === -1 ? isLast : isFocused}
+              isEditing={isFocused || (isLast && editIndex === -1)}
+              changeHandler={(value) => setWordAtIndex(index, value)}
+            />
+          );
+        })}
       </form>
     </FormWrapper>
   );
