@@ -1,10 +1,11 @@
 (ns celebrity.game
-  (:require [taoensso.timbre :as log]
-            [celebrity.protocol :as proto]
-            [celebrity.commands :as commands]
+  (:require [celebrity
+             [commands :as commands]
+             [protocol :as proto]]
             [clojure.core.async :as a]
-            [clojure.string]
-            [manifold.stream :as s]))
+            [clojure.string :as str]
+            [manifold.stream :as s]
+            [taoensso.timbre :as log]))
 
 (def room-code-length 4)
 
@@ -12,7 +13,7 @@
   "Generates an alphabet-only code"
   ([] (generate-room-code room-code-length))
   ([len]
-    (clojure.string/join (repeatedly len #(char (+ (rand 26) 65))))))
+    (str/join (repeatedly len #(char (+ (rand 26) 65))))))
 
 (defn generate-uuid []
   (str (java.util.UUID/randomUUID)))
@@ -44,13 +45,12 @@
 (defn create-client-channel
   "Connect the TCP stream to channels, encoding and decoding JSON along the way"
   [conn client-id]
-  (let [in-ch (a/chan)
+  (let [in-ch  (a/chan)
         out-ch (a/chan)]
     (s/connect
-     (->>
-       (s/source-only conn)
-         (s/map proto/parse-message)
-         (s/map #(assoc % :id client-id)))
+     (->> (s/source-only conn)
+          (s/map proto/parse-message)
+          (s/map #(assoc % :id client-id)))
      in-ch)
     (s/connect
      (s/map proto/encode-message (s/->source out-ch))
@@ -92,7 +92,7 @@
                                    :name      name})
         (-> state
             (assoc :players players')
-            (update-in [:screens client-id] #(or % commands/initial-screen))
+            (update-in [:screens client-id'] #(or % commands/initial-screen))
             (assoc-in [:clients client-id'] {:output output
                                              :name   name})
             (update :inputs conj input))))))
@@ -142,7 +142,7 @@
             (recur (commands/handle-client-message msg state))))))))
 
 (defn validate-params
-  [{:keys [teams] :as params}]
+  [{:keys [teams]}]
   (if (< (count teams) 2)
     {:error "Need at least two teams"}
     (when-not (= (count teams) (count (distinct teams)))

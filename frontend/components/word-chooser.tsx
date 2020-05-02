@@ -1,4 +1,4 @@
-import React, { useState, FunctionComponent } from "react";
+import React, { useState, useRef, FunctionComponent } from "react";
 import { connect } from "react-redux";
 import { RootState } from "../reducers";
 import CelebrityClient from "../clients/celebrity";
@@ -10,6 +10,7 @@ type EditableWordProps = {
   changeHandler: (value: string) => void;
   toggleEdit: () => void;
   editing: boolean;
+  isLast: boolean;
 };
 
 const EditableWord: FunctionComponent<EditableWordProps> = ({
@@ -18,27 +19,26 @@ const EditableWord: FunctionComponent<EditableWordProps> = ({
   changeHandler,
   editing,
   toggleEdit,
+  isLast,
 }: EditableWordProps) => {
   return (
     <div className="flex justify-between items-center mb-2">
       {editing ? (
         <ShortFormInput
           type="text"
-          className="w-2/3"
+          className="w-full"
           key={index}
           value={value}
           onChange={(event) => changeHandler(event.target.value)}
+          onBlur={toggleEdit}
           onKeyPress={(event) => event.key === "Enter" && toggleEdit()}
+          autoFocus={isLast}
         />
       ) : (
-        <span className="leading-8">{value}</span>
+        <span className="leading-8 w-full" onClick={toggleEdit}>
+          {value}
+        </span>
       )}
-      <button
-        onClick={toggleEdit}
-        className="ml-2 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded"
-      >
-        {editing ? "Add" : "Edit"}
-      </button>
     </div>
   );
 };
@@ -82,15 +82,27 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
     client.setWords(values);
   };
 
+  const normalizeWord = (word: string): string => {
+    return word.toLowerCase().replace(/\.|-| /g, "");
+  };
+
   const toggleEditing = (index: number): void => {
-    const newWords = words.splice(0);
+    let newWords = words.splice(0);
     const wasEditing = newWords[index].editing;
-    newWords[index].editing = !wasEditing;
-    if (
-      wasEditing &&
-      index + 1 === newWords.length &&
-      (maxWords === 0 || newWords.length < maxWords)
-    ) {
+
+    const existingWords = newWords
+      .map((item, j) => {
+        return j == index ? null : normalizeWord(item.value);
+      })
+      .filter(Boolean);
+    const normalizedWord = normalizeWord(newWords[index].value);
+    if (existingWords.includes(normalizedWord)) {
+      newWords = newWords.splice(0, index).concat(newWords.splice(index));
+    } else {
+      newWords[index].editing = !wasEditing;
+    }
+    newWords = newWords.filter((word) => normalizeWord(word.value).length > 0);
+    if (wasEditing && (maxWords === 0 || newWords.length < maxWords)) {
       newWords.push({ value: "", editing: true });
     }
     setWords(newWords);
@@ -123,6 +135,7 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
             value={word.value}
             editing={word.editing}
             toggleEdit={() => toggleEditing(index)}
+            isLast={index === words.length - 1}
             changeHandler={(value) => setWordAtIndex(index, value)}
           />
         ))}
