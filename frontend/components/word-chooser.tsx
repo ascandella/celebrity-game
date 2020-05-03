@@ -74,7 +74,7 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
   };
 
   const persistWords = (newWords: string[]) => {
-    client.setWords(newWords);
+    client.setWords(newWords.filter(Boolean));
   };
 
   const normalizeWord = (word: string): string => {
@@ -139,7 +139,9 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
               finishEdit={() => finishEditing(index)}
               startEdit={() => setEditIndex(index)}
               isFocused={editIndex === -1 ? isLast : isFocused}
-              isEditing={isFocused || (isLast && editIndex === -1)}
+              isEditing={
+                isFocused || (isLast && (editIndex === -1 || word === ""))
+              }
               changeHandler={(value) => setWordAtIndex(index, value)}
             />
           );
