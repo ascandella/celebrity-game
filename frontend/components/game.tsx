@@ -4,6 +4,7 @@ import styled from "styled-components";
 import ConnectionStatus from "./connection-status";
 import WordChooser from "./word-chooser";
 import TeamPicker from "./team-picker";
+import InGameContainer from "./in-game/container";
 import GameControls from "./controls";
 import { RootState } from "../reducers";
 import CelebrityClient from "../clients/celebrity";
@@ -46,6 +47,8 @@ const Game: FunctionComponent<GameProps> = ({
       </GameHeader>
       <WordChooser client={client} />
       <TeamPicker client={client} />
+      <InGameContainer client={client} />
+
       {hasControl && (
         <div className="flex justify-center mt-4">Code: {gameCode}</div>
       )}

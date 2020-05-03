@@ -27,20 +27,23 @@
   (= client-id (:id (first players))))
 
 (defn broadcast-state
-  [{:keys [clients players screens teams config] :as state}]
+  [{:keys [clients current-player next-player players round-words screens teams config] :as state}]
   (a/go
     (doseq [[client-id {:keys [name output]}] clients]
       (if (nil? output)
         (log/error "Nil output for client " client-id ", name:" name)
-        (a/>! output {:client-id   client-id
-                      :players     players
-                      :event       "broadcast"
-                      :teams       teams
-                      :screen      (get screens client-id)
-                      :has-control (has-control client-id state)
-                      :word-counts (:word-counts state)
-                      :words       (get-in state [:words client-id])
-                      :config      config}))))
+        (a/>! output {:client-id       client-id
+                      :players         players
+                      :event           "broadcast"
+                      :teams           teams
+                      :current-player  current-player
+                      :next-player     next-player
+                      :screen          (get screens client-id)
+                      :has-control     (has-control client-id state)
+                      :remaining-words (count round-words)
+                      :word-counts     (:word-counts state)
+                      :words           (get-in state [:words client-id])
+                      :config          config}))))
   state)
 
 (defn add-player-to-team
@@ -66,12 +69,38 @@
   [state client-id]
   (get-in state [:clients client-id :name]))
 
+(defn randomize-words
+  "Given a map of client id -> word lists, flatten and return a sequence."
+  [words]
+  (shuffle (flatten (vals words))))
+
+(defn randomize-players
+  [{:keys [name players]}]
+  (shuffle (map #(assoc % :team name) players)))
+
+(defn make-player-seq
+  "Given the set of teams (name and players), generate a lazy seq that
+  will cycle through the teams.
+
+  It will return the players in the same order after it cycles through them."
+  [teams]
+  (->> (map randomize-players teams)
+      (apply interleave)
+      cycle))
+
 (defn start-game
-  [{:keys [screens] :as state}]
-  (-> state
-      (assoc :started true)
-      (assoc :screens
-             (into {} (map vector (keys screens) (repeat "round-1"))))))
+  [{:keys [screens teams words] :as state}]
+  (let [player-seq   (make-player-seq teams)
+        next-players (next player-seq)
+        round-words  (randomize-words words)]
+    (-> state
+        (assoc :started true)
+        (assoc :round 1)
+        (assoc :player-seq next-players)
+        (assoc :current-player (first player-seq))
+        (assoc :next-player (first next-players))
+        (assoc :round-words round-words)
+        (assoc :screens (zipmap (keys screens) (repeat "round"))))))
 
 (defn handle-start-game
   [client-id _ {:keys [players] :as state}]
