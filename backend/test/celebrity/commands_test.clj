@@ -85,7 +85,6 @@
 
 (def empty-team
   {:name "empty"})
-   ;; :players []})
 
 (deftest start-game-tests
   (let [state      {:screens {"client-a" "bar"}
@@ -141,6 +140,6 @@
       (let [beats-players (filter #(= "beats" (:team %)) players)]
         (is (= (take 2 beats-players) (drop 2 beats-players)))))
     (testing "With an empty team"
-      (let [with-empty-seq (make-player-seq [bears-team beats-team {:name "empty"}])
+      (let [with-empty-seq (make-player-seq [bears-team beats-team empty-team])
             empty-players  (take 4 with-empty-seq)]
         (is (= 4 (count empty-players)))))))
