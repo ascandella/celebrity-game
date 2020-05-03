@@ -107,8 +107,7 @@
   (log/info "Disconnecting client from server")
   (update-in state [:inputs] disj in-ch))
 
-;; TODO increase this, maybe 5 minutes?
-(def server-timeout-after 60000)
+(def server-timeout-after (* 10 60 1000))
 
 (defn create-teams
   [team-names]

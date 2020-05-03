@@ -23,11 +23,11 @@
     (conj players player)))
 
 (defn has-control
-  [client-id {:keys [players] :as state}]
+  [client-id {:keys [players]}]
   (= client-id (:id (first players))))
 
 (defn broadcast-state
-  [{:keys [clients current-player next-player players round-words screens teams config] :as state}]
+  [{:keys [clients player-seq players round-words screens teams config] :as state}]
   (a/go
     (doseq [[client-id {:keys [name output]}] clients]
       (if (nil? output)
@@ -36,8 +36,8 @@
                       :players         players
                       :event           "broadcast"
                       :teams           teams
-                      :current-player  current-player
-                      :next-player     next-player
+                      :current-player  (first player-seq)
+                      :next-player     (fnext player-seq)
                       :screen          (get screens client-id)
                       :has-control     (has-control client-id state)
                       :remaining-words (count round-words)
@@ -85,25 +85,23 @@
   It will return the players in the same order after it cycles through them."
   [teams]
   (->> (map randomize-players teams)
-      (apply interleave)
-      cycle))
+       (filter not-empty)
+       (map cycle)
+       (apply interleave)))
 
 (defn start-game
   [{:keys [screens teams words] :as state}]
   (let [player-seq   (make-player-seq teams)
-        next-players (next player-seq)
         round-words  (randomize-words words)]
     (-> state
         (assoc :started true)
         (assoc :round 1)
-        (assoc :player-seq next-players)
-        (assoc :current-player (first player-seq))
-        (assoc :next-player (first next-players))
+        (assoc :player-seq player-seq)
         (assoc :round-words round-words)
         (assoc :screens (zipmap (keys screens) (repeat "round"))))))
 
 (defn handle-start-game
-  [client-id _ {:keys [players] :as state}]
+  [client-id _ state]
   (if (has-control client-id state)
     (broadcast-state (start-game state))
     (do (a/>!!

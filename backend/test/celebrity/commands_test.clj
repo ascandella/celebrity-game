@@ -1,7 +1,8 @@
 (ns celebrity.commands-test
   (:require [celebrity.commands :refer :all]
             [clojure.test :refer :all]
-            [clojure.core.async :as a]))
+            [clojure.core.async :as a]
+            [clojure.set :as set]))
 
 
 (deftest handle-join-team-empty
@@ -67,7 +68,7 @@
     (testing "Is invalid for others"
       (is (not (has-control "random-id" state))))))
 
-(def bear-team
+(def bears-team
   {:name    "bears"
    :players [{:id "one" :name "player one"}
              {:id "two" :name "player two"}
@@ -78,9 +79,16 @@
    :players [{:id "four" :name "Dwight Shrute"}
              {:id "jim"  :name "Jim Halpert"}]})
 
+(def solo-team
+  {:neam "solo"
+   :players [{:id "lonely" :name "Loner"}]})
+
+(def empty-team
+  {:name "empty"})
+
 (deftest start-game-tests
   (let [state      {:screens {"client-a" "bar"}
-                    :teams   [beats-team bear-team]
+                    :teams   [beats-team bears-team]
                     :words   {"client-a" ["bears" "beats"]}}
         game-state (start-game state)]
     (testing "Is started"
@@ -88,8 +96,8 @@
     (testing "Is round 1"
       (is (= 1 (:round game-state))))
     (testing "Current player team is different than next player"
-      (is (not= (:team (:current-player game-state))
-                (:team (:next-player game-state)))))
+      (is (not= (:team (first (:player-seq game-state)))
+                (:team (fnext (:player-seq game-state))))))
     (testing "Updates screens"
       (is (= "round" (get-in game-state [:screens "client-a"]))))))
 
@@ -104,7 +112,7 @@
       (is (some #(= "bears" %) words)))))
 
 (deftest randomize-players-test
-  (let [shuffled-players (randomize-players bear-team)]
+  (let [shuffled-players (randomize-players bears-team)]
     (testing "Has correct length"
       (is (= 3 (count shuffled-players))))
     (testing "Associates team name"
@@ -114,15 +122,24 @@
       (is (some #(= "one" (:id %)) shuffled-players))
       (is (some #(= "player one" (:name %)) shuffled-players)))))
 
+
 (deftest make-player-seq-test
-  (let [player-seq (make-player-seq [beats-team bear-team])
+  (let [player-seq (make-player-seq [beats-team bears-team])
         players    (take 8 player-seq)
-        team-names (map #(:team %) players)]
+        team-names (map :team players)]
     (testing "Has enough elements"
       (is (= 8 (count players))))
     (testing "Has four of each team"
       (is (= 4 (count (filter #(= "bears" %) team-names))))
       (is (= 4 (count (filter #(= "beats" %) team-names)))))
+    (testing "Has all the bears players"
+      (let [bear-players (set (map :name (:players bears-team)))
+            all-names    (set (map :name players))]
+        (is (set/subset? bear-players all-names))))
     (testing "Has beats players in the same order"
       (let [beats-players (filter #(= "beats" (:team %)) players)]
-        (is (= (take 2 beats-players) (drop 2 beats-players)))))))
+        (is (= (take 2 beats-players) (drop 2 beats-players)))))
+    (testing "With an empty team"
+      (let [with-empty-seq (make-player-seq [bears-team beats-team empty-team])
+            empty-players  (take 4 with-empty-seq)]
+        (is (= 4 (count empty-players)))))))
