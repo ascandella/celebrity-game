@@ -231,10 +231,10 @@ const myWords = (state = [], action): {} => {
   }
 };
 
-const isCreator = (state = null, action): boolean => {
+const hasControl = (state = null, action): boolean => {
   switch (action.type) {
     case BROADCAST:
-      return action.isCreator || false;
+      return action.hasControl || false;
     default:
       return state;
   }
@@ -251,7 +251,7 @@ const rootReducer = combineReducers({
   gameConfig,
   myWords,
   clientID,
-  isCreator,
+  hasControl,
 
   inGame,
   creatingGame,

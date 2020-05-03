@@ -17,7 +17,7 @@ type GameProps = {
   gameCode: string;
   playerName: string;
   inGame: boolean;
-  isCreator: boolean;
+  hasControl: boolean;
   client: CelebrityClient;
 };
 
@@ -29,7 +29,7 @@ const Game: FunctionComponent<GameProps> = ({
   gameCode,
   inGame,
   client,
-  isCreator,
+  hasControl,
 }: GameProps) => {
   if (!inGame) {
     return null;
@@ -46,7 +46,7 @@ const Game: FunctionComponent<GameProps> = ({
       </GameHeader>
       <WordChooser client={client} />
       <TeamPicker client={client} />
-      {isCreator && (
+      {hasControl && (
         <div className="flex justify-center mt-4">Code: {gameCode}</div>
       )}
     </div>
@@ -57,7 +57,7 @@ const mapStateToProps = (state: RootState) => ({
   gameCode: state.gameCode,
   playerName: state.playerName,
   inGame: state.inGame,
-  isCreator: state.isCreator,
+  hasControl: state.hasControl,
 });
 
 export default connect(mapStateToProps)(Game);

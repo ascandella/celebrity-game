@@ -22,6 +22,10 @@
     players
     (conj players player)))
 
+(defn has-control
+  [client-id {:keys [players] :as state}]
+  (= client-id (:id (first players))))
+
 (defn broadcast-state
   [{:keys [clients players screens teams config] :as state}]
   (a/go
@@ -33,7 +37,7 @@
                       :event       "broadcast"
                       :teams       teams
                       :screen      (get screens client-id)
-                      :is-creator  (= client-id (:id (first players)))
+                      :has-control (has-control client-id state)
                       :word-counts (:word-counts state)
                       :words       (get-in state [:words client-id])
                       :config      config}))))
@@ -65,8 +69,19 @@
 (defn start-game
   [{:keys [screens] :as state}]
   (-> state
+      (assoc :started true)
       (assoc :screens
              (into {} (map vector (keys screens) (repeat "round-1"))))))
+
+(defn handle-start-game
+  [client-id _ {:keys [players] :as state}]
+  (if (has-control client-id state)
+    (broadcast-state (start-game state))
+    (do (a/>!!
+         (get-output state client-id)
+         {:error "You are not allowed to start the game"
+          :event "command-error"})
+        state)))
 
 (defn handle-join-team
   [client-id msg {:keys [teams] :as state}]
@@ -93,16 +108,6 @@
     :pong      true
     :client-id client-id})
   state)
-
-(defn handle-start-game
-  [client-id _ {:keys [players] :as state}]
-  (if (= client-id (:id (first players)))
-    (broadcast-state (start-game state))
-    (do (a/>!!
-         (get-output state client-id)
-         {:error "You are not allowed to start the game"
-          :event "command-error"})
-        state)))
 
 (def command-handlers
   {"join-team"  handle-join-team

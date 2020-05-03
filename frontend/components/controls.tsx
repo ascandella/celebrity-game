@@ -11,16 +11,16 @@ const StartButton = styled.button.attrs({
 
 type ControlProps = {
   isStartable: boolean;
-  isCreator: boolean;
+  hasControl: boolean;
   client: CelebrityClient;
 };
 
 const GameControls: FunctionComponent<ControlProps> = ({
   isStartable,
-  isCreator,
+  hasControl,
   client,
 }: ControlProps) => {
-  if (!isStartable || !isCreator) {
+  if (!isStartable || !hasControl) {
     return null;
   }
 
@@ -31,7 +31,7 @@ const GameControls: FunctionComponent<ControlProps> = ({
 
 const mapStateToProps = (state: RootState) => ({
   isStartable: state.screen === "select-words",
-  isCreator: state.isCreator,
+  hasControl: state.hasControl,
 });
 
 export default connect(mapStateToProps)(GameControls);
