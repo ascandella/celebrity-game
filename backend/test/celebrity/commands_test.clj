@@ -67,7 +67,61 @@
     (testing "Is invalid for others"
       (is (not (has-control "random-id" state))))))
 
+(def bear-team
+  {:name    "bears"
+   :players [{:id "one" :name "player one"}
+             {:id "two" :name "player two"}
+             {:id "three" :name "player three"}]})
+
+(def beats-team
+  {:name "beats"
+   :players [{:id "four" :name "Dwight Shrute"}
+             {:id "jim"  :name "Jim Halpert"}]})
+
 (deftest start-game-tests
-  (testing "Updates screens"
-    (let [state {:screens {"foo" "bar"}}]
-      (is (= "round-1" (get-in (start-game state) [:screens "foo"]))))))
+  (let [state      {:screens {"client-a" "bar"}
+                    :teams   [beats-team bear-team]
+                    :words   {"client-a" ["bears" "beats"]}}
+        game-state (start-game state)]
+    (testing "Is started"
+      (is (:started game-state)))
+    (testing "Is round 1"
+      (is (= 1 (:round game-state))))
+    (testing "Current player team is different than next player"
+      (is (not= (:team (:current-player game-state))
+                (:team (:next-player game-state)))))
+    (testing "Updates screens"
+      (is (= "round" (get-in game-state [:screens "client-a"]))))))
+
+(deftest randomize-words-tests
+  (let [word-map {"hello" ["cow" "banana" "orange"]
+                  "there" ["bears"]}
+        words (randomize-words word-map)]
+    (testing "Returns the right count"
+      (is (= 4 (count words))))
+    (testing "Contains the correct words"
+      (is (some #(= "cow" %) words)
+      (is (some #(= "bears" %) words))))))
+(deftest randomize-players-test
+  (let [shuffled-players (randomize-players bear-team)]
+    (testing "Has correct length"
+      (is (= 3 (count shuffled-players))))
+    (testing "Associates team name"
+      (is (= "bears" (:team (first shuffled-players))))
+      (is (= "bears" (:team (last shuffled-players)))))
+    (testing "Contains player one"
+      (is (some #(= "one" (:id %)) shuffled-players))
+      (is (some #(= "player one" (:name %)) shuffled-players)))))
+
+(deftest make-player-seq-test
+  (let [player-seq (make-player-seq [beats-team bear-team])
+        players    (take 8 player-seq)
+        team-names (map #(:team %) players)]
+    (testing "Has enough elements"
+      (is (= 8 (count players))))
+    (testing "Has four of each team"
+      (is (= 4 (count (filter #(= "bears" %) team-names))))
+      (is (= 4 (count (filter #(= "beats" %) team-names)))))
+    (testing "Has beats players in the same order"
+      (let [beats-players (filter #(= "beats" (:team %)) players)]
+        (is (= (take 2 beats-players) (drop 2 beats-players)))))))

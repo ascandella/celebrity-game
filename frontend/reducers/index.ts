@@ -11,7 +11,7 @@ import {
   CONNECT_ERROR,
   BROADCAST,
 } from "../actions";
-import { Player, Team } from "../types/team";
+import { ActivePlayer, Player, Team } from "../types/team";
 
 const players = (state = [], action): Player[] => {
   switch (action.type) {
@@ -240,6 +240,30 @@ const hasControl = (state = null, action): boolean => {
   }
 };
 
+const emptyActivePlayer: ActivePlayer = {
+  id: undefined,
+  name: undefined,
+  team: undefined,
+};
+
+const currentPlayer = (state = emptyActivePlayer, action): ActivePlayer => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.currentPlayer || {};
+    default:
+      return state;
+  }
+};
+
+const nextPlayer = (state = emptyActivePlayer, action): ActivePlayer => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.nextPlayer || {};
+    default:
+      return state;
+  }
+};
+
 const rootReducer = combineReducers({
   gameCode,
   playerName,
@@ -252,6 +276,8 @@ const rootReducer = combineReducers({
   myWords,
   clientID,
   hasControl,
+  currentPlayer,
+  nextPlayer,
 
   inGame,
   creatingGame,
