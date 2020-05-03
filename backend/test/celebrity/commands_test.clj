@@ -100,8 +100,9 @@
     (testing "Returns the right count"
       (is (= 4 (count words))))
     (testing "Contains the correct words"
-      (is (some #(= "cow" %) words)
-      (is (some #(= "bears" %) words))))))
+      (is (some #(= "cow" %) words))
+      (is (some #(= "bears" %) words)))))
+
 (deftest randomize-players-test
   (let [shuffled-players (randomize-players bear-team)]
     (testing "Has correct length"
