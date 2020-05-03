@@ -132,4 +132,8 @@ export default class CelebrityClient {
       words,
     });
   }
+
+  startGame(): void {
+    this.sendCommand("start-game", {});
+  }
 }

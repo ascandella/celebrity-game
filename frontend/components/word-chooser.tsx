@@ -60,7 +60,7 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
   }
 
   const initialWords = myWords || [];
-  if (initialWords.length < maxWords) {
+  if (maxWords === 0 || initialWords.length < maxWords) {
     initialWords.push("");
   }
 
@@ -82,6 +82,9 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
   };
 
   const finishEditing = (index: number): void => {
+    if (!words[index]) {
+      return;
+    }
     let newWords = [...words];
 
     // This stupid spreading is necessary because otherwise referencing the state
@@ -92,18 +95,16 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
 
     const normalizedWords = otherWords.map(normalizeWord);
 
-    if (newWords[index]) {
-      const normalizedWord = normalizeWord(newWords[index]);
-      if (normalizedWords.includes(normalizedWord)) {
-        newWords = otherWords;
-      }
+    const normalizedWord = normalizeWord(newWords[index]);
+    if (normalizedWords.includes(normalizedWord)) {
+      newWords = otherWords;
     }
     newWords = newWords.filter((word, j) => {
       return normalizeWord(word).length > 0 || j === newWords.length - 1;
     });
     persistWords([...newWords]);
-    const isFull = newWords.length === maxWords;
-    if (newWords.length < maxWords) {
+    const isFull = maxWords > 0 && newWords.length === maxWords;
+    if (maxWords === 0 || newWords.length < maxWords) {
       newWords.push("");
     }
     setWords(newWords);
@@ -125,9 +126,11 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
       >
         <h3 className="mb-2">
           Name Your Celebrities
-          <span className="ml-2 text-base">
-            {maxWords && `(${maxWords} max.)`}
-          </span>
+          {maxWords > 0 && (
+            <span className="ml-2 text-base">
+              {maxWords && `(${maxWords} max.)`}
+            </span>
+          )}
         </h3>
         {words.map((word, index) => {
           const isLast = index === words.length - 1;

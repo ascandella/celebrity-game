@@ -58,3 +58,8 @@
   (testing "Setting words works"
     (let [state (handle-set-words "client-id" {:words ["foo" "bar"]} {})]
       (is (= 2 (get-in state [:word-counts "client-id"]))))))
+
+(deftest start-game-tests
+  (testing "Updates screens"
+    (let [state {:screens {"foo" "bar"}}]
+      (is (= "round-1" (get-in (start-game state) [:screens "foo"]))))))
