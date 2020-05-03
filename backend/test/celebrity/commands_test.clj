@@ -27,7 +27,7 @@
           ghost-players (:players (nth (:teams state) 0))
           ghoul-players (:players (nth (:teams state) 1))]
       (is (= 1 (count ghost-players)))
-      (is (= 0 (count ghoul-players)))
+      (is (zero? (count ghoul-players)))
       (is (= {:id "id" :name "name"} (nth ghost-players 0))))))
 
 (deftest handle-join-team-same-team
@@ -40,7 +40,7 @@
           state         (handle-join-team "id" msg start-state)
           ghost-players (:players (nth (:teams state) 0))
           ghoul-players (:players (nth (:teams state) 1))]
-      (is (= 0 (count ghost-players)))
+      (is (zero? (count ghost-players)))
       (is (= 1 (count ghoul-players)))
       (is (= {:id "id" :name "old-name"} (nth ghoul-players 0))))))
 
@@ -58,3 +58,16 @@
   (testing "Setting words works"
     (let [state (handle-set-words "client-id" {:words ["foo" "bar"]} {})]
       (is (= 2 (get-in state [:word-counts "client-id"]))))))
+
+(deftest has-control-tests
+  (let [start-player-id "abcd"
+        state           {:players [{:id start-player-id}]}]
+    (testing "Is valid for the first player"
+      (is (has-control start-player-id state)))
+    (testing "Is invalid for others"
+      (is (not (has-control "random-id" state))))))
+
+(deftest start-game-tests
+  (testing "Updates screens"
+    (let [state {:screens {"foo" "bar"}}]
+      (is (= "round-1" (get-in (start-game state) [:screens "foo"]))))))

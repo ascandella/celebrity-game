@@ -231,6 +231,15 @@ const myWords = (state = [], action): {} => {
   }
 };
 
+const hasControl = (state = null, action): boolean => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.hasControl || false;
+    default:
+      return state;
+  }
+};
+
 const rootReducer = combineReducers({
   gameCode,
   playerName,
@@ -242,6 +251,7 @@ const rootReducer = combineReducers({
   gameConfig,
   myWords,
   clientID,
+  hasControl,
 
   inGame,
   creatingGame,

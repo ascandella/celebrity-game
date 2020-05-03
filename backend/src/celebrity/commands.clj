@@ -22,6 +22,10 @@
     players
     (conj players player)))
 
+(defn has-control
+  [client-id {:keys [players] :as state}]
+  (= client-id (:id (first players))))
+
 (defn broadcast-state
   [{:keys [clients players screens teams config] :as state}]
   (a/go
@@ -33,6 +37,7 @@
                       :event       "broadcast"
                       :teams       teams
                       :screen      (get screens client-id)
+                      :has-control (has-control client-id state)
                       :word-counts (:word-counts state)
                       :words       (get-in state [:words client-id])
                       :config      config}))))
@@ -61,6 +66,23 @@
   [state client-id]
   (get-in state [:clients client-id :name]))
 
+(defn start-game
+  [{:keys [screens] :as state}]
+  (-> state
+      (assoc :started true)
+      (assoc :screens
+             (into {} (map vector (keys screens) (repeat "round-1"))))))
+
+(defn handle-start-game
+  [client-id _ {:keys [players] :as state}]
+  (if (has-control client-id state)
+    (broadcast-state (start-game state))
+    (do (a/>!!
+         (get-output state client-id)
+         {:error "You are not allowed to start the game"
+          :event "command-error"})
+        state)))
+
 (defn handle-join-team
   [client-id msg {:keys [teams] :as state}]
   (let [client-name (get-name state client-id)
@@ -88,9 +110,10 @@
   state)
 
 (def command-handlers
-  {"join-team" handle-join-team
-   "set-words" handle-set-words
-   "ping"      handle-ping})
+  {"join-team"  handle-join-team
+   "set-words"  handle-set-words
+   "start-game" handle-start-game
+   "ping"       handle-ping})
 
 (defn handle-client-message
   [{:keys [id command] :as msg} state]
@@ -101,4 +124,5 @@
       (let [output (get-output state id)]
           (log/error "Unknown command " command )
           (a/>!! output {:error (str "Unknown command: " command)
-                         :event "command-error"})))))
+                         :event "command-error"})
+          state))))
