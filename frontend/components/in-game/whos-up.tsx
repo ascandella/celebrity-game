@@ -8,7 +8,7 @@ type WhosUpProps = {
   currentPlayer: ActivePlayer;
   myTurn: boolean;
   client: CelebrityClient;
-  turnStarted: Date;
+  turnEnds: Date;
   activeWord: boolean;
 };
 
@@ -16,7 +16,7 @@ const WhosUp: FunctionComponent<WhosUpProps> = ({
   currentPlayer,
   myTurn,
   client,
-  turnStarted,
+  turnEnds,
   activeWord,
 }: WhosUpProps) => {
   if (activeWord) {
@@ -25,8 +25,8 @@ const WhosUp: FunctionComponent<WhosUpProps> = ({
 
   return (
     <div className="flex justify-center text-center">
-      <div className="mb-4 w-64">
-        {myTurn && turnStarted === null ? (
+      <div className="mb-4 w-full">
+        {myTurn && turnEnds === null ? (
           <div>
             <div className="bg-green-500 text-white font-bold px-4 py-1">
               Your Turn
@@ -57,7 +57,7 @@ const mapStateToProps = (state: RootState) => ({
   currentPlayer: state.currentPlayer,
   myTurn: state.myTurn,
   clientID: state.clientID,
-  turnStarted: state.turnStarted,
+  turnEnds: state.turnEnds,
   activeWord: !!state.currentWord,
 });
 export default connect(mapStateToProps)(WhosUp);

@@ -25,7 +25,9 @@ const GameControls: FunctionComponent<ControlProps> = ({
   }
 
   return (
-    <StartButton onClick={() => client.startGame()}>Start Game</StartButton>
+    <div className="mb-4">
+      <StartButton onClick={() => client.startGame()}>Start Game</StartButton>
+    </div>
   );
 };
 

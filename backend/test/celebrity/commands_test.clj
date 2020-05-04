@@ -2,7 +2,8 @@
   (:require [celebrity.commands :refer :all]
             [clojure.test :refer :all]
             [clojure.core.async :as a]
-            [clojure.set :as set]))
+            [clojure.set :as set])
+  (:import (java.time Duration Instant)))
 
 
 (deftest handle-join-team-empty
@@ -154,8 +155,10 @@
 
 (deftest handle-start-turn-tests
   (let [state     {:round-words ["first" "second"]}
-        new-state (handle-start-turn nil nil state)]
-    (testing "Has the first word"
-      (is (= "first" (:current-word new-state))))
-    (testing "Updates the round words"
-      (is (= "second" (first (:round-words new-state)))))))
+        new-state (handle-start-turn nil nil state)
+        now       (Instant/now)
+        turn-ends (:turn-ends new-state)]
+    (testing "Has the turn ending"
+      (is (.isAfter turn-ends now)))
+    (testing "Turn ends is less than 90 seconds from now"
+      (is (.isBefore turn-ends (.plus now (Duration/ofSeconds 90)))))))

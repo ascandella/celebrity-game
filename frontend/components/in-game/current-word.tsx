@@ -13,7 +13,7 @@ const CurrentWord: FunctionComponent<CurrentWordProps> = ({
     return null;
   }
   return (
-    <div className="flex justify-center text-center mb-6">
+    <div className="w-full text-center mb-6">
       <div>
         <div className="bg-green-500 text-white font-bold px-4 py-1">
           Your Word
