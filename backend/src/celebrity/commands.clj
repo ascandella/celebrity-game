@@ -143,8 +143,7 @@
   [_ _ state]
   (broadcast-state
    ;; TODO start a timer chan to end the turn
-   (-> state
-       (assoc :turn-ends (.plus (Instant/now) (Duration/ofMinutes 1))))))
+   (assoc state :turn-ends (.plus (Instant/now) (Duration/ofMinutes 1)))))
 
 (defn ensure-active-player
   "Wrap a handler and ensure the sender is the active player."
