@@ -19,7 +19,7 @@ const ContentWrapper: FunctionComponent<ContentWrapperProps> = ({
         <title>Celebrity Game</title>
       </Head>
       {showHeader && <Header />}
-      <div className="p-6">{children}</div>
+      <div className="p-8 mx-auto max-w-lg lg:max-w-lg">{children}</div>
     </div>
   );
 };

@@ -1,7 +1,7 @@
 (ns celebrity.commands
   (:require [taoensso.timbre :as log]
             [clojure.core.async :as a])
-  (:import (java.time Instant)))
+  (:import (java.time Duration Instant)))
 
 (def initial-screen "pick-team")
 
@@ -28,28 +28,28 @@
   (= client-id (:id (first players))))
 
 (defn broadcast-state
-  [{:keys [clients current-word player-seq players round-words screens teams scores turn-started config] :as state}]
+  [{:keys [clients player-seq players round-words screens teams scores turn-ends config] :as state}]
   (a/go
     (doseq [[client-id {:keys [name output]}] clients]
       (if (nil? output)
         (log/error "Nil output for client " client-id ", name:" name)
         (let [is-active-player (= client-id (:id (first player-seq)))]
           (a/>! output {:client-id       client-id
-                        :players         players
-                        :event           "broadcast"
-                        :teams           teams
-                        :current-player  (first player-seq)
                         :can-guess       false ; TODO, this should tell the player whether their team is up
-                        :next-player     (fnext player-seq)
-                        :screen          (get screens client-id)
+                        :current-player  (first player-seq)
+                        :current-word    (when (and turn-ends is-active-player) (first round-words))
+                        :event           "broadcast"
                         :has-control     (has-control client-id state)
+                        :next-player     (fnext player-seq)
+                        :players         players
                         :remaining-words (count round-words)
-                        :current-word    (when is-active-player current-word)
                         :scores          scores
-                        :turn-started    (when turn-started (.toEpochMilli turn-started))
-                        :your-turn       is-active-player
+                        :screen          (get screens client-id)
+                        :teams           teams
+                        :turn-ends       (when turn-ends (.toEpochMilli turn-ends))
                         :word-counts     (:word-counts state)
                         :words           (get-in state [:words client-id])
+                        :your-turn       is-active-player
                         :config          config})))))
   state)
 
@@ -140,13 +140,10 @@
 
 (defn handle-start-turn
   "Starts the turn."
-  [_ _ {:keys [round-words] :as state}]
+  [_ _ state]
   (broadcast-state
    ;; TODO start a timer chan to end the turn
-   (-> state
-       (assoc :current-word (first round-words))
-       (update :round-words next)
-       (assoc :turn-started (Instant/now)))))
+   (assoc state :turn-ends (.plus (Instant/now) (Duration/ofMinutes 1)))))
 
 (defn ensure-active-player
   "Wrap a handler and ensure the sender is the active player."

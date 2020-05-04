@@ -122,16 +122,14 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
     <FormWrapper>
       <form
         onSubmit={handleSubmit}
-        className="bg-white shadow-md px-8 pt-6 pb-8 m-4"
+        className="bg-white shadow-md px-8 pt-6 pb-8 mb-4"
       >
-        <h3 className="mb-2">
-          Name Your Celebrities
+        <div className="mb-2">
+          <h3>Name Your Celebrities</h3>
           {maxWords > 0 && (
-            <span className="ml-2 text-base">
-              {maxWords && `(${maxWords} max.)`}
-            </span>
+            <span className="text-base">Maximum: {maxWords}</span>
           )}
-        </h3>
+        </div>
         {words.map((word, index) => {
           const isLast = index === words.length - 1;
           const isFocused = index === editIndex;

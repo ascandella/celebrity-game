@@ -291,10 +291,10 @@ const canGuess = (state = false, action): boolean => {
   }
 };
 
-const turnStarted = (state = null, action): Date => {
+const turnEnds = (state = null, action): Date => {
   switch (action.type) {
     case BROADCAST:
-      return action.turnStarted ? new Date(action.turnStarted) : null;
+      return action.turnEnds ? new Date(action.turnEnds) : null;
     default:
       return state;
   }
@@ -326,7 +326,7 @@ const rootReducer = combineReducers({
   scores,
   myTurn,
   canGuess,
-  turnStarted,
+  turnEnds,
   currentWord,
 
   inGame,
