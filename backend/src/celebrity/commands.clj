@@ -1,6 +1,7 @@
 (ns celebrity.commands
   (:require [taoensso.timbre :as log]
-            [clojure.core.async :as a]))
+            [clojure.core.async :as a])
+  (:import (java.time Instant)))
 
 (def initial-screen "pick-team")
 
@@ -27,26 +28,29 @@
   (= client-id (:id (first players))))
 
 (defn broadcast-state
-  [{:keys [clients player-seq players round-words screens teams scores config] :as state}]
+  [{:keys [clients current-word player-seq players round-words screens teams scores turn-started config] :as state}]
   (a/go
     (doseq [[client-id {:keys [name output]}] clients]
       (if (nil? output)
         (log/error "Nil output for client " client-id ", name:" name)
-        (a/>! output {:client-id       client-id
-                      :players         players
-                      :event           "broadcast"
-                      :teams           teams
-                      :current-player  (first player-seq)
-                      :can-guess       false ; TODO
-                      :next-player     (fnext player-seq)
-                      :screen          (get screens client-id)
-                      :has-control     (has-control client-id state)
-                      :remaining-words (count round-words)
-                      :scores          scores
-                      :your-turn       (= client-id (:id (first player-seq)))
-                      :word-counts     (:word-counts state)
-                      :words           (get-in state [:words client-id])
-                      :config          config}))))
+        (let [is-active-player (= client-id (:id (first player-seq)))]
+          (a/>! output {:client-id       client-id
+                        :players         players
+                        :event           "broadcast"
+                        :teams           teams
+                        :current-player  (first player-seq)
+                        :can-guess       false ; TODO, this should tell the player whether their team is up
+                        :next-player     (fnext player-seq)
+                        :screen          (get screens client-id)
+                        :has-control     (has-control client-id state)
+                        :remaining-words (count round-words)
+                        :current-word    (when is-active-player current-word)
+                        :scores          scores
+                        :turn-started    (when turn-started (.toEpochMilli turn-started))
+                        :your-turn       is-active-player
+                        :word-counts     (:word-counts state)
+                        :words           (get-in state [:words client-id])
+                        :config          config})))))
   state)
 
 (defn add-player-to-team
@@ -104,15 +108,18 @@
         (assoc :round-words round-words)
         (assoc :screens (zipmap (keys screens) (repeat "round"))))))
 
+(defn message-client
+  [client-id state message]
+  (when-let [output (get-output state client-id)]
+    (a/>!! output message))
+  state)
+
 (defn handle-start-game
   [client-id _ state]
   (if (has-control client-id state)
     (broadcast-state (start-game state))
-    (do (a/>!!
-         (get-output state client-id)
-         {:error "You are not allowed to start the game"
-          :event "command-error"})
-        state)))
+    (message-client client-id state {:error "You are not allowed to start the game"
+                                     :event "command-error"})))
 
 (defn handle-join-team
   [client-id msg {:keys [teams] :as state}]
@@ -131,19 +138,36 @@
        (assoc-in [:words client-id] words)
        (assoc-in [:word-counts client-id] (count words)))))
 
+(defn handle-start-turn
+  "Starts the turn."
+  [_ _ {:keys [round-words] :as state}]
+  (broadcast-state
+   ;; TODO start a timer chan to end the turn
+   (-> state
+       (assoc :current-word (first round-words))
+       (update :round-words next)
+       (assoc :turn-started (Instant/now)))))
+
+(defn ensure-active-player
+  "Wrap a handler and ensure the sender is the active player."
+  [thunk]
+  (fn [client-id msg {:keys [player-seq] :as state}]
+    (if (= client-id (:id (first player-seq)))
+      (thunk client-id msg state)
+      (message-client client-id state {:error "You are not the active player"
+                                       :event "command-error"}))))
+
 (defn handle-ping
   [client-id _ state]
-  (a/>!!
-   (get-output state client-id)
-   {:event     "pong"
-    :pong      true
-    :client-id client-id})
-  state)
+  (message-client client-id state {:event     "pong"
+                                   :pong      true
+                                   :client-id client-id}))
 
 (def command-handlers
   {"join-team"  handle-join-team
    "set-words"  handle-set-words
    "start-game" handle-start-game
+   "start-turn" (ensure-active-player handle-start-turn)
    "ping"       handle-ping})
 
 (defn handle-client-message
@@ -152,8 +176,7 @@
     (log/info "Responding to command" command "for client" id ": " name " for message " msg)
     (if-let [handler (get command-handlers command)]
       (handler id msg state)
-      (let [output (get-output state id)]
-          (log/error "Unknown command " command )
-          (a/>!! output {:error (str "Unknown command: " command)
-                         :event "command-error"})
-          state))))
+      (do
+        (log/error "Unknown command " command )
+        (message-client id state {:error (str "Unknown command: " command)
+                                  :event "command-error"})))))
