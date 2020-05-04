@@ -15,8 +15,8 @@ const GuessBox: FunctionComponent<GuessBoxProps> = (/* {
   myTurn,
 }: GuessBoxProps */) => {
   return (
-    <div className="flex h-56 justify-center mb-4 border">
-      <div className="w-full">Guesses will go here...</div>
+    <div className="mx-auto p-2 mb-4 h-64 max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl border">
+      Guesses will go here...
     </div>
   );
 };
