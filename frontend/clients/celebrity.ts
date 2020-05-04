@@ -136,4 +136,8 @@ export default class CelebrityClient {
   startGame(): void {
     this.sendCommand("start-game", {});
   }
+
+  startTurn(): void {
+    this.sendCommand("start-turn", {});
+  }
 }

@@ -142,3 +142,20 @@
       (let [with-empty-seq (make-player-seq [bears-team beats-team empty-team])
             empty-players  (take 4 with-empty-seq)]
         (is (= 4 (count empty-players)))))))
+
+(deftest ensure-active-player-tests
+  (let [thunk (fn [& args] ::thunk)
+        state {:player-seq [{:id "bar"}]}
+        wrapped (ensure-active-player thunk)]
+    (testing "With active player it calls thunk"
+      (is (= ::thunk (wrapped "bar" {} state))))
+    (testing "With other players it returns state"
+      (is (= state (wrapped "no-bar" {} state))))))
+
+(deftest handle-start-turn-tests
+  (let [state     {:round-words ["first" "second"]}
+        new-state (handle-start-turn nil nil state)]
+    (testing "Has the first word"
+      (is (= "first" (:current-word new-state))))
+    (testing "Updates the round words"
+      (is (= "second" (first (:round-words new-state)))))))
