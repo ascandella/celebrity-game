@@ -81,7 +81,9 @@
                                  name :name} :join}]
   (let [[client-id' join-error] (try-rejoin client-id name players)]
     (if join-error
-      (proto/respond-message ch (assoc join-error :event "join-error"))
+      (do
+        (proto/respond-message ch (assoc join-error :event "join-error"))
+        state)
       (let [[input output] (create-client-channel ch client-id')
             players'       (commands/add-player players {:id client-id' :name name})]
         (proto/respond-message ch {:room-code code

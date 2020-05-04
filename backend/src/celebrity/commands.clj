@@ -37,11 +37,13 @@
                       :event           "broadcast"
                       :teams           teams
                       :current-player  (first player-seq)
+                      :can-guess       false ; TODO
                       :next-player     (fnext player-seq)
                       :screen          (get screens client-id)
                       :has-control     (has-control client-id state)
                       :remaining-words (count round-words)
                       :scores          scores
+                      :your-turn       (= client-id (:id (first player-seq)))
                       :word-counts     (:word-counts state)
                       :words           (get-in state [:words client-id])
                       :config          config}))))

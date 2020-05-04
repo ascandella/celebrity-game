@@ -12,15 +12,17 @@ type ContentWrapperProps = {
 const ContentWrapper: FunctionComponent<ContentWrapperProps> = ({
   showHeader,
   children,
-}: ContentWrapperProps) => (
-  <div className="bg-gray-100 min-h-screen">
-    <Head>
-      <title>Celebrity Game</title>
-    </Head>
-    {showHeader && <Header />}
-    <div className="p-6">{children}</div>
-  </div>
-);
+}: ContentWrapperProps) => {
+  return (
+    <div className="bg-gray-100 min-h-screen">
+      <Head>
+        <title>Celebrity Game</title>
+      </Head>
+      {showHeader && <Header />}
+      <div className="p-6">{children}</div>
+    </div>
+  );
+};
 
 const mapStateToProps = (state: RootState) => ({
   showHeader: !state.inGame,

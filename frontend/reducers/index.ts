@@ -273,6 +273,24 @@ const scores = (state = {}, action): { [key: string]: number } => {
   }
 };
 
+const myTurn = (state = false, action): boolean => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.yourTurn;
+    default:
+      return state;
+  }
+};
+
+const canGuess = (state = false, action): boolean => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.canGuess;
+    default:
+      return state;
+  }
+};
+
 const rootReducer = combineReducers({
   gameCode,
   playerName,
@@ -288,6 +306,8 @@ const rootReducer = combineReducers({
   currentPlayer,
   nextPlayer,
   scores,
+  myTurn,
+  canGuess,
 
   inGame,
   creatingGame,
