@@ -122,7 +122,6 @@
       (is (some #(= "one" (:id %)) shuffled-players))
       (is (some #(= "player one" (:name %)) shuffled-players)))))
 
-
 (deftest make-player-seq-test
   (let [player-seq (make-player-seq [beats-team bears-team])
         players    (take 8 player-seq)

@@ -264,6 +264,15 @@ const nextPlayer = (state = emptyActivePlayer, action): ActivePlayer => {
   }
 };
 
+const scores = (state = {}, action): { [key: string]: number } => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.scores;
+    default:
+      return state;
+  }
+};
+
 const rootReducer = combineReducers({
   gameCode,
   playerName,
@@ -278,6 +287,7 @@ const rootReducer = combineReducers({
   hasControl,
   currentPlayer,
   nextPlayer,
+  scores,
 
   inGame,
   creatingGame,

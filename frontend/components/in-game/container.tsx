@@ -3,6 +3,7 @@ import { connect } from "react-redux";
 import { RootState } from "../../reducers";
 import CelebrityClient from "../../clients/celebrity";
 import { ActivePlayer } from "../../types/team";
+import Scoreboard from "./scoreboard";
 
 type InGameProps = {
   client: CelebrityClient;
@@ -23,6 +24,7 @@ const InGameContainer: FunctionComponent<InGameProps> = ({
 
   return (
     <div>
+      <Scoreboard />
       <div>Currently Up: {currentPlayer.name}</div>
       <div>Next Up: {nextPlayer.name}</div>
     </div>
