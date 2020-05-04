@@ -27,7 +27,7 @@
   (= client-id (:id (first players))))
 
 (defn broadcast-state
-  [{:keys [clients player-seq players round-words screens teams config] :as state}]
+  [{:keys [clients player-seq players round-words screens teams scores config] :as state}]
   (a/go
     (doseq [[client-id {:keys [name output]}] clients]
       (if (nil? output)
@@ -41,6 +41,7 @@
                       :screen          (get screens client-id)
                       :has-control     (has-control client-id state)
                       :remaining-words (count round-words)
+                      :scores          scores
                       :word-counts     (:word-counts state)
                       :words           (get-in state [:words client-id])
                       :config          config}))))
@@ -97,6 +98,7 @@
         (assoc :started true)
         (assoc :round 1)
         (assoc :player-seq player-seq)
+        (assoc :scores (zipmap (map :name teams) (repeat 0)))
         (assoc :round-words round-words)
         (assoc :screens (zipmap (keys screens) (repeat "round"))))))
 
