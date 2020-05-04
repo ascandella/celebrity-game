@@ -4,6 +4,8 @@ import { RootState } from "../../reducers";
 import CelebrityClient from "../../clients/celebrity";
 import { ActivePlayer } from "../../types/team";
 import Scoreboard from "./scoreboard";
+import WhosUp from "./whos-up";
+import GuessBox from "./guess-box";
 
 type InGameProps = {
   client: CelebrityClient;
@@ -15,8 +17,7 @@ type InGameProps = {
 
 const InGameContainer: FunctionComponent<InGameProps> = ({
   inRound,
-  currentPlayer,
-  nextPlayer,
+  client,
 }: InGameProps) => {
   if (!inRound) {
     return null;
@@ -24,9 +25,9 @@ const InGameContainer: FunctionComponent<InGameProps> = ({
 
   return (
     <div>
+      <WhosUp client={client} />
+      <GuessBox client={client} />
       <Scoreboard />
-      <div>Currently Up: {currentPlayer.name}</div>
-      <div>Next Up: {nextPlayer.name}</div>
     </div>
   );
 };

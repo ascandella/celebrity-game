@@ -19,6 +19,7 @@ type GameProps = {
   playerName: string;
   inGame: boolean;
   hasControl: boolean;
+  screen: string;
   client: CelebrityClient;
 };
 
@@ -30,6 +31,7 @@ const Game: FunctionComponent<GameProps> = ({
   gameCode,
   inGame,
   client,
+  screen,
   hasControl,
 }: GameProps) => {
   if (!inGame) {
@@ -49,8 +51,14 @@ const Game: FunctionComponent<GameProps> = ({
       <TeamPicker client={client} />
       <InGameContainer client={client} />
 
-      {hasControl && (
-        <div className="flex justify-center mt-4">Code: {gameCode}</div>
+      {hasControl && screen !== "round" && (
+        <div className="flex justify-center text-center mt-4">
+          <div>
+            <div className="border border-t-4 border-blue-400 bg-blue-100 px-4 py-2">
+              Room code: <span className="font-medium">{gameCode}</span>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -61,6 +69,7 @@ const mapStateToProps = (state: RootState) => ({
   playerName: state.playerName,
   inGame: state.inGame,
   hasControl: state.hasControl,
+  screen: state.screen,
 });
 
 export default connect(mapStateToProps)(Game);
