@@ -42,7 +42,7 @@
                         :has-control     (has-control client-id state)
                         :next-player     (fnext player-seq)
                         :players         players
-                        :remaining-words (count round-words)
+                        :remaining-words (- (count round-words) 1)
                         :scores          scores
                         :screen          (get screens client-id)
                         :teams           teams
@@ -162,12 +162,36 @@
                                    :pong      true
                                    :client-id client-id}))
 
+(defn next-word-or-round
+  "Advance to the next round if no words are left"
+  [{:keys [round-words] :as state}]
+  (if-let [words (next round-words)]
+    (assoc state :round-words words)
+    (do
+      (log/info "Out of words, moving to next round")
+      ;;TODO
+      state)))
+
+(defn handle-skip-word
+  [_ _ state]
+  ;; TODO have a max number of skips per turn
+  (broadcast-state (next-word-or-round state)))
+
+(defn handle-count-guess
+  [_ _ state]
+  ;; TODO send a message to the chat
+  (broadcast-state
+   (next-word-or-round
+    (update-in state [:scores (:team (first (:player-seq state)))] inc))))
+
 (def command-handlers
-  {"join-team"  handle-join-team
-   "set-words"  handle-set-words
-   "start-game" handle-start-game
-   "start-turn" (ensure-active-player handle-start-turn)
-   "ping"       handle-ping})
+  {"join-team"   handle-join-team
+   "set-words"   handle-set-words
+   "start-game"  handle-start-game
+   "start-turn"  (ensure-active-player handle-start-turn)
+   "skip-word"   (ensure-active-player handle-skip-word)
+   "count-guess" (ensure-active-player handle-count-guess)
+   "ping"        handle-ping})
 
 (defn handle-client-message
   [{:keys [id command] :as msg} state]
