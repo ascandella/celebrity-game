@@ -165,7 +165,6 @@
 (defn next-word-or-round
   "Advance to the next round if no words are left"
   [{:keys [round-words] :as state}]
-  (log/infof "Next word or round: %s" (:scores state))
   (if-let [words (next round-words)]
     (assoc state :round-words words)
     (do
