@@ -154,11 +154,21 @@
       (is (= state (wrapped "no-bar" {} state))))))
 
 (deftest handle-start-turn-tests
-  (let [state     {:round-words ["first" "second"]}
+  (let [events-ch  (a/chan)
+        state     {:events-ch   events-ch
+                   :turn-time   10
+                   :round-words ["first" "second"]}
         new-state (handle-start-turn nil nil state)
         now       (Instant/now)
         turn-ends (:turn-ends new-state)]
     (testing "Has the turn ending"
       (is (.isAfter turn-ends now)))
     (testing "Turn ends is less than 90 seconds from now"
-      (is (.isBefore turn-ends (.plus now (Duration/ofSeconds 90)))))))
+      (is (.isBefore turn-ends (.plus now (Duration/ofSeconds 90)))))
+    (testing "Gives a turn end event"
+      (is (= :turn-end (a/<!! events-ch))))))
+
+(deftest handle-event-tests
+  (let [state {}]
+    (testing "Handle unknown event"
+      (is (= state (handle-event :unknown state))))))

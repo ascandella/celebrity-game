@@ -20,6 +20,9 @@
   :plugins [[jonase/eastwood "0.3.11"]
             [lein-kibit "0.1.5"]]
 
+  ;; necessary for :else in cond expression
+  :eastwood {:exclude-linters [:constant-test]}
+
   :profiles
   {:uberjar {:aot :all}
    :test {:dependencies [[ring/ring-mock "0.4.0"]]}})

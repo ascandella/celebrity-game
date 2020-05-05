@@ -56,7 +56,7 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
   client,
 }: WordChooserProps) => {
   const initialWords = myWords || [];
-  if (maxWords === 0 || initialWords.length < maxWords) {
+  if (!maxWords || initialWords.length < maxWords) {
     initialWords.push("");
   }
 
