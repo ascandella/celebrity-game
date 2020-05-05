@@ -7,6 +7,7 @@ import Scoreboard from "./scoreboard";
 import WhosUp from "./whos-up";
 import GuessBox from "./guess-box";
 import CurrentWord from "./current-word";
+import Timer from "./timer";
 
 type InGameProps = {
   client: CelebrityClient;
@@ -26,6 +27,7 @@ const InGameContainer: FunctionComponent<InGameProps> = ({
 
   return (
     <div>
+      <Timer />
       <WhosUp client={client} />
       <CurrentWord />
       <GuessBox client={client} />

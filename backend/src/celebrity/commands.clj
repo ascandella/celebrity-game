@@ -140,10 +140,12 @@
 
 (defn handle-start-turn
   "Starts the turn."
-  [_ _ state]
+  [_ _ {:keys [turn-time events-ch] :as state}]
+  (a/go
+    (a/<! (a/timeout turn-time))
+    (a/>! events-ch :turn-end))
   (broadcast-state
-   ;; TODO start a timer chan to end the turn
-   (assoc state :turn-ends (.plus (Instant/now) (Duration/ofMinutes 1)))))
+   (assoc state :turn-ends (.plus (Instant/now) (Duration/ofMillis turn-time)))))
 
 (defn ensure-active-player
   "Wrap a handler and ensure the sender is the active player."
@@ -177,3 +179,26 @@
         (log/error "Unknown command " command )
         (message-client id state {:error (str "Unknown command: " command)
                                   :event "command-error"})))))
+
+(defn handle-turn-end
+  [{:keys [words] :as state}]
+  (log/info "Turn finished")
+  ;; TODO send a message to chat saying how many the player scored
+  (broadcast-state
+   (-> state
+       (assoc :round-words (randomize-words words))
+       (dissoc :turn-ends)
+       (update :player-seq next)
+       (update :round inc))))
+
+(def events-map
+  {:turn-end handle-turn-end})
+
+(defn handle-event
+  [event state]
+  (log/infof "Handle event: %s" event)
+  (if-let [handler (get events-map event)]
+    (handler state)
+    (do
+      (log/errorf "No event handler for %s" event)
+      state)))

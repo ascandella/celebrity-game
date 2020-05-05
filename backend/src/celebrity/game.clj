@@ -79,6 +79,8 @@
                                 ch           :ch
                                 {code :room-code
                                  name :name} :join}]
+
+  (log/info "Received client connection: " client-id code name)
   (let [[client-id' join-error] (try-rejoin client-id name players)]
     (if join-error
       (do
@@ -119,28 +121,30 @@
   [code client-in game-config deregister]
   (a/go-loop [state {:inputs    #{}
                      :players   []
+                     :events-ch (a/chan)
                      :room-code code
+                     :rounds    2
                      :teams     (create-teams (:teams game-config))
+                     :turn-time 60000
                      :config    game-config}]
     ;; wait for messages from clients connecting, clients sending message, or a
     ;; timeout indicating nobody is here anymore
     (let [timeout-ch    (a/timeout server-timeout-after)
-          [msg channel] (a/alts! (vec (conj (:inputs state) timeout-ch client-in)))]
+          events-ch     (:events-ch state)
+          [msg channel] (a/alts! (vec (conj (:inputs state) timeout-ch client-in events-ch)))]
       (if (identical? channel timeout-ch)
         (do
           (log/info "Cancelling event loop for " code " due to no activity in " (/ server-timeout-after 1000))
           (deregister)
+          (a/close! events-ch)
           (a/close! client-in))
-        (if (nil? msg)
-          ;; one of the channels was closed, remove from :inputs if it's ac lient
-          (recur (disconnect-from-server channel state))
-          ;; we received a message on one of the channels
-          (if (identical? channel client-in)
-            (let [new-state (try-join state msg)]
-              (log/info "Received client connection: " (dissoc msg :ch))
-              ;; let clients know a new player has joined
-              (recur (commands/broadcast-state new-state)))
-            (recur (commands/handle-client-message msg state))))))))
+        (recur (cond
+                 ;; one of the channels was closed, remove from :inputs if it's ac lient
+                 (nil? msg)                     (disconnect-from-server channel state)
+                 ;; we received a message on one of the channels
+                 (identical? channel client-in) (commands/broadcast-state (try-join state msg))
+                 (identical? channel events-ch) (commands/handle-event msg state)
+                 :else                          (commands/handle-client-message msg state)))))))
 
 (defn validate-params
   [{:keys [teams]}]
