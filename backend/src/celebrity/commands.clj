@@ -145,7 +145,6 @@
     (a/<! (a/timeout turn-time))
     (a/>! events-ch :turn-end))
   (broadcast-state
-   ;; TODO start a timer chan to end the turn
    (assoc state :turn-ends (.plus (Instant/now) (Duration/ofMillis turn-time)))))
 
 (defn ensure-active-player
