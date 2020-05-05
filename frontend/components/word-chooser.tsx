@@ -55,10 +55,6 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
   myWords,
   client,
 }: WordChooserProps) => {
-  if (!isChoosing) {
-    return null;
-  }
-
   const initialWords = myWords || [];
   if (maxWords === 0 || initialWords.length < maxWords) {
     initialWords.push("");
@@ -66,6 +62,10 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
 
   const [words, setWords] = useState(initialWords);
   const [editIndex, setEditIndex] = useState(Math.max(0, words.length - 1));
+
+  if (!isChoosing) {
+    return null;
+  }
 
   const setWordAtIndex = (index: number, word: string): void => {
     const newWords = words.splice(0);

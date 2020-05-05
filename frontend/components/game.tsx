@@ -34,12 +34,15 @@ const Game: FunctionComponent<GameProps> = ({
   screen,
   hasControl,
 }: GameProps) => {
+  useEffect(() => {
+    if (gameCode) {
+      window.location.hash = gameCode;
+    }
+  });
+
   if (!inGame) {
     return null;
   }
-  useEffect(() => {
-    window.location.hash = gameCode;
-  });
 
   return (
     <div>
