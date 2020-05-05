@@ -309,6 +309,15 @@ const currentWord = (state = null, action): string => {
   }
 };
 
+const remainingWords = (state = null, action): number => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.remainingWords;
+    default:
+      return state;
+  }
+};
+
 const rootReducer = combineReducers({
   gameCode,
   playerName,
@@ -328,6 +337,7 @@ const rootReducer = combineReducers({
   canGuess,
   turnEnds,
   currentWord,
+  remainingWords,
 
   inGame,
   creatingGame,

@@ -140,4 +140,12 @@ export default class CelebrityClient {
   startTurn(): void {
     this.sendCommand("start-turn", {});
   }
+
+  skipWord(): void {
+    this.sendCommand("skip-word", {});
+  }
+
+  countGuess(): void {
+    this.sendCommand("count-guess", {});
+  }
 }

@@ -14,15 +14,17 @@
                   default-val))))
 
 
-(defn camelcase-if-not-uuid
+(defn maybe-camelcase
   [key]
-  (if (= 36 (count (str key)))
-    key
-    (csk/->camelCaseString key)))
+  (let [key-str (str key)]
+  (cond
+    (= 36 (count key-str))                  key
+    (Character/isUpperCase (first key-str)) key
+    :else                                   (csk/->camelCaseString key))))
 
 (defn encode-message
   [msg]
-  (json/write-str msg :key-fn camelcase-if-not-uuid))
+  (json/write-str msg :key-fn maybe-camelcase))
 
 (defn respond-json
   [stream data]
