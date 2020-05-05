@@ -172,3 +172,14 @@
   (let [state {}]
     (testing "Handle unknown event"
       (is (= state (handle-event :unknown state))))))
+
+(deftest handle-count-guess-tests
+  (let [state {:round-words ["foo" "bar"]
+               :scores      {"bears" 2
+                             "beats" 3}
+               :player-seq  [{:team "beats"}]}
+        result (handle-count-guess nil nil state)]
+    (testing "Updates the score"
+      (is (= 4 (get-in result [:scores "beats"]))))
+    (testing "Updates round words"
+      (is (= ["bar"] (:round-words result))))))
