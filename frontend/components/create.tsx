@@ -162,7 +162,7 @@ class CreateGame extends Component<CreateProps, CreateState> {
 
             <div className="flex justify-between">
               <a
-                className={`bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent ${
+                className={`bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-3 border border-blue-500 hover:border-transparent ${
                   addDisabled && "opacity-50 cursor-not-allowed"
                 }`}
                 onClick={this.addTeam.bind(this)}
@@ -170,7 +170,7 @@ class CreateGame extends Component<CreateProps, CreateState> {
                 Add Team
               </a>
               <a
-                className={`bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent ${
+                className={`bg-transparent hover:bg-red-500 text-red-700 font-semibold hover:text-white py-2 px-3 border border-red-500 hover:border-transparent ${
                   removeDisabled && "opacity-50 cursor-not-allowed"
                 }`}
                 onClick={this.removeTeam.bind(this)}
