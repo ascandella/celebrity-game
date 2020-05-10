@@ -10,6 +10,7 @@
                  [com.taoensso/timbre "4.10.0"]
                  [camel-snake-kebab "0.4.1"]
                  [ring "1.7.0"]
+                 [stemmers "0.2.2"]
                  [aleph "0.4.6"]
                  [compojure "1.6.1"]]
 
