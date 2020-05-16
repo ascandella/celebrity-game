@@ -123,7 +123,7 @@
                      :players   []
                      :events-ch (a/chan)
                      :room-code code
-                     :rounds    2
+                     :rounds    3
                      :teams     (create-teams (:teams game-config))
                      :turn-time 60000
                      :config    game-config}]

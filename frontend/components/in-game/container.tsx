@@ -13,6 +13,7 @@ import ActorControls from "./actor-controls";
 type InGameProps = {
   client: CelebrityClient;
   inRound: boolean;
+  gameOver: boolean;
   currentPlayer: ActivePlayer;
   nextPlayer: ActivePlayer;
   clientID: string;
@@ -21,17 +22,32 @@ type InGameProps = {
 const InGameContainer: FunctionComponent<InGameProps> = ({
   inRound,
   client,
+  gameOver,
 }: InGameProps) => {
-  if (!inRound) {
+  if (!inRound && !gameOver) {
     return null;
   }
 
   return (
     <div>
-      <Timer />
-      <WhosUp client={client} />
-      <CurrentWord />
-      <ActorControls client={client} />
+      {inRound && (
+        <div>
+          <Timer />
+          <WhosUp client={client} />
+          <CurrentWord />
+          <ActorControls client={client} />
+        </div>
+      )}
+      {gameOver && (
+        <div className="mb-4 justify-center text-center">
+          <div className="bg-green-500 text-white font-bold px-4 py-1">
+            Game Over
+          </div>
+          <div className="border border-t-0 border-green-400 bg-green-100 px-4 py-2">
+            <div>Thanks for playing</div>
+          </div>
+        </div>
+      )}
       <GuessBox client={client} />
       <Scoreboard />
     </div>
@@ -40,6 +56,7 @@ const InGameContainer: FunctionComponent<InGameProps> = ({
 
 const mapStateToProps = (state: RootState) => ({
   inRound: state.screen === "round",
+  gameOver: state.screen === "game-over",
   currentPlayer: state.currentPlayer,
   nextPlayer: state.nextPlayer,
   clientID: state.clientID,

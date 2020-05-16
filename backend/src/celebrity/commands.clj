@@ -43,6 +43,7 @@
                         :next-player     (fnext player-seq)
                         :players         players
                         :remaining-words (- (count round-words) 1)
+                        :remaining-skips (:remaining-skips state)
                         :scores          scores
                         :screen          (get screens client-id)
                         :teams           teams
@@ -60,7 +61,7 @@
 (defn remove-player-from-team
   [{:keys [players] :as team} id]
   (assoc team :players
-          (remove #(= id (:id %)) players)))
+         (remove #(= id (:id %)) players)))
 
 (defn move-player-to-team
   [team id name team-name]
@@ -98,8 +99,8 @@
 
 (defn start-game
   [{:keys [screens teams words] :as state}]
-  (let [player-seq   (make-player-seq teams)
-        round-words  (randomize-words words)]
+  (let [player-seq  (make-player-seq teams)
+        round-words (randomize-words words)]
     (-> state
         (assoc :started true)
         (assoc :round 1)
@@ -127,25 +128,29 @@
         team-name   (get-in msg [:team :name])
         new-teams   (map #(move-player-to-team % client-id client-name team-name) teams)]
     (broadcast-state
-     (-> state
-         (assoc-in [:screens client-id] "select-words")
-         (assoc :teams new-teams)))))
+      (-> state
+          (assoc-in [:screens client-id] "select-words")
+          (assoc :teams new-teams)))))
 
 (defn handle-set-words
   [client-id {:keys [words]} state]
   (broadcast-state
-   (-> state
-       (assoc-in [:words client-id] words)
-       (assoc-in [:word-counts client-id] (count words)))))
+    (-> state
+        (assoc-in [:words client-id] words)
+        (assoc-in [:word-counts client-id] (count words)))))
 
 (defn handle-start-turn
   "Starts the turn."
-  [_ _ {:keys [turn-time events-ch] :as state}]
+  [_ _ {:keys [turn-time events-ch round leftover-clock] :as state}]
   (a/go
     (a/<! (a/timeout turn-time))
     (a/>! events-ch :turn-end))
-  (broadcast-state
-   (assoc state :turn-ends (.plus (Instant/now) (Duration/ofMillis turn-time)))))
+  (let [turn-time (or leftover-clock (Duration/ofMillis turn-time))]
+    (broadcast-state
+      (-> state
+          ;; you start with as many skips as the round number
+          (assoc :remaining-skips round)
+          (assoc :turn-ends (.plus (Instant/now) turn-time))))))
 
 (defn ensure-active-player
   "Wrap a handler and ensure the sender is the active player."
@@ -162,27 +167,47 @@
                                    :pong      true
                                    :client-id client-id}))
 
+(defn maybe-end-game
+  [{:keys [rounds round screens] :as state}]
+  (cond-> state
+    (> round rounds) (assoc :screens
+                            (zipmap (keys screens) (repeat "game-over")))))
+
+(defn next-round
+  "Advance to the rext round"
+  [{:keys [words] :as state}]
+  (maybe-end-game
+    (-> state
+        (assoc :round-words (randomize-words words))
+        (dissoc :turn-ends)
+        (update :round inc))))
+
 (defn next-word-or-round
   "Advance to the next round if no words are left"
-  [{:keys [round-words] :as state}]
+  [{:keys [round-words turn-ends] :as state}]
+  (log/info "Next word or round: " round-words)
   (if-let [words (next round-words)]
     (assoc state :round-words words)
     (do
       (log/info "Out of words, moving to next round")
-      ;;TODO
-      state)))
+      (next-round
+        (assoc state :leftover-clock (Duration/between (Instant/now) turn-ends))))))
 
 (defn handle-skip-word
-  [_ _ state]
-  ;; TODO have a max number of skips per turn
-  (broadcast-state (next-word-or-round state)))
+  [_ _ {:keys [remaining-skips] :as state}]
+  (broadcast-state
+    (if (< 1 remaining-skips)
+      (do
+        (log/error "Can't skip with remaining: " remaining-skips)
+        state)
+      (next-word-or-round (update state :remaining-skips dec)))))
 
 (defn handle-count-guess
   [_ _ state]
   ;; TODO send a message to the chat
   (broadcast-state
-   (next-word-or-round
-    (update-in state [:scores (:team (first (:player-seq state)))] inc))))
+    (next-word-or-round
+      (update-in state [:scores (:team (first (:player-seq state)))] inc))))
 
 (def command-handlers
   {"join-team"   handle-join-team
@@ -209,11 +234,7 @@
   (log/info "Turn finished")
   ;; TODO send a message to chat saying how many the player scored
   (broadcast-state
-   (-> state
-       (assoc :round-words (randomize-words words))
-       (dissoc :turn-ends)
-       (update :player-seq next)
-       (update :round inc))))
+    (next-round (update state :player-seq next))))
 
 (def events-map
   {:turn-end handle-turn-end})

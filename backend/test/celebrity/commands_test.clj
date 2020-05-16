@@ -154,17 +154,25 @@
       (is (= state (wrapped "no-bar" {} state))))))
 
 (deftest handle-start-turn-tests
-  (let [events-ch  (a/chan)
+  (let [events-ch (a/chan)
         state     {:events-ch   events-ch
                    :turn-time   10
                    :round-words ["first" "second"]}
         new-state (handle-start-turn nil nil state)
         now       (Instant/now)
         turn-ends (:turn-ends new-state)]
+
     (testing "Has the turn ending"
       (is (.isAfter turn-ends now)))
+
     (testing "Turn ends is less than 90 seconds from now"
       (is (.isBefore turn-ends (.plus now (Duration/ofSeconds 90)))))
+
+    (testing "With remaining clock"
+      (let [turn-ends-with-clock (assoc state :leftover-clock (Duration/ofMillis 1000))
+            new-round            (handle-start-turn nil nil turn-ends-with-clock)]
+        (is (.isBefore (:turn-ends new-round) (.plus now (Duration/ofSeconds 2))))))
+
     (testing "Gives a turn end event"
       (is (= :turn-end (a/<!! events-ch))))))
 
@@ -174,12 +182,43 @@
       (is (= state (handle-event :unknown state))))))
 
 (deftest handle-count-guess-tests
-  (let [state {:round-words ["foo" "bar"]
-               :scores      {"bears" 2
-                             "beats" 3}
-               :player-seq  [{:team "beats"}]}
+  (let [state  {:round-words ["foo" "bar"]
+                :scores      {"bears" 2
+                              "beats" 3}
+                :round       3
+                :rounds      3
+                :player-seq  [{:team "beats"}]}
         result (handle-count-guess nil nil state)]
     (testing "Updates the score"
       (is (= 4 (get-in result [:scores "beats"]))))
     (testing "Updates round words"
       (is (= ["bar"] (:round-words result))))))
+
+(deftest maybe-end-game-tests
+  (testing "When the game isn't over"
+    (let [state {:screens {:foo "round"}
+                 :rounds  3
+                 :round   3}]
+      (is (= "round" (get-in (maybe-end-game state) [:screens :foo])))))
+  (testing "When the game isn't over"
+    (let [state {:screens {:foo "round"}
+                 :rounds  3
+                 :round   4}]
+      (is (= "game-over" (get-in (maybe-end-game state) [:screens :foo]))))))
+
+(deftest next-word-or-round-tests
+  (testing "On the last word"
+    (let [state     {:round-words ["foo"]
+                     :words       {:player-1 ["a" "b" "c"]}
+                     :rounds      2
+                     :turn-ends   (.plus (Instant/now) (Duration/ofSeconds 3))
+                     :round       1}
+          new-state (next-word-or-round state)]
+      (is (< (.toMillis (:leftover-clock new-state)) 4000))
+      (is (> (.toMillis (:leftover-clock new-state)) 1000))
+      (is (= 3 (count (:round-words new-state))))
+      (is (= 2 (:round new-state)))))
+  (testing "With words left over"
+    (let [state {:round-words ["foo" "bar"]
+                 :round       1}]
+      (is (= ["bar"] (:round-words (next-word-or-round state)))))))
