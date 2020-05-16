@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { RootState } from "../../reducers";
 
 type TimerProps = {
-  turnEnd: Date;
+  turnEnds: Date;
 };
 
 type TimerState = {
@@ -25,7 +25,7 @@ class Timer extends Component<TimerProps, TimerState> {
   constructor(props) {
     super(props);
     this.state = {
-      secondsRemaining: computeSeconds(this.props.turnEnd),
+      secondsRemaining: computeSeconds(this.props.turnEnds),
     };
   }
 
@@ -40,9 +40,9 @@ class Timer extends Component<TimerProps, TimerState> {
   }
 
   componentDidUpdate(prevProps): void {
-    if (this.props.turnEnd !== prevProps.turnEnd && this.props.turnEnd) {
+    if (this.props.turnEnds !== prevProps.turnEnds) {
       this.setState({
-        secondsRemaining: computeSeconds(this.props.turnEnd),
+        secondsRemaining: computeSeconds(this.props.turnEnds),
       });
     }
   }
@@ -69,7 +69,7 @@ class Timer extends Component<TimerProps, TimerState> {
 }
 
 const mapStateToProps = (state: RootState) => ({
-  turnEnd: state.turnEnds,
+  turnEnds: state.turnEnds,
 });
 
 export default connect(mapStateToProps)(Timer);

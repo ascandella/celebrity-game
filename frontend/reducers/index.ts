@@ -318,6 +318,15 @@ const remainingWords = (state = null, action): number => {
   }
 };
 
+const remainingSkips = (state = null, action): number => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.remainingSkips;
+    default:
+      return state;
+  }
+};
+
 const rootReducer = combineReducers({
   gameCode,
   playerName,
@@ -338,6 +347,7 @@ const rootReducer = combineReducers({
   turnEnds,
   currentWord,
   remainingWords,
+  remainingSkips,
 
   inGame,
   creatingGame,

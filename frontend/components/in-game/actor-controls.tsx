@@ -7,6 +7,7 @@ type ActorControlsProps = {
   client: CelebrityClient;
   myTurn: boolean;
   remainingWords: number;
+  remainingSkips: number;
   currentWord: string;
 };
 
@@ -14,13 +15,14 @@ const ActorControls: FunctionComponent<ActorControlsProps> = ({
   client,
   myTurn,
   remainingWords,
+  remainingSkips,
   currentWord,
 }: ActorControlsProps) => {
   if (!myTurn || !currentWord) {
     return null;
   }
 
-  const skipDisabled = remainingWords < 1;
+  const skipDisabled = remainingWords < 1 || remainingSkips <= 0;
   const skipStyle = skipDisabled ? "opacity-50 cursor-not-allowed" : " ";
 
   return (
@@ -31,12 +33,11 @@ const ActorControls: FunctionComponent<ActorControlsProps> = ({
           disabled={skipDisabled}
           onClick={() => client.skipWord()}
         >
-          Skip
+          Skip ({remainingSkips} left)
         </button>
 
         <button
           className="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-blue-700 hover:border-blue-500 rounded"
-          disabled={skipDisabled}
           onClick={() => client.countGuess()}
         >
           Correct
@@ -50,6 +51,7 @@ const mapStateToProps = (state: RootState) => ({
   // TODO number of skips left
   myTurn: state.myTurn,
   remainingWords: state.remainingWords,
+  remainingSkips: state.remainingSkips,
   currentWord: state.currentWord,
 });
 export default connect(mapStateToProps)(ActorControls);
