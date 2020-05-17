@@ -22,9 +22,12 @@ jobs:
           lein: "2.9.3"
 
       - name: Run Clojure tests
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: |
           cd backend
-          lein test
+          lein with-profile test cloverage --codecov
+          bash <(curl -s https://codecov.io/bash)
 
       - name: Run Eastwood linter
         run: |
