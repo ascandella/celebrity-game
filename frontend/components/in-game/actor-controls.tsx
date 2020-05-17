@@ -26,7 +26,7 @@ const ActorControls: FunctionComponent<ActorControlsProps> = ({
   const skipStyle = skipDisabled ? "opacity-50 cursor-not-allowed" : " ";
 
   return (
-    <div className="flex justify-center text-center mb-4">
+    <div className="flex justify-center text-center text-lg mb-4">
       <div>
         <button
           className={`${skipStyle}bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 mr-4 border border-orange-500 hover:border-transparent rounded`}

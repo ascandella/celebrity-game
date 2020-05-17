@@ -232,6 +232,13 @@
         (dissoc :turn-ends)
         (update :round inc))))
 
+(defn next-player
+  [state]
+  (-> state
+      (dissoc :turn-id)
+      (dissoc :turn-ends)
+      (update :player-seq next)))
+
 (defn next-word-or-round
   "Advance to the next round if no words are left"
   [{:keys [round-words turn-ends] :as state}]
@@ -317,8 +324,7 @@
     (do
       (broadcast-message {:system true
                           :text   "Time's up!"} state)
-      (broadcast-state
-        (next-round (update state :player-seq next))))
+      (broadcast-state (next-player state)))
     (do
       (log/info "Ignoring turn end for inactive ID: " (:turn-id event) turn-id)
       state)))
