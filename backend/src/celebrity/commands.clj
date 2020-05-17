@@ -32,7 +32,7 @@
   [{:keys [player-seq]}]
   (:team (first player-seq)))
 
-(defn player-on-team
+(defn player-on-active-team
   [player-id {:keys [teams] :as state}]
   (if-let [team (first (filter #(= (active-team state) (:name %)) teams))]
     (contains? (:player-ids team) player-id)
@@ -58,7 +58,7 @@
         (log/error "Nil output for client " client-id ", name:" name)
         (let [is-active-player (= client-id (:id (first player-seq)))
               current-player   (first player-seq)
-              on-active-team   (player-on-team client-id state)
+              on-active-team   (player-on-active-team client-id state)
               can-guess        (and (not is-active-player) on-active-team)]
           (a/>! output {:client-id       client-id
                         :can-guess       can-guess
@@ -201,7 +201,7 @@
   "Wrap a handler and ensure the sender is on the team that's up."
   [thunk]
   (fn [client-id msg state]
-    (if (player-on-team client-id state)
+    (if (player-on-active-team client-id state)
       (thunk client-id msg state)
       (message-client client-id state {:error "You are not allowed to guess"
                                        :event "command-error"}))))
@@ -252,14 +252,18 @@
                             :text   (format "%s skipped a word" (active-player-name state))} state)
         (next-word-or-round (update state :remaining-skips dec))))))
 
+(defn count-guess-and-advance
+  [state]
+  (broadcast-state
+    (next-word-or-round
+      (update-in state [:scores (active-team state)] inc))))
+
 (defn handle-count-guess
   [_ _ {:keys [round-words] :as state}]
   (broadcast-message {:system true
                       :text   (format "\"%s\" was right" (first round-words))}
                      state)
-  (broadcast-state
-    (next-word-or-round
-      (update-in state [:scores (active-team state)] inc))))
+  (count-guess-and-advance state))
 
 (defn handle-send-message
   [client-id {:keys [message]} {:keys [round-words players] :as state}]
@@ -271,11 +275,12 @@
         (broadcast-message {:player  player
                             :correct true
                             :text    message} state)
-        (handle-count-guess client-id {} state))
+        (count-guess-and-advance state))
       (do
         (log/info "Incorrect guess: " word message)
         (broadcast-message {:player player
                             :text   message} state)
+        ;; no need to broadcast state here, but return it just in case
         state))))
 
 (def command-handlers
