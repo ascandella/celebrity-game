@@ -1,4 +1,4 @@
-[![Netlify Status](https://api.netlify.com/api/v1/badges/c29dab66-8c65-4397-a3fb-038daeb06138/deploy-status)](https://app.netlify.com/sites/celebrity-game/deploys)
+[![codecov](https://codecov.io/gh/ascandella/celebrity-game/branch/master/graph/badge.svg)](https://codecov.io/gh/ascandella/celebrity-game)
 
 # Celebrity Game
 
