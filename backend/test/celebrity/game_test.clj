@@ -121,7 +121,7 @@
       (is (= join-uuid client-id)))))
 
 
-(deftest try-rejoin-same-id
+(deftest try-rejoin-different-id
   (testing "rejoining with the same name and different ID works"
     (let [client-id "test-id"
           name      "not-taken"

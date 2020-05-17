@@ -1,4 +1,5 @@
 import { Message } from "../types/message";
+
 export type JoinGameRequest = {
   userName: string;
   roomCode: string;

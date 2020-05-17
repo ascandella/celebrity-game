@@ -11,7 +11,6 @@ import {
   CONNECT_ERROR,
   BROADCAST,
   MESSAGE,
-  message,
 } from "../actions";
 import { Message } from "../types/message";
 import { ActivePlayer, Player, Team } from "../types/team";
@@ -333,7 +332,7 @@ const remainingSkips = (state = null, action): number => {
 const messages = (state = [], action): Message[] => {
   switch (action.type) {
     case MESSAGE:
-      if (action.roundEnd) {
+      if (action.message.roundEnd) {
         // Clear out the messages when the round starts so players
         // can't scroll back
         return [action.message];
