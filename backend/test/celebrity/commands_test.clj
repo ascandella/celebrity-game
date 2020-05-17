@@ -43,10 +43,8 @@
           ghost-players (:players (nth (:teams state) 0))
           ghoul-players (:players (nth (:teams state) 1))]
       (is (zero? (count ghost-players)))
-      (is (= 2 (count ghoul-players)))
-      (is (= {:id "id" :name "old-name"} (nth ghoul-players 0)))
-      ;; note: this will probably never happen, but just in case
-      (is (= {:id "id" :name "new-name"} (nth ghoul-players 1))) )))
+      (is (= 1 (count ghoul-players)))
+      (is (= {:id "id" :name "old-name"} (nth ghoul-players 0))))))
 
 (deftest handle-client-message-unknown
   (testing "Handle client message rejects unknown"
@@ -188,10 +186,12 @@
                 :scores      {"bears" 2
                               "beats" 3}
                 :round       3
+                :turn-score  1
                 :rounds      3
                 :player-seq  [{:team "beats"}]}
         result (handle-count-guess nil nil state)]
     (testing "Updates the score"
+      (is (= 2 (:turn-score result)))
       (is (= 4 (get-in result [:scores "beats"]))))
     (testing "Updates round words"
       (is (= ["bar"] (:round-words result))))))
@@ -260,6 +260,7 @@
                 :player-seq  [{:team "fake-team"}]
                 :scores      {"fake-team" 1}
                 :turn-ends   (Instant/now)
+                :turn-score  0
                 :round       2
                 :rounds      5
                 :screens     {}
@@ -269,6 +270,7 @@
     (testing "A correct guess"
       (let [new-state (handle-send-message "clueless-id" {:message "catch PHRASE"} state)]
         (is (get-in (a/<!! player) [:message :correct]))
+        (is (= 1 (:turn-score new-state)))
         (is (= 3 (:round new-state)))
         (is (= 2 (get-in new-state [:scores "fake-team"])))))
 
