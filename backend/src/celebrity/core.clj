@@ -5,7 +5,8 @@
             [ring.middleware.params :as params]
             [aleph.http :as http]
             [manifold.deferred :as d]
-            [celebrity.connect :as connect])
+            [celebrity.connect :as connect]
+            [taoensso.timbre :as log])
   (:gen-class))
 
 (def non-websocket-request
@@ -17,8 +18,8 @@
   [req]
   (d/catch
       (d/let-flow
-       [conn (http/websocket-connection req)]
-       (connect/handle-connect conn))
+        [conn (http/websocket-connection req)]
+        (connect/handle-connect conn))
       (fn [_] non-websocket-request)))
 
 (defn health-handler
@@ -29,10 +30,10 @@
 
 (def handler
   (params/wrap-params
-   (compojure/routes
-    (GET "/game" [] game-handler)
-    (GET "/health" [] health-handler)
-    (route/not-found "No such page."))))
+    (compojure/routes
+      (GET "/game" [] game-handler)
+      (GET "/health" [] health-handler)
+      (route/not-found "No such page."))))
 
 (def wrapped-handler
   (if (= (System/getenv "CELEBRITY_ENVIRONMENT") "development")
@@ -47,7 +48,14 @@
   [& args]
   (http/start-server wrapped-handler {:port (get-port)}))
 
-(defn dev
-  []
-  (http/start-server wrapped-handler {:port  3030
-                                      :join? false}))
+(defonce devserver (atom nil))
+
+(defn dev []
+  (reset! devserver
+          (http/start-server wrapped-handler {:port  3030
+                                              :join? false})))
+
+(defn halt []
+  (when-let [ds @devserver]
+    (.close ds)
+    (reset! devserver nil)))

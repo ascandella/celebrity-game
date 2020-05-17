@@ -1,10 +1,13 @@
 (ns celebrity.game-test
   (:require [celebrity.game :refer :all]
             [celebrity.protocol :as proto]
+            [clojure.data.json :as json]
             [clojure.test :refer :all]
             [clojure.string :as string]
             [clojure.core.async :as a]
-            [manifold.stream :as s]))
+            [manifold.stream :as s]
+            [me.raynes.fs :as fs]
+            [clojure.data.json :as json]))
 
 (defn two-sided-stream
   []
@@ -193,3 +196,22 @@
   (testing "Validate game params with 1 team fails"
     (let [params {:teams ["a"]}]
       (is (not (nil? (validate-params params)))))))
+
+(deftest write-registry-to-disk-tests
+  (let [[client server] (two-sided-stream)
+        params          (make-create-params {:name   "persisted"
+                                             :config {:foo "bar"}})
+        registry        (atom {})
+        val             (create-game params server {:registry registry})
+        tmp-dir         (fs/temp-dir "test-games")]
+    (write-registry-to-disk registry tmp-dir)
+    (Thread/sleep 500)
+    (testing "There is a JSON file"
+      (let [files (fs/list-dir tmp-dir)]
+        (is (= 1 (count files)))
+        (let [game-data (json/read-str (slurp (first files))
+                                       :key-fn keyword)]
+          (is (string? (:room-code game-data)))
+          (is (= 2 (count (:teams game-data))))
+          (is (= "persisted" (get-in game-data [:config :name]))))))
+    (fs/delete-dir tmp-dir)))
