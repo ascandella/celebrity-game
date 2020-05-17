@@ -70,26 +70,32 @@
 
 (defn try-join
   "If the client with join message `msg` can join, return updated state a"
-  [{:keys [players] :as state} {client-id    :id
-                                ch           :ch
-                                {code :room-code
-                                 name :name} :join}]
+  [{:keys [players joinable?] :as state} {client-id    :id
+                                          ch           :ch
+                                          {code :room-code
+                                           name :name} :join}]
   (log/info "Received client connection: " client-id code name)
-  (let [client-id'     (try-rejoin client-id name players)
-        [input output] (create-client-channel ch client-id')
-        players'       (commands/add-player players {:id client-id' :name name})]
-    (proto/respond-message ch {:room-code code
-                               :event     "joined"
-                               :success   true
-                               :client-id client-id'
-                               :players   players'
-                               :name      name})
-    (-> state
-        (assoc :players players')
-        (update-in [:screens client-id'] #(or % commands/initial-screen))
-        (assoc-in [:clients client-id'] {:output output
-                                         :name   name})
-        (update :inputs conj input))))
+  (if-not joinable?
+    (do
+      (log/error "Unable to join game: " code " for name: " name)
+      (proto/respond-message ch {:event "join-error"
+                                 :error "Game has already started"})
+      state)
+    (let [client-id'     (try-rejoin client-id name players)
+          [input output] (create-client-channel ch client-id')
+          players'       (commands/add-player players {:id client-id' :name name})]
+      (proto/respond-message ch {:room-code code
+                                 :event     "joined"
+                                 :success   true
+                                 :client-id client-id'
+                                 :players   players'
+                                 :name      name})
+      (-> state
+          (assoc :players players')
+          (update-in [:screens client-id'] #(or % commands/initial-screen))
+          (assoc-in [:clients client-id'] {:output output
+                                           :name   name})
+          (update :inputs conj input)))))
 
 (defn deregister-server
   [code registry]
@@ -105,13 +111,15 @@
 
 (defn create-teams
   [team-names]
-  (map (fn [name] {:name name :players [] :player-ids (set nil)}) team-names))
+  (for [name team-names]
+    {:name name :players [] :player-ids #{}}))
 
 (defn game-state-machine
   [code client-in game-config deregister]
   (a/go-loop [state {:inputs     #{}
                      :players    []
                      :events-ch  (a/chan)
+                     :joinable?  true
                      :room-code  code
                      :rounds     3
                      :teams      (create-teams (:teams game-config))

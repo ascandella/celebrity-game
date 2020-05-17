@@ -32,6 +32,7 @@
   [{:keys [player-seq]}]
   (:team (first player-seq)))
 
+;; FIXME this smells like the data is laid out poorly
 (defn player-on-active-team
   [player-id {:keys [teams] :as state}]
   (if-let [team (first (filter #(= (active-team state) (:name %)) teams))]
@@ -131,7 +132,7 @@
   (let [player-seq  (make-player-seq teams)
         round-words (randomize-words words)]
     (-> state
-        (assoc :started true)
+        (assoc :joinable? false)
         (assoc :round 1)
         (assoc :player-seq player-seq)
         (assoc :scores (zipmap (map :name teams) (repeat 0)))

@@ -93,7 +93,7 @@
                     :words   {"client-a" ["bears" "beats"]}}
         game-state (start-game state)]
     (testing "Is started"
-      (is (:started game-state)))
+      (is (not (:joinable? game-state))))
     (testing "Is round 1"
       (is (= 1 (:round game-state))))
     (testing "Current player team is different than next player"
