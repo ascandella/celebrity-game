@@ -14,6 +14,7 @@ export const SET_CONNECTING = "SET_CONNECTING";
 export const CONNECT_ERROR = "CONNECT_ERROR";
 export const CONNECTED = "CONNECTED";
 export const BROADCAST = "BROADCAST";
+export const MESSAGE = "MESSAGE";
 
 export const connectionStatus = (status) => ({
   type: CONNECTION_STATUS,
@@ -92,6 +93,11 @@ export const createError = (event: GameEvent) => ({
   ...event,
 });
 
+export const message = (event: GameEvent) => ({
+  type: MESSAGE,
+  ...event,
+});
+
 export const receivedMessage = (event: GameEvent) => {
   /* eslint-disable default-case */
   switch (event.event) {
@@ -107,6 +113,8 @@ export const receivedMessage = (event: GameEvent) => {
       return broadcast(event);
     case "joined":
       return joinedGame(event);
+    case "message":
+      return message(event);
     default:
       return {
         type: "UNKNOWN_MESSAGE",

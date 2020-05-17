@@ -27,6 +27,18 @@
   [client-id {:keys [players]}]
   (= client-id (:id (first players))))
 
+(defn client-channels
+  "Return all the out channels for clients"
+  [{:keys [clients]}]
+  (map :output (vals clients)))
+
+(defn broadcast-message
+  [message state]
+  (a/go
+    (doseq [client-ch (client-channels state)]
+      (a/>! client-ch {:event   "message"
+                       :message message}))))
+
 (defn broadcast-state
   [{:keys [clients player-seq players round-words screens teams scores turn-ends config] :as state}]
   (a/go
@@ -139,12 +151,19 @@
         (assoc-in [:words client-id] words)
         (assoc-in [:word-counts client-id] (count words)))))
 
+(defn active-player-name
+  [{:keys [player-seq]}]
+  (:name (first player-seq)))
+
 (defn handle-start-turn
   "Starts the turn."
   [_ _ {:keys [turn-time events-ch round leftover-clock] :as state}]
   (a/go
     (a/<! (a/timeout turn-time))
     (a/>! events-ch :turn-end))
+  (broadcast-message {:system true
+                      :text   (format "%s started their turn" (active-player-name state))}
+                     state)
   (let [turn-time (or leftover-clock (Duration/ofMillis turn-time))]
     (broadcast-state
       (-> state
@@ -185,26 +204,33 @@
 (defn next-word-or-round
   "Advance to the next round if no words are left"
   [{:keys [round-words turn-ends] :as state}]
-  (log/info "Next word or round: " round-words)
   (if-let [words (next round-words)]
     (assoc state :round-words words)
     (do
       (log/info "Out of words, moving to next round")
+      (broadcast-message {:system    true
+                          :round-end true
+                          :text      "Out of words, on to the next round"} state)
       (next-round
         (assoc state :leftover-clock (Duration/between (Instant/now) turn-ends))))))
 
 (defn handle-skip-word
   [_ _ {:keys [remaining-skips] :as state}]
   (broadcast-state
-    (if (< 1 remaining-skips)
+    (if (< remaining-skips 1)
       (do
         (log/error "Can't skip with remaining: " remaining-skips)
         state)
-      (next-word-or-round (update state :remaining-skips dec)))))
+      (do
+        (broadcast-message {:system true
+                            :text   (format "%s skipped a word" (active-player-name state))} state)
+        (next-word-or-round (update state :remaining-skips dec))))))
 
 (defn handle-count-guess
-  [_ _ state]
-  ;; TODO send a message to the chat
+  [_ _ {:keys [round-words] :as state}]
+  (broadcast-message {:system true
+                      :text   (format "\"%s\" was right" (first round-words))}
+                     state)
   (broadcast-state
     (next-word-or-round
       (update-in state [:scores (:team (first (:player-seq state)))] inc))))
@@ -225,7 +251,7 @@
     (if-let [handler (get command-handlers command)]
       (handler id msg state)
       (do
-        (log/error "Unknown command " command )
+        (log/error "Unknown command " command)
         (message-client id state {:error (str "Unknown command: " command)
                                   :event "command-error"})))))
 

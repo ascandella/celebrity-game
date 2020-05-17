@@ -1,3 +1,5 @@
+import { Message } from "../types/message";
+
 export type JoinGameRequest = {
   userName: string;
   roomCode: string;
@@ -15,6 +17,7 @@ export type GameEvent = {
   error?: string;
   code?: string;
   event: string;
+  message?: Message;
   [key: string]: any;
 };
 
