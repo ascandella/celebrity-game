@@ -63,7 +63,7 @@
   (if-let [existing-player (commands/player-by-name name players)]
     (do
       (log/info "Reconnecting client by with: " client-id "name: " name)
-      client-id)
+      (:id existing-player))
     (if (commands/player-by-id client-id players)
       (generate-uuid)
       client-id)))

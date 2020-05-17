@@ -175,21 +175,22 @@
 (defn handle-start-turn
   "Starts the turn."
   [_ _ {:keys [turn-time events-ch turn-id round leftover-clock] :as state}]
-  (let [turn-id (java.util.UUID/randomUUID)]
+  (let [turn-id      (java.util.UUID/randomUUID)
+        turn-ends-in (or leftover-clock (Duration/ofMillis turn-time))]
     (a/go
-      (a/<! (a/timeout turn-time))
+      (a/<! (a/timeout (.toMillis turn-ends-in)))
       (a/>! events-ch {:type    ::turn-end
                        :turn-id turn-id}))
     (broadcast-message {:system true
                         :text   (format "%s started their turn" (active-player-name state))}
                        state)
-    (let [turn-time (or leftover-clock (Duration/ofMillis turn-time))]
+    (let []
       (broadcast-state
         (-> state
             ;; you start with as many skips as the round number
             (assoc :remaining-skips round)
             (assoc :turn-id turn-id)
-            (assoc :turn-ends (.plus (Instant/now) turn-time)))))))
+            (assoc :turn-ends (.plus (Instant/now) turn-ends-in)))))))
 
 (defn ensure-active-player
   "Wrap a handler and ensure the sender is the active player."
@@ -313,8 +314,11 @@
   (log/info "Turn finished")
   (if (= (:turn-id event) turn-id)
     ;; TODO send a message to chat saying how many the player scored
-    (broadcast-state
-      (next-round (update state :player-seq next)))
+    (do
+      (broadcast-message {:system true
+                          :text   "Time's up!"} state)
+      (broadcast-state
+        (next-round (update state :player-seq next))))
     (do
       (log/info "Ignoring turn end for inactive ID: " (:turn-id event) turn-id)
       state)))

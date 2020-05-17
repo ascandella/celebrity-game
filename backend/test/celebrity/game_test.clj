@@ -127,7 +127,7 @@
           name      "not-taken"
           players   [{:id "different-id" :name name}]
           join-uuid (try-rejoin client-id name players)]
-      (is (= join-uuid client-id)))))
+      (is (= join-uuid "different-id")))))
 
 (deftest client-disconnect-reconnect
   (testing "We can reconnect if we disconnect"

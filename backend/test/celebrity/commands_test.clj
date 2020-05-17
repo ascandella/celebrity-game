@@ -37,14 +37,16 @@
     (let [teams         [{:name "ghosts" :players []}
                          {:name "ghouls" :players [{:id "id" :name "old-name"}]}]
           msg           {:team {:name "ghouls"}}
-          start-state   {:teams teams
+          start-state   {:teams   teams
                          :clients {"id" {:name "new-name"}}}
           state         (handle-join-team "id" msg start-state)
           ghost-players (:players (nth (:teams state) 0))
           ghoul-players (:players (nth (:teams state) 1))]
       (is (zero? (count ghost-players)))
-      (is (= 1 (count ghoul-players)))
-      (is (= {:id "id" :name "old-name"} (nth ghoul-players 0))))))
+      (is (= 2 (count ghoul-players)))
+      (is (= {:id "id" :name "old-name"} (nth ghoul-players 0)))
+      ;; note: this will probably never happen, but just in case
+      (is (= {:id "id" :name "new-name"} (nth ghoul-players 1))) )))
 
 (deftest handle-client-message-unknown
   (testing "Handle client message rejects unknown"
@@ -174,7 +176,7 @@
         (is (.isBefore (:turn-ends new-round) (.plus now (Duration/ofSeconds 2))))))
 
     (testing "Gives a turn end event"
-      (is (= :turn-end (a/<!! events-ch))))))
+      (is (= "turn-end" (name (:type (a/<!! events-ch))))))))
 
 (deftest handle-event-tests
   (let [state {}]
@@ -259,13 +261,14 @@
                 :scores      {"fake-team" 1}
                 :turn-ends   (Instant/now)
                 :round       2
+                :rounds      5
                 :screens     {}
                 :players     [{:name "clueless"
                                :id   "clueless-id"}]}]
 
     (testing "A correct guess"
       (let [new-state (handle-send-message "clueless-id" {:message "catch PHRASE"} state)]
-        (is (:correct (a/<!! player)))
+        (is (get-in (a/<!! player) [:message :correct]))
         (is (= 3 (:round new-state)))
         (is (= 2 (get-in new-state [:scores "fake-team"])))))
 

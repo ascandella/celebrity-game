@@ -46,6 +46,7 @@ const WhosUp: FunctionComponent<WhosUpProps> = ({
         ) : (
           <div>
             <strong>{currentPlayer.name}</strong> is up
+            {!turnEnds && <span>... waiting for them to start</span>}
           </div>
         )}
       </div>
