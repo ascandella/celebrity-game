@@ -3,8 +3,12 @@
              [commands :as commands]
              [protocol :as proto]]
             [clojure.core.async :as a]
+            [clojure.data.json :as json]
+            [clojure.java.io :as io]
             [clojure.string :as str]
             [manifold.stream :as s]
+            [me.raynes.fs :as fs]
+            [signal.handler :as signal]
             [taoensso.timbre :as log]))
 
 (def room-code-length 4)
@@ -68,34 +72,57 @@
       (generate-uuid)
       client-id)))
 
+(defn value-fn
+  [k v]
+  (cond
+    (= k :player-seq) value-fn
+    (= k :inputs)     value-fn
+    (= k :output)     value-fn
+    (= k :events-ch)  value-fn
+    :else             v))
+
+(defn halt-game
+  [{:keys [room-code] :as state} out-dir]
+  (with-open [wrtr (io/writer (fs/file out-dir (format "%s.json" room-code)))]
+    (json/write state wrtr :value-fn value-fn)
+    (.flush wrtr))
+  (-> state
+      (assoc :joinable? false)
+      (assoc :closed true)))
+
 (defn try-join
   "If the client with join message `msg` can join, return updated state a"
   [{:keys [players joinable?] :as state} {client-id    :id
                                           ch           :ch
                                           {code :room-code
-                                           name :name} :join}]
-  (log/info "Received client connection: " client-id code name)
-  (if-not joinable?
+                                           name :name} :join
+                                          halt         :halt
+                                          out-dir      :out-dir}]
+  (if halt
+    (halt-game state out-dir)
     (do
-      (log/error "Unable to join game: " code " for name: " name)
-      (proto/respond-message ch {:event "join-error"
-                                 :error "Game has already started"})
-      state)
-    (let [client-id'     (try-rejoin client-id name players)
-          [input output] (create-client-channel ch client-id')
-          players'       (commands/add-player players {:id client-id' :name name})]
-      (proto/respond-message ch {:room-code code
-                                 :event     "joined"
-                                 :success   true
-                                 :client-id client-id'
-                                 :players   players'
-                                 :name      name})
-      (-> state
-          (assoc :players players')
-          (update-in [:screens client-id'] #(or % commands/initial-screen))
-          (assoc-in [:clients client-id'] {:output output
-                                           :name   name})
-          (update :inputs conj input)))))
+      (log/info "Received client connection: " client-id code name)
+      (if-not joinable?
+        (do
+          (log/error "Unable to join game: " code " for name: " name)
+          (proto/respond-message ch {:event "join-error"
+                                     :error "Game has already started"})
+          state)
+        (let [client-id'     (try-rejoin client-id name players)
+              [input output] (create-client-channel ch client-id')
+              players'       (commands/add-player players {:id client-id' :name name})]
+          (proto/respond-message ch {:room-code code
+                                     :event     "joined"
+                                     :success   true
+                                     :client-id client-id'
+                                     :players   players'
+                                     :name      name})
+          (-> state
+              (assoc :players players')
+              (update-in [:screens client-id'] #(or % commands/initial-screen))
+              (assoc-in [:clients client-id'] {:output output
+                                               :name   name})
+              (update :inputs conj input)))))))
 
 (defn deregister-server
   [code registry]
@@ -147,10 +174,9 @@
 
 (defn validate-params
   [{:keys [teams]}]
-  (if (< (count teams) 2)
-    {:error "Need at least two teams"}
-    (when-not (= (count teams) (count (distinct teams)))
-      {:error "Duplicate team names"})))
+  (cond
+    (< (count teams) 2)                           {:error "Need at least two teams"}
+    (not= (count teams) (count (distinct teams))) {:error "Duplicate team names"}))
 
 (defn create-game
   "Creates a new game, returns a game code"
@@ -183,3 +209,23 @@
                   ;; connect the client to the server handler
                   (connect-client-to-game (assoc params :room-code code) stream server-chan))
                 (recur (inc count))))))))))
+
+(defn write-registry-to-disk
+  [registry dir]
+  (doseq [[code server-ch] @registry]
+    (a/>!! server-ch {:halt    true
+                      :out-dir dir})
+    (log/info "Writing game to disk: " code)))
+
+(defn shutdown [sig]
+  (log/info "Shutting down:" sig)
+  ;; TODO persistent dir
+  (let [tmp-dir (fs/temp-dir "game-flush")]
+    (write-registry-to-disk games tmp-dir))
+  (Thread/sleep 1000)
+  (java.lang.System/exit 0))
+
+;; control-c from command line
+(signal/on-signal :int shutdown)
+;; regular quit
+(signal/on-signal :term shutdown)
