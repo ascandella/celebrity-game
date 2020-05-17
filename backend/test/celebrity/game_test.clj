@@ -89,47 +89,44 @@
 
 (deftest join-game-does-not-exist
   (testing "try to join a game that doesn't exist"
-    (let [client (s/stream)
+    (let [client   (s/stream)
           registry (atom {})
           response (join client {} {:registry registry})]
       (is (=
-           (:error response)
-           "No room code provided")))))
-
-(deftest try-rejoin-name-taken
-  (testing "trying to rejoin with a taken name fails"
-    (let [client-id "test-id"
-          name "tester-taken"
-          players [{:id "foo" :name name}]
-          [_ join-error] (try-rejoin client-id name players)]
-      (is (string/includes? join-error "already taken"))
-      (is (string/includes? join-error name)))))
+            (:error response)
+            "No room code provided")))))
 
 (deftest try-rejoin-name-empty
   (testing "trying to rejoin with a new player succeeds"
-    (let [client-id "test-id"
-          name "not-taken"
-          players []
-          [accepted-uuid join-error] (try-rejoin client-id name players)]
-      (is (nil? join-error))
+    (let [client-id     "test-id"
+          name          "not-taken"
+          players       []
+          accepted-uuid (try-rejoin client-id name players)]
       (is (= client-id accepted-uuid)))))
 
 (deftest try-rejoin-overlapping-id
   (testing "overlapping IDs are regenerated"
-    (let [client-id "test-id"
-          new-name "new-name"
-          players [{:id client-id :name "old-name"}]
-          [accepted-uuid join-error] (try-rejoin client-id name players)]
-      (is (nil? join-error))
-      (is (not (= client-id accepted-uuid))))))
+    (let [client-id       "test-id"
+          new-name        "new-name"
+          players         [{:id client-id :name "old-name"}]
+          [accepted-uuid] (try-rejoin client-id name players)]
+      (is (not= client-id accepted-uuid)))))
 
 (deftest try-rejoin-same-id
   (testing "rejoining with the same name and ID works"
     (let [client-id "test-id"
-          name "not-taken"
-          players [{:id client-id :name name}]
-          [join-uuid join-error] (try-rejoin client-id name players)]
-      (is (nil? join-error))
+          name      "not-taken"
+          players   [{:id client-id :name name}]
+          join-uuid (try-rejoin client-id name players)]
+      (is (= join-uuid client-id)))))
+
+
+(deftest try-rejoin-same-id
+  (testing "rejoining with the same name and different ID works"
+    (let [client-id "test-id"
+          name      "not-taken"
+          players   [{:id "different-id" :name name}]
+          join-uuid (try-rejoin client-id name players)]
       (is (= join-uuid client-id)))))
 
 (deftest client-disconnect-reconnect

@@ -13,7 +13,7 @@
   "Generates an alphabet-only code"
   ([] (generate-room-code room-code-length))
   ([len]
-    (str/join (repeatedly len #(char (+ (rand 26) 65))))))
+   (str/join (repeatedly len #(char (+ (rand 26) 65))))))
 
 (defn generate-uuid []
   (str (java.util.UUID/randomUUID)))
@@ -48,30 +48,25 @@
   (let [in-ch  (a/chan)
         out-ch (a/chan)]
     (s/connect
-     (->> (s/source-only conn)
-          (s/map proto/parse-message)
-          (s/map #(assoc % :id client-id)))
-     in-ch)
+      (->> (s/source-only conn)
+           (s/map proto/parse-message)
+           (s/map #(assoc % :id client-id)))
+      in-ch)
     (s/connect
-     (s/map proto/encode-message (s/->source out-ch))
-     (s/sink-only conn))
+      (s/map proto/encode-message (s/->source out-ch))
+      (s/sink-only conn))
     [in-ch out-ch]))
 
 (defn try-rejoin
   [client-id name players]
   ;; is there a player here with that name already
   (if-let [existing-player (commands/player-by-name name players)]
-    (if (= client-id (:id existing-player))
-      (do
-        (log/info "Reconnecting client by id: " client-id "name: " name)
-        [client-id nil])
-      (do
-        (log/warn "Name " name " client ID " client-id "tried to connect but name already taken:" (:id existing-player))
-        [client-id {:error (str "Name '" name "' already taken")
-                    :code  "name-taken"}]))
+    (do
+      (log/info "Reconnecting client by with: " client-id "name: " name)
+      client-id)
     (if (commands/player-by-id client-id players)
-      [(generate-uuid) nil]
-      [client-id nil])))
+      (generate-uuid)
+      client-id)))
 
 (defn try-join
   "If the client with join message `msg` can join, return updated state a"
@@ -79,27 +74,22 @@
                                 ch           :ch
                                 {code :room-code
                                  name :name} :join}]
-
   (log/info "Received client connection: " client-id code name)
-  (let [[client-id' join-error] (try-rejoin client-id name players)]
-    (if join-error
-      (do
-        (proto/respond-message ch (assoc join-error :event "join-error"))
-        state)
-      (let [[input output] (create-client-channel ch client-id')
-            players'       (commands/add-player players {:id client-id' :name name})]
-        (proto/respond-message ch {:room-code code
-                                   :event     "joined"
-                                   :success   true
-                                   :client-id client-id'
-                                   :players   players'
-                                   :name      name})
-        (-> state
-            (assoc :players players')
-            (update-in [:screens client-id'] #(or % commands/initial-screen))
-            (assoc-in [:clients client-id'] {:output output
-                                             :name   name})
-            (update :inputs conj input))))))
+  (let [client-id'     (try-rejoin client-id name players)
+        [input output] (create-client-channel ch client-id')
+        players'       (commands/add-player players {:id client-id' :name name})]
+    (proto/respond-message ch {:room-code code
+                               :event     "joined"
+                               :success   true
+                               :client-id client-id'
+                               :players   players'
+                               :name      name})
+    (-> state
+        (assoc :players players')
+        (update-in [:screens client-id'] #(or % commands/initial-screen))
+        (assoc-in [:clients client-id'] {:output output
+                                         :name   name})
+        (update :inputs conj input))))
 
 (defn deregister-server
   [code registry]
@@ -175,8 +165,8 @@
             ;; otherwise, try to add it to the registry
             (let [server-chan (a/chan 1)]
               (if (compare-and-set!
-                   registry registry'
-                   (assoc registry' code server-chan))
+                    registry registry'
+                    (assoc registry' code server-chan))
                 ;; it was added, now create the game
                 (let [deregister #(deregister-server code registry)]
                   (log/info "Game code created with code: " code "config: " params)
