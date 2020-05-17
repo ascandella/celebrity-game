@@ -277,3 +277,16 @@
     (testing "An incorrect guess"
       (handle-send-message "clueless-id" {:message "something"} state)
       (is (nil? (:correct (a/<!! player)))))))
+
+(deftest handle-turn-end-tests
+  (testing "With an inactive ID"
+    (let [state    {:turn-id "fake"}
+          response (handle-turn-end {:turn-id "not-fake"} state)]
+      (is (= state response))))
+
+  (testing "With an active ID"
+    (let [state    {:turn-id    "my-turn"
+                    :player-seq ["1" "2"]}
+          response (handle-turn-end {:turn-id "my-turn"}
+                                    state)]
+      (is (= "2" (first (:player-seq response)))))))
