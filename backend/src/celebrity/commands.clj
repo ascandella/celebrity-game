@@ -235,6 +235,7 @@
 (defn next-player
   [state]
   (-> state
+      (assoc  :turn-score 0)
       (dissoc :turn-id)
       (dissoc :turn-ends)
       (update :player-seq next)))
@@ -268,7 +269,9 @@
   [state]
   (broadcast-state
     (next-word-or-round
-      (update-in state [:scores (active-team state)] inc))))
+      (-> state
+          (update :turn-score inc)
+          (update-in [:scores (active-team state)] inc)))))
 
 (defn handle-count-guess
   [_ _ {:keys [round-words] :as state}]
@@ -317,13 +320,15 @@
                                   :event "command-error"})))))
 
 (defn handle-turn-end
-  [event {:keys [words turn-id] :as state}]
+  [event {:keys [words turn-id turn-score] :as state}]
   (log/info "Turn finished")
   (if (= (:turn-id event) turn-id)
     ;; TODO send a message to chat saying how many the player scored
     (do
-      (broadcast-message {:system true
-                          :text   "Time's up!"} state)
+      (broadcast-message
+        {:system true
+         :text   (format "Time's up! %s scored %s points" (active-player-name state) turn-score)}
+        state)
       (broadcast-state (next-player state)))
     (do
       (log/info "Ignoring turn end for inactive ID: " (:turn-id event) turn-id)
