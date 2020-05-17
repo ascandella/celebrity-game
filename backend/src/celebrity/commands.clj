@@ -323,7 +323,6 @@
   [event {:keys [words turn-id turn-score] :as state}]
   (log/info "Turn finished")
   (if (= (:turn-id event) turn-id)
-    ;; TODO send a message to chat saying how many the player scored
     (do
       (broadcast-message
         {:system true
