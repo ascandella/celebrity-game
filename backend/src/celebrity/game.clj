@@ -63,7 +63,7 @@
   (if-let [existing-player (commands/player-by-name name players)]
     (do
       (log/info "Reconnecting client by with: " client-id "name: " name)
-      client-id)
+      (:id existing-player))
     (if (commands/player-by-id client-id players)
       (generate-uuid)
       client-id)))
@@ -105,18 +105,19 @@
 
 (defn create-teams
   [team-names]
-  (map (fn [name] {:name name :players []}) team-names))
+  (map (fn [name] {:name name :players [] :player-ids (set nil)}) team-names))
 
 (defn game-state-machine
   [code client-in game-config deregister]
-  (a/go-loop [state {:inputs    #{}
-                     :players   []
-                     :events-ch (a/chan)
-                     :room-code code
-                     :rounds    3
-                     :teams     (create-teams (:teams game-config))
-                     :turn-time 60000
-                     :config    game-config}]
+  (a/go-loop [state {:inputs     #{}
+                     :players    []
+                     :events-ch  (a/chan)
+                     :room-code  code
+                     :rounds     3
+                     :teams      (create-teams (:teams game-config))
+                     :turn-score 0
+                     :turn-time  60000
+                     :config     game-config}]
     ;; wait for messages from clients connecting, clients sending message, or a
     ;; timeout indicating nobody is here anymore
     (let [timeout-ch    (a/timeout server-timeout-after)

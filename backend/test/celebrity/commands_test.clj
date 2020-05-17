@@ -37,7 +37,7 @@
     (let [teams         [{:name "ghosts" :players []}
                          {:name "ghouls" :players [{:id "id" :name "old-name"}]}]
           msg           {:team {:name "ghouls"}}
-          start-state   {:teams teams
+          start-state   {:teams   teams
                          :clients {"id" {:name "new-name"}}}
           state         (handle-join-team "id" msg start-state)
           ghost-players (:players (nth (:teams state) 0))
@@ -174,7 +174,7 @@
         (is (.isBefore (:turn-ends new-round) (.plus now (Duration/ofSeconds 2))))))
 
     (testing "Gives a turn end event"
-      (is (= :turn-end (a/<!! events-ch))))))
+      (is (= "turn-end" (name (:type (a/<!! events-ch))))))))
 
 (deftest handle-event-tests
   (let [state {}]
@@ -186,10 +186,12 @@
                 :scores      {"bears" 2
                               "beats" 3}
                 :round       3
+                :turn-score  1
                 :rounds      3
                 :player-seq  [{:team "beats"}]}
         result (handle-count-guess nil nil state)]
     (testing "Updates the score"
+      (is (= 2 (:turn-score result)))
       (is (= 4 (get-in result [:scores "beats"]))))
     (testing "Updates round words"
       (is (= ["bar"] (:round-words result))))))
@@ -233,7 +235,45 @@
       (is (= "world" (get-in (a/<!! client-one) [:message :hello])))
       (is (= "world" (get-in (a/<!! client-two) [:message :hello]))) )))
 
-
 (deftest active-player-name-tests
   (testing "It works"
     (is (= "aiden" (active-player-name {:player-seq [{:name "aiden"}]})))))
+
+(deftest player-on-active-team-tests
+  (let [bob     {:id "abc" :name "bob loblaw"}
+        fred    {:id "def" :name "fred flinstone"}
+        players [bob fred]
+        state   {:player-seq [(assoc bob :team "outlaws") (assoc fred :team "rebels")]
+                 :teams      [{:name "outlaws" :players [bob] :player-ids (set ["abc"])}
+                              {:name "rebels" :players [fred] :player-ids (set ["def"])}]}]
+    (testing "On team"
+      (is (player-on-active-team "abc" state)))
+
+    (testing "Not on team"
+      (is (not (player-on-active-team "def" state))))))
+
+(deftest handle-send-message-tests
+  (let [player (a/chan)
+        phrase "a catch phrase"
+        state  {:round-words [phrase]
+                :clients     {"clueless-id" {:output player} }
+                :player-seq  [{:team "fake-team"}]
+                :scores      {"fake-team" 1}
+                :turn-ends   (Instant/now)
+                :turn-score  0
+                :round       2
+                :rounds      5
+                :screens     {}
+                :players     [{:name "clueless"
+                               :id   "clueless-id"}]}]
+
+    (testing "A correct guess"
+      (let [new-state (handle-send-message "clueless-id" {:message "catch PHRASE"} state)]
+        (is (get-in (a/<!! player) [:message :correct]))
+        (is (= 1 (:turn-score new-state)))
+        (is (= 3 (:round new-state)))
+        (is (= 2 (get-in new-state [:scores "fake-team"])))))
+
+    (testing "An incorrect guess"
+      (handle-send-message "clueless-id" {:message "something"} state)
+      (is (nil? (:correct (a/<!! player)))))))

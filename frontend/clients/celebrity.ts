@@ -148,4 +148,10 @@ export default class CelebrityClient {
   countGuess(): void {
     this.sendCommand("count-guess", {});
   }
+
+  sendMessage(message: string): void {
+    this.sendCommand("send-message", {
+      message,
+    });
+  }
 }

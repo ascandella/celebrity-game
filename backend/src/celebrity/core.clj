@@ -5,8 +5,6 @@
             [ring.middleware.params :as params]
             [aleph.http :as http]
             [manifold.deferred :as d]
-            ;;[manifold.bus :as bus]
-            ;;[clojure.core.async :as a]
             [celebrity.connect :as connect])
   (:gen-class))
 
@@ -48,3 +46,8 @@
 (defn -main
   [& args]
   (http/start-server wrapped-handler {:port (get-port)}))
+
+(defn dev
+  []
+  (http/start-server wrapped-handler {:port  3030
+                                      :join? false}))

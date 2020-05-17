@@ -1,6 +1,7 @@
 (ns celebrity.commands
   (:require [taoensso.timbre :as log]
-            [clojure.core.async :as a])
+            [clojure.core.async :as a]
+            [celebrity.stemming :as stem])
   (:import (java.time Duration Instant)))
 
 (def initial-screen "pick-team")
@@ -27,6 +28,16 @@
   [client-id {:keys [players]}]
   (= client-id (:id (first players))))
 
+(defn active-team
+  [{:keys [player-seq]}]
+  (:team (first player-seq)))
+
+(defn player-on-active-team
+  [player-id {:keys [teams] :as state}]
+  (if-let [team (first (filter #(= (active-team state) (:name %)) teams))]
+    (contains? (:player-ids team) player-id)
+    false))
+
 (defn client-channels
   "Return all the out channels for clients"
   [{:keys [clients]}]
@@ -45,10 +56,13 @@
     (doseq [[client-id {:keys [name output]}] clients]
       (if (nil? output)
         (log/error "Nil output for client " client-id ", name:" name)
-        (let [is-active-player (= client-id (:id (first player-seq)))]
+        (let [is-active-player (= client-id (:id (first player-seq)))
+              current-player   (first player-seq)
+              on-active-team   (player-on-active-team client-id state)
+              can-guess        (and (not is-active-player) on-active-team)]
           (a/>! output {:client-id       client-id
-                        :can-guess       false ; TODO, this should tell the player whether their team is up
-                        :current-player  (first player-seq)
+                        :can-guess       can-guess
+                        :current-player  current-player
                         :current-word    (when (and turn-ends is-active-player) (first round-words))
                         :event           "broadcast"
                         :has-control     (has-control client-id state)
@@ -68,12 +82,15 @@
 
 (defn add-player-to-team
   [{:keys [players] :as team}  id name]
-  (assoc team :players (add-player players {:id id :name name})))
+  (-> team
+      (update :player-ids conj id)
+      (assoc :players (add-player players {:id id :name name}))))
 
 (defn remove-player-from-team
   [{:keys [players] :as team} id]
-  (assoc team :players
-         (remove #(= id (:id %)) players)))
+  (-> team
+      (update :player-ids disj id)
+      (assoc :players (remove #(= id (:id %)) players))))
 
 (defn move-player-to-team
   [team id name team-name]
@@ -157,19 +174,23 @@
 
 (defn handle-start-turn
   "Starts the turn."
-  [_ _ {:keys [turn-time events-ch round leftover-clock] :as state}]
-  (a/go
-    (a/<! (a/timeout turn-time))
-    (a/>! events-ch :turn-end))
-  (broadcast-message {:system true
-                      :text   (format "%s started their turn" (active-player-name state))}
-                     state)
-  (let [turn-time (or leftover-clock (Duration/ofMillis turn-time))]
-    (broadcast-state
-      (-> state
-          ;; you start with as many skips as the round number
-          (assoc :remaining-skips round)
-          (assoc :turn-ends (.plus (Instant/now) turn-time))))))
+  [_ _ {:keys [turn-time events-ch turn-id round leftover-clock] :as state}]
+  (let [turn-id      (java.util.UUID/randomUUID)
+        turn-ends-in (or leftover-clock (Duration/ofMillis turn-time))]
+    (a/go
+      (a/<! (a/timeout (.toMillis turn-ends-in)))
+      (a/>! events-ch {:type    ::turn-end
+                       :turn-id turn-id}))
+    (broadcast-message {:system true
+                        :text   (format "%s started their turn" (active-player-name state))}
+                       state)
+    (let []
+      (broadcast-state
+        (-> state
+            ;; you start with as many skips as the round number
+            (assoc :remaining-skips round)
+            (assoc :turn-id turn-id)
+            (assoc :turn-ends (.plus (Instant/now) turn-ends-in)))))))
 
 (defn ensure-active-player
   "Wrap a handler and ensure the sender is the active player."
@@ -178,6 +199,15 @@
     (if (= client-id (:id (first player-seq)))
       (thunk client-id msg state)
       (message-client client-id state {:error "You are not the active player"
+                                       :event "command-error"}))))
+
+(defn ensure-active-team
+  "Wrap a handler and ensure the sender is on the team that's up."
+  [thunk]
+  (fn [client-id msg state]
+    (if (player-on-active-team client-id state)
+      (thunk client-id msg state)
+      (message-client client-id state {:error "You are not allowed to guess"
                                        :event "command-error"}))))
 
 (defn handle-ping
@@ -198,8 +228,17 @@
   (maybe-end-game
     (-> state
         (assoc :round-words (randomize-words words))
+        (dissoc :turn-id)
         (dissoc :turn-ends)
         (update :round inc))))
+
+(defn next-player
+  [state]
+  (-> state
+      (assoc  :turn-score 0)
+      (dissoc :turn-id)
+      (dissoc :turn-ends)
+      (update :player-seq next)))
 
 (defn next-word-or-round
   "Advance to the next round if no words are left"
@@ -226,23 +265,48 @@
                             :text   (format "%s skipped a word" (active-player-name state))} state)
         (next-word-or-round (update state :remaining-skips dec))))))
 
+(defn count-guess-and-advance
+  [state]
+  (broadcast-state
+    (next-word-or-round
+      (-> state
+          (update :turn-score inc)
+          (update-in [:scores (active-team state)] inc)))))
+
 (defn handle-count-guess
   [_ _ {:keys [round-words] :as state}]
   (broadcast-message {:system true
                       :text   (format "\"%s\" was right" (first round-words))}
                      state)
-  (broadcast-state
-    (next-word-or-round
-      (update-in state [:scores (:team (first (:player-seq state)))] inc))))
+  (count-guess-and-advance state))
+
+(defn handle-send-message
+  [client-id {:keys [message]} {:keys [round-words players] :as state}]
+  (let [player (player-by-id client-id players)
+        word   (first round-words)]
+    (if (= (stem/stem message) (stem/stem word))
+      (do
+        (log/info "Correct guess: " word message)
+        (broadcast-message {:player  player
+                            :correct true
+                            :text    message} state)
+        (count-guess-and-advance state))
+      (do
+        (log/info "Incorrect guess: " word message)
+        (broadcast-message {:player player
+                            :text   message} state)
+        ;; no need to broadcast state here, but return it just in case
+        state))))
 
 (def command-handlers
-  {"join-team"   handle-join-team
-   "set-words"   handle-set-words
-   "start-game"  handle-start-game
-   "start-turn"  (ensure-active-player handle-start-turn)
-   "skip-word"   (ensure-active-player handle-skip-word)
-   "count-guess" (ensure-active-player handle-count-guess)
-   "ping"        handle-ping})
+  {"join-team"    handle-join-team
+   "set-words"    handle-set-words
+   "start-game"   handle-start-game
+   "send-message" (ensure-active-team handle-send-message)
+   "start-turn"   (ensure-active-player handle-start-turn)
+   "skip-word"    (ensure-active-player handle-skip-word)
+   "count-guess"  (ensure-active-player handle-count-guess)
+   "ping"         handle-ping})
 
 (defn handle-client-message
   [{:keys [id command] :as msg} state]
@@ -256,20 +320,27 @@
                                   :event "command-error"})))))
 
 (defn handle-turn-end
-  [{:keys [words] :as state}]
+  [event {:keys [words turn-id turn-score] :as state}]
   (log/info "Turn finished")
-  ;; TODO send a message to chat saying how many the player scored
-  (broadcast-state
-    (next-round (update state :player-seq next))))
+  (if (= (:turn-id event) turn-id)
+    (do
+      (broadcast-message
+        {:system true
+         :text   (format "Time's up! %s scored %s points" (active-player-name state) turn-score)}
+        state)
+      (broadcast-state (next-player state)))
+    (do
+      (log/info "Ignoring turn end for inactive ID: " (:turn-id event) turn-id)
+      state)))
 
 (def events-map
-  {:turn-end handle-turn-end})
+  {::turn-end handle-turn-end})
 
 (defn handle-event
-  [event state]
+  [{:keys [type] :as event}state]
   (log/infof "Handle event: %s" event)
-  (if-let [handler (get events-map event)]
-    (handler state)
+  (if-let [handler (get events-map type)]
+    (handler event state)
     (do
       (log/errorf "No event handler for %s" event)
       state)))
