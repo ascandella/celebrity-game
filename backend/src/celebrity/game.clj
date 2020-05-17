@@ -105,7 +105,7 @@
 
 (defn create-teams
   [team-names]
-  (map (fn [name] {:name name :players []}) team-names))
+  (map (fn [name] {:name name :players [] :player-ids (set nil)}) team-names))
 
 (defn game-state-machine
   [code client-in game-config deregister]

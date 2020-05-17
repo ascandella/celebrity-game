@@ -335,7 +335,7 @@ const messages = (state = [], action): Message[] => {
       if (action.message.roundEnd) {
         // Clear out the messages when the round starts so players
         // can't scroll back
-        return [action.message];
+        return state.slice(state.length - 3).concat(action.message);
       }
       return state.concat(action.message);
     default:

@@ -1,6 +1,7 @@
 (ns celebrity.commands
   (:require [taoensso.timbre :as log]
-            [clojure.core.async :as a])
+            [clojure.core.async :as a]
+            [celebrity.stemming :as stem])
   (:import (java.time Duration Instant)))
 
 (def initial-screen "pick-team")
@@ -27,6 +28,16 @@
   [client-id {:keys [players]}]
   (= client-id (:id (first players))))
 
+(defn active-team
+  [{:keys [player-seq]}]
+  (:team (first player-seq)))
+
+(defn player-on-team
+  [player-id {:keys [teams] :as state}]
+  (if-let [team (first (filter #(= (active-team state) (:name %)) teams))]
+    (contains? (:player-ids team) player-id)
+    false))
+
 (defn client-channels
   "Return all the out channels for clients"
   [{:keys [clients]}]
@@ -45,10 +56,13 @@
     (doseq [[client-id {:keys [name output]}] clients]
       (if (nil? output)
         (log/error "Nil output for client " client-id ", name:" name)
-        (let [is-active-player (= client-id (:id (first player-seq)))]
+        (let [is-active-player (= client-id (:id (first player-seq)))
+              current-player   (first player-seq)
+              on-active-team   (player-on-team client-id state)
+              can-guess        (and (not is-active-player) on-active-team)]
           (a/>! output {:client-id       client-id
-                        :can-guess       false ; TODO, this should tell the player whether their team is up
-                        :current-player  (first player-seq)
+                        :can-guess       can-guess
+                        :current-player  current-player
                         :current-word    (when (and turn-ends is-active-player) (first round-words))
                         :event           "broadcast"
                         :has-control     (has-control client-id state)
@@ -68,12 +82,15 @@
 
 (defn add-player-to-team
   [{:keys [players] :as team}  id name]
-  (assoc team :players (add-player players {:id id :name name})))
+  (-> team
+      (update :player-ids conj id)
+      (assoc :players (add-player players {:id id :name name}))))
 
 (defn remove-player-from-team
   [{:keys [players] :as team} id]
-  (assoc team :players
-         (remove #(= id (:id %)) players)))
+  (-> team
+      (update :player-ids disj id)
+      (assoc :players (remove #(= id (:id %)) players))))
 
 (defn move-player-to-team
   [team id name team-name]
@@ -180,6 +197,15 @@
       (message-client client-id state {:error "You are not the active player"
                                        :event "command-error"}))))
 
+(defn ensure-active-team
+  "Wrap a handler and ensure the sender is on the team that's up."
+  [thunk]
+  (fn [client-id msg state]
+    (if (player-on-team client-id state)
+      (thunk client-id msg state)
+      (message-client client-id state {:error "You are not allowed to guess"
+                                       :event "command-error"}))))
+
 (defn handle-ping
   [client-id _ state]
   (message-client client-id state {:event     "pong"
@@ -233,16 +259,34 @@
                      state)
   (broadcast-state
     (next-word-or-round
-      (update-in state [:scores (:team (first (:player-seq state)))] inc))))
+      (update-in state [:scores (active-team state)] inc))))
+
+(defn handle-send-message
+  [client-id {:keys [message]} {:keys [round-words players] :as state}]
+  (let [player (player-by-id client-id players)
+        word   (first round-words)]
+    (if (= (stem/stem message) (stem/stem word))
+      (do
+        (log/info "Correct guess: " word message)
+        (broadcast-message {:player  player
+                            :correct true
+                            :text    message} state)
+        (handle-count-guess client-id {} state))
+      (do
+        (log/info "Incorrect guess: " word message)
+        (broadcast-message {:player player
+                            :text   message} state)
+        state))))
 
 (def command-handlers
-  {"join-team"   handle-join-team
-   "set-words"   handle-set-words
-   "start-game"  handle-start-game
-   "start-turn"  (ensure-active-player handle-start-turn)
-   "skip-word"   (ensure-active-player handle-skip-word)
-   "count-guess" (ensure-active-player handle-count-guess)
-   "ping"        handle-ping})
+  {"join-team"    handle-join-team
+   "set-words"    handle-set-words
+   "start-game"   handle-start-game
+   "send-message" (ensure-active-team handle-send-message)
+   "start-turn"   (ensure-active-player handle-start-turn)
+   "skip-word"    (ensure-active-player handle-skip-word)
+   "count-guess"  (ensure-active-player handle-count-guess)
+   "ping"         handle-ping})
 
 (defn handle-client-message
   [{:keys [id command] :as msg} state]

@@ -233,7 +233,18 @@
       (is (= "world" (get-in (a/<!! client-one) [:message :hello])))
       (is (= "world" (get-in (a/<!! client-two) [:message :hello]))) )))
 
-
 (deftest active-player-name-tests
   (testing "It works"
     (is (= "aiden" (active-player-name {:player-seq [{:name "aiden"}]})))))
+
+(deftest player-on-team-tests
+  (let [bob     {:id "abc" :name "bob loblaw"}
+        fred    {:id "def" :name "fred flinstone"}
+        players [bob fred]
+        state   {:player-seq [(assoc bob :team "outlaws") (assoc fred :team "rebels")]
+                 :teams      [{:name "outlaws" :players [bob] :player-ids (set ["abc"])}
+                              {:name "rebels" :players [fred] :player-ids (set ["def"])}]}]
+    (testing "On team"
+      (is (player-on-team "abc" state)))
+    (testing "Not on team"
+      (is (not (player-on-team "def" state))))))
