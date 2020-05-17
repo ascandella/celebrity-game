@@ -174,19 +174,22 @@
 
 (defn handle-start-turn
   "Starts the turn."
-  [_ _ {:keys [turn-time events-ch round leftover-clock] :as state}]
-  (a/go
-    (a/<! (a/timeout turn-time))
-    (a/>! events-ch :turn-end))
-  (broadcast-message {:system true
-                      :text   (format "%s started their turn" (active-player-name state))}
-                     state)
-  (let [turn-time (or leftover-clock (Duration/ofMillis turn-time))]
-    (broadcast-state
-      (-> state
-          ;; you start with as many skips as the round number
-          (assoc :remaining-skips round)
-          (assoc :turn-ends (.plus (Instant/now) turn-time))))))
+  [_ _ {:keys [turn-time events-ch turn-id round leftover-clock] :as state}]
+  (let [turn-id (java.util.UUID/randomUUID)]
+    (a/go
+      (a/<! (a/timeout turn-time))
+      (a/>! events-ch {:type    ::turn-end
+                       :turn-id turn-id}))
+    (broadcast-message {:system true
+                        :text   (format "%s started their turn" (active-player-name state))}
+                       state)
+    (let [turn-time (or leftover-clock (Duration/ofMillis turn-time))]
+      (broadcast-state
+        (-> state
+            ;; you start with as many skips as the round number
+            (assoc :remaining-skips round)
+            (assoc :turn-id turn-id)
+            (assoc :turn-ends (.plus (Instant/now) turn-time)))))))
 
 (defn ensure-active-player
   "Wrap a handler and ensure the sender is the active player."
@@ -224,6 +227,7 @@
   (maybe-end-game
     (-> state
         (assoc :round-words (randomize-words words))
+        (dissoc :turn-id)
         (dissoc :turn-ends)
         (update :round inc))))
 
@@ -305,20 +309,24 @@
                                   :event "command-error"})))))
 
 (defn handle-turn-end
-  [{:keys [words] :as state}]
+  [event {:keys [words turn-id] :as state}]
   (log/info "Turn finished")
-  ;; TODO send a message to chat saying how many the player scored
-  (broadcast-state
-    (next-round (update state :player-seq next))))
+  (if (= (:turn-id event) turn-id)
+    ;; TODO send a message to chat saying how many the player scored
+    (broadcast-state
+      (next-round (update state :player-seq next)))
+    (do
+      (log/info "Ignoring turn end for inactive ID: " (:turn-id event) turn-id)
+      state)))
 
 (def events-map
-  {:turn-end handle-turn-end})
+  {::turn-end handle-turn-end})
 
 (defn handle-event
-  [event state]
+  [{:keys [type] :as event}state]
   (log/infof "Handle event: %s" event)
-  (if-let [handler (get events-map event)]
-    (handler state)
+  (if-let [handler (get events-map type)]
+    (handler event state)
     (do
       (log/errorf "No event handler for %s" event)
       state)))

@@ -26,7 +26,7 @@ const messages = {
   closed: "Connection lost",
 };
 
-const pingTime = 10000;
+const pingTime = 30000;
 
 const ConnectionStatus: FunctionComponent<ConnectionStatusProps> = ({
   status,
