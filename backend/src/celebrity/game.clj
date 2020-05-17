@@ -87,6 +87,7 @@
     (json/write state wrtr :value-fn value-fn)
     (.flush wrtr))
   (-> state
+      (assoc :joinable? false)
       (assoc :closed true)))
 
 (defn try-join
@@ -220,7 +221,7 @@
   (log/info "Shutting down:" sig)
   ;; TODO persistent dir
   (let [tmp-dir (fs/temp-dir "game-flush")]
-    (write-registry-to-disk tmp-dir))
+    (write-registry-to-disk games tmp-dir))
   (Thread/sleep 1000)
   (java.lang.System/exit 0))
 
