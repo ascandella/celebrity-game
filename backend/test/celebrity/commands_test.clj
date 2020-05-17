@@ -290,3 +290,15 @@
           response (handle-turn-end {:turn-id "my-turn"}
                                     state)]
       (is (= "2" (first (:player-seq response)))))))
+
+(deftest handle-skip-word-tests
+  (testing "With no remaining skips"
+    (let [state    {:remaining-skips 0}
+          response (handle-skip-word {} {} state)]
+      (is (= state response))))
+
+  (testing "With remaining skips"
+    (let [state    {:remaining-skips 2
+                    :round-words     ["foo" "bar"]}
+          response (handle-skip-word {} {} state)]
+      (is (= "bar" (first (:round-words response)))))))
