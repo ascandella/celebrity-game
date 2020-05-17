@@ -28,7 +28,7 @@ type JoinState = {
 export class JoinGame extends Component<JoinProps, JoinState> {
   static defaultProps = {
     maxCodeLength: 4,
-    maxNameLength: 12,
+    maxNameLength: 20,
   };
 
   codeInput: HTMLInputElement;

@@ -10,7 +10,10 @@ import {
   CONNECTED,
   CONNECT_ERROR,
   BROADCAST,
+  MESSAGE,
+  message,
 } from "../actions";
+import { Message } from "../types/message";
 import { ActivePlayer, Player, Team } from "../types/team";
 
 const players = (state = [], action): Player[] => {
@@ -327,6 +330,20 @@ const remainingSkips = (state = null, action): number => {
   }
 };
 
+const messages = (state = [], action): Message[] => {
+  switch (action.type) {
+    case MESSAGE:
+      if (action.roundEnd) {
+        // Clear out the messages when the round starts so players
+        // can't scroll back
+        return [action.message];
+      }
+      return state.concat(action.message);
+    default:
+      return state;
+  }
+};
+
 const rootReducer = combineReducers({
   gameCode,
   playerName,
@@ -348,6 +365,7 @@ const rootReducer = combineReducers({
   currentWord,
   remainingWords,
   remainingSkips,
+  messages,
 
   inGame,
   creatingGame,

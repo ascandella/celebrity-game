@@ -222,3 +222,18 @@
     (let [state {:round-words ["foo" "bar"]
                  :round       1}]
       (is (= ["bar"] (:round-words (next-word-or-round state)))))))
+
+(deftest broadcast-message-tests
+  (let [client-one (a/chan)
+        client-two (a/chan)
+        state      {:clients {:client-one {:output client-one}
+                              :client-two {:output client-two}}}]
+    (testing "All clients receive the message"
+      (broadcast-message {:hello "world"} state)
+      (is (= "world" (get-in (a/<!! client-one) [:message :hello])))
+      (is (= "world" (get-in (a/<!! client-two) [:message :hello]))) )))
+
+
+(deftest active-player-name-tests
+  (testing "It works"
+    (is (= "aiden" (active-player-name {:player-seq [{:name "aiden"}]})))))
