@@ -24,7 +24,8 @@ jobs:
       - name: Run Clojure tests
         run: |
           cd backend
-          lein test
+          lein with-profile test cloverage --codecov
+          bash <(curl -s https://codecov.io/bash)
 
       - name: Run Eastwood linter
         run: |

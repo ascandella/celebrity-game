@@ -21,7 +21,8 @@
   :target-path "target/%s"
 
   :plugins [[jonase/eastwood "0.3.11"]
-            [lein-kibit "0.1.5"]]
+            [lein-kibit "0.1.5"]
+            [lein-cloverage "1.1.2"]]
 
   ;; necessary for :else in cond expression
   :eastwood {:exclude-linters [:constant-test]}
