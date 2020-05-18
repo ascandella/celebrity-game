@@ -176,7 +176,7 @@
 (defn handle-start-turn
   "Starts the turn."
   [_ _ {:keys [turn-time events-ch turn-id round leftover-clock] :as state}]
-  (let [turn-id      (java.util.UUID/randomUUID)
+  (let [turn-id      (str (java.util.UUID/randomUUID))
         turn-ends-in (or leftover-clock turn-time)]
     (a/go
       (a/<! (a/timeout turn-ends-in))
