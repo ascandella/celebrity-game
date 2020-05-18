@@ -177,9 +177,9 @@
   "Starts the turn."
   [_ _ {:keys [turn-time events-ch turn-id round leftover-clock] :as state}]
   (let [turn-id      (java.util.UUID/randomUUID)
-        turn-ends-in (or leftover-clock (Duration/ofMillis turn-time))]
+        turn-ends-in (or leftover-clock turn-time)]
     (a/go
-      (a/<! (a/timeout (.toMillis turn-ends-in)))
+      (a/<! (a/timeout turn-ends-in))
       (a/>! events-ch {:type    ::turn-end
                        :turn-id turn-id}))
     (broadcast-message {:system true
@@ -191,7 +191,7 @@
             ;; you start with as many skips as the round number
             (assoc :remaining-skips round)
             (assoc :turn-id turn-id)
-            (assoc :turn-ends (.plus (Instant/now) turn-ends-in)))))))
+            (assoc :turn-ends (.plus (Instant/now) (Duration/ofMillis turn-ends-in))))))))
 
 (defn ensure-active-player
   "Wrap a handler and ensure the sender is the active player."
@@ -238,6 +238,7 @@
   (-> state
       (assoc  :turn-score 0)
       (dissoc :turn-id)
+      (dissoc :leftover-clock)
       (dissoc :turn-ends)
       (update :player-seq next)))
 
@@ -252,7 +253,9 @@
                           :round-end true
                           :text      "Out of words, on to the next round"} state)
       (next-round
-        (assoc state :leftover-clock (Duration/between (Instant/now) turn-ends))))))
+        (assoc state :leftover-clock (->> turn-ends
+                                          (Duration/between (Instant/now))
+                                          .toMillis))))))
 
 (defn handle-skip-word
   [_ _ {:keys [remaining-skips] :as state}]
