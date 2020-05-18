@@ -169,7 +169,7 @@
       (is (.isBefore turn-ends (.plus now (Duration/ofSeconds 90)))))
 
     (testing "With remaining clock"
-      (let [turn-ends-with-clock (assoc state :leftover-clock (Duration/ofMillis 1000))
+      (let [turn-ends-with-clock (assoc state :leftover-clock 1000)
             new-round            (handle-start-turn nil nil turn-ends-with-clock)]
         (is (.isBefore (:turn-ends new-round) (.plus now (Duration/ofSeconds 2))))))
 
@@ -216,14 +216,17 @@
                      :turn-ends   (.plus (Instant/now) (Duration/ofSeconds 3))
                      :round       1}
           new-state (next-word-or-round state)]
-      (is (< (.toMillis (:leftover-clock new-state)) 4000))
-      (is (> (.toMillis (:leftover-clock new-state)) 1000))
+      (is (< (:leftover-clock new-state) 4000))
+      (is (> (:leftover-clock new-state) 1000))
       (is (= 3 (count (:round-words new-state))))
       (is (= 2 (:round new-state)))))
+
   (testing "With words left over"
-    (let [state {:round-words ["foo" "bar"]
-                 :round       1}]
-      (is (= ["bar"] (:round-words (next-word-or-round state)))))))
+    (let [state  {:round-words ["foo" "bar"]
+                  :round       1}
+          result (next-word-or-round state)]
+      (is (nil? (:leftover-clock result)))
+      (is (= ["bar"] (:round-words result))))))
 
 (deftest broadcast-message-tests
   (let [client-one (a/chan)
@@ -285,10 +288,12 @@
       (is (= state response))))
 
   (testing "With an active ID"
-    (let [state    {:turn-id    "my-turn"
-                    :player-seq ["1" "2"]}
+    (let [state    {:turn-id        "my-turn"
+                    :leftover-clock 100
+                    :player-seq     ["1" "2"]}
           response (handle-turn-end {:turn-id "my-turn"}
                                     state)]
+      (is (nil? (:leftover-clock response)))
       (is (= "2" (first (:player-seq response)))))))
 
 (deftest handle-skip-word-tests
