@@ -14,7 +14,6 @@ type HeaderProps = {
   round: number;
   screen: string;
   inGame: boolean;
-  round: boolean;
 };
 
 const titleStyle = `font-semibold text-xl tracking-tigh hover:text-white text-white`;
