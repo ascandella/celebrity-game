@@ -7,7 +7,6 @@ import Scoreboard from "./scoreboard";
 import WhosUp from "./whos-up";
 import GuessBox from "./guess-box";
 import CurrentWord from "./current-word";
-import Timer from "./timer";
 import ActorControls from "./actor-controls";
 
 type InGameProps = {
@@ -32,7 +31,6 @@ const InGameContainer: FunctionComponent<InGameProps> = ({
     <div>
       {inRound && (
         <div>
-          <Timer />
           <WhosUp client={client} />
           <CurrentWord />
           <ActorControls client={client} />

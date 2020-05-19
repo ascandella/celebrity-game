@@ -58,13 +58,7 @@ class Timer extends Component<TimerProps, TimerState> {
       return null;
     }
     const textStyle = this.state.secondsRemaining <= 10 ? "text-red-700" : " ";
-    return (
-      <div
-        className={`w-full text-center text-lg font-medium mb-6 ${textStyle}`}
-      >
-        {this.state.secondsRemaining}
-      </div>
-    );
+    return <span className={textStyle}>{this.state.secondsRemaining}</span>;
   }
 }
 

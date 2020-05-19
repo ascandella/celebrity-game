@@ -121,37 +121,36 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
 
   return (
     <FormWrapper>
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white shadow-md px-8 pt-6 pb-6 mb-4"
-      >
-        <div className="mb-2">
-          {maxWords > 0 && (
-            <span className="text-base">Maximum: {maxWords}</span>
-          )}
-        </div>
-        {words.map((word, index) => {
-          const isLast = index === words.length - 1;
-          const isFocused = index === editIndex;
-          return (
-            <EditableWord
-              key={index}
-              value={word}
-              finishEdit={() => finishEditing(index)}
-              startEdit={() => setEditIndex(index)}
-              isFocused={editIndex === -1 ? isLast : isFocused}
-              isEditing={
-                isFocused || (isLast && (editIndex === -1 || word === ""))
-              }
-              changeHandler={(value) => setWordAtIndex(index, value)}
-            />
-          );
-        })}
+      <div className="bg-white shadow-md px-8 pt-6 pb-6 mb-4">
+        <form onSubmit={handleSubmit}>
+          <div className="mb-2">
+            {maxWords > 0 && (
+              <span className="text-base">Maximum: {maxWords}</span>
+            )}
+          </div>
+          {words.map((word, index) => {
+            const isLast = index === words.length - 1;
+            const isFocused = index === editIndex;
+            return (
+              <EditableWord
+                key={index}
+                value={word}
+                finishEdit={() => finishEditing(index)}
+                startEdit={() => setEditIndex(index)}
+                isFocused={editIndex === -1 ? isLast : isFocused}
+                isEditing={
+                  isFocused || (isLast && (editIndex === -1 || word === ""))
+                }
+                changeHandler={(value) => setWordAtIndex(index, value)}
+              />
+            );
+          })}
+        </form>
 
         <div className="flex justify-center mt-4">
           <GameControls client={client} />
         </div>
-      </form>
+      </div>
     </FormWrapper>
   );
 };

@@ -3,6 +3,7 @@ import { connect } from "react-redux";
 import Link from "next/link";
 import styled from "styled-components";
 import PinkGradient from "./styles";
+import Timer from "./in-game/timer";
 import { RootState } from "../reducers";
 
 export const GradientHeader = styled.nav`
@@ -82,6 +83,7 @@ const Header: FunctionComponent<HeaderProps> = ({
   return (
     <GradientHeader className="flex items-center justify-between flex-wrap p-4">
       {getHeaderContent()}
+      <Timer />
     </GradientHeader>
   );
 };
