@@ -1,5 +1,6 @@
 import React, { FunctionComponent } from "react";
 import styled from "styled-components";
+import PinkGradient from "./styles";
 
 interface FormClassAttrs {
   className?: string;
@@ -61,6 +62,7 @@ export const SubmitButton: FunctionComponent<SubmitButtonProps> = ({
 }: SubmitButtonProps) => (
   <StyledButton
     type="submit"
+    style={{ background: PinkGradient }}
     value={value}
     disabled={submitting}
     className={submitting ? "opacity-50 " : ""}

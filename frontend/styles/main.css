@@ -2,11 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url("https://fonts.googleapis.com/css?family=Varela");
+
+body {
+  font-family: "Varela";
+}
 a {
-  @apply text-blue-500 cursor-pointer;
-  &:hover {
-    @apply text-blue-800;
-  }
+  @apply text-tangarine cursor-pointer;
 }
 
 p {

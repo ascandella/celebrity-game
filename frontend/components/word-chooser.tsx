@@ -3,6 +3,7 @@ import { connect } from "react-redux";
 import { RootState } from "../reducers";
 import CelebrityClient from "../clients/celebrity";
 import { ShortFormInput, FormWrapper } from "./form";
+import GameControls from "./controls";
 
 type EditableWordProps = {
   value: string;
@@ -122,10 +123,9 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
     <FormWrapper>
       <form
         onSubmit={handleSubmit}
-        className="bg-white shadow-md px-8 pt-6 pb-8 mb-4"
+        className="bg-white shadow-md px-8 pt-6 pb-6 mb-4"
       >
         <div className="mb-2">
-          <h3>Name Your Celebrities</h3>
           {maxWords > 0 && (
             <span className="text-base">Maximum: {maxWords}</span>
           )}
@@ -147,6 +147,10 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
             />
           );
         })}
+
+        <div className="flex justify-center mt-4">
+          <GameControls client={client} />
+        </div>
       </form>
     </FormWrapper>
   );

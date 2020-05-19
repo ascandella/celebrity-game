@@ -71,6 +71,7 @@
                         :players         players
                         :remaining-words (- (count round-words) 1)
                         :remaining-skips (:remaining-skips state)
+                        :round           (:round state)
                         :scores          scores
                         :screen          (get screens client-id)
                         :teams           teams

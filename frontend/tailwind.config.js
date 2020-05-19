@@ -1,7 +1,11 @@
 module.exports = {
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        tangarine: "#ed8936",
+      },
+    },
+    variants: {},
+    plugins: [],
   },
-  variants: {},
-  plugins: [],
 };

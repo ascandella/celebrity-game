@@ -1,32 +1,95 @@
 import React, { FunctionComponent } from "react";
+import { connect } from "react-redux";
 import Link from "next/link";
+import styled from "styled-components";
+import PinkGradient from "./styles";
+import { RootState } from "../reducers";
 
-const Header: FunctionComponent = () => (
-  <nav className="flex items-center justify-between flex-wrap bg-blue-600 p-4">
-    <div className="flex items-center flex-shrink-0 text-white mr-6">
-      <svg
-        className="fill-current h-8 w-8 mr-2"
-        width="54"
-        height="54"
-        viewBox="0 0 54 54"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path d="M13.5 22.1c1.8-7.2 6.3-10.8 13.5-10.8 10.8 0 12.15 8.1 17.55 9.45 3.6.9 6.75-.45 9.45-4.05-1.8 7.2-6.3 10.8-13.5 10.8-10.8 0-12.15-8.1-17.55-9.45-3.6-.9-6.75.45-9.45 4.05zM0 38.3c1.8-7.2 6.3-10.8 13.5-10.8 10.8 0 12.15 8.1 17.55 9.45 3.6.9 6.75-.45 9.45-4.05-1.8 7.2-6.3 10.8-13.5 10.8-10.8 0-12.15-8.1-17.55-9.45-3.6-.9-6.75.45-9.45 4.05z" />
-      </svg>
-      <Link href="/">
-        <a className="font-semibold text-xl tracking-tigh hover:text-white text-white">
-          Celebrity
-        </a>
-      </Link>
-    </div>
-    <div className="block lg:flex lg:items-center lg:w-auto">
-      <Link href="/about">
-        <a className="mt-4 lg:mt-0 text-teal-200 hover:text-white mr-4">
-          About
-        </a>
-      </Link>
-    </div>
-  </nav>
-);
+export const GradientHeader = styled.nav`
+  background: ${PinkGradient};
+`;
 
-export default Header;
+type HeaderProps = {
+  round: number;
+  screen: string;
+  inGame: boolean;
+  round: boolean;
+};
+
+const titleStyle = `font-semibold text-xl tracking-tigh hover:text-white text-white`;
+
+const Header: FunctionComponent<HeaderProps> = ({
+  round,
+  screen,
+  inGame,
+}: HeaderProps) => {
+  const getHeaderContent = (): React.ReactNode => {
+    const screenNames = {
+      "pick-team": "Choose Your Team",
+      "select-words": "Name Your Celebrities",
+      "game-over": "Game Over",
+      round: "Waiting To Start",
+    };
+
+    const roundDescriptions = {
+      1: {
+        title: "Catchprase",
+        help: "say anything except your phrase",
+      },
+      2: {
+        title: "One Word",
+        help: "... and only one,",
+      },
+      3: {
+        title: "Charades",
+        help: "act it out",
+      },
+    };
+
+    let content = screenNames[screen];
+    if (round && screen !== "game-over") {
+      content = `Round ${round}: ${roundDescriptions[round].title}`;
+    }
+    // TODO round descriptions
+    if (!content) {
+      return null;
+    }
+
+    return <div className={titleStyle}>{content}</div>;
+  };
+
+  if (!inGame) {
+    // Kinda sucks to duplicate the header wrapper, but the flex box needs to have
+    // these direct children
+    return (
+      <GradientHeader className="flex items-center justify-between flex-wrap p-4">
+        <div className="flex items-center flex-shrink-0 text-white mr-6">
+          <Link href="/">
+            <a className={titleStyle}>Celebrity</a>
+          </Link>
+        </div>
+        <div className="block lg:flex lg:items-center lg:w-auto">
+          <Link href="/about">
+            <a className="mt-4 lg:mt-0 text-white hover:text-white mr-4">
+              About
+            </a>
+          </Link>
+        </div>
+      </GradientHeader>
+    );
+  }
+
+  return (
+    <GradientHeader className="flex items-center justify-between flex-wrap p-4">
+      {getHeaderContent()}
+    </GradientHeader>
+  );
+};
+
+const mapStateToProps = (state: RootState) => ({
+  inGame: state.inGame,
+  screen: state.screen,
+  round: state.round,
+});
+
+export default connect(mapStateToProps)(Header);

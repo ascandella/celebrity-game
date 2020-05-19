@@ -329,13 +329,22 @@ const remainingSkips = (state = null, action): number => {
   }
 };
 
+const round = (state = null, action): number => {
+  switch (action.type) {
+    case BROADCAST:
+      return action.round || null;
+    default:
+      return state;
+  }
+};
+
 const messages = (state = [], action): Message[] => {
   switch (action.type) {
     case MESSAGE:
       if (action.message.roundEnd) {
         // Clear out the messages when the round starts so players
         // can't scroll back
-        return state.slice(state.length - 3).concat(action.message);
+        return state.slice(state.length - 8).concat(action.message);
       }
       return state.concat(action.message);
     default:
@@ -365,6 +374,7 @@ const rootReducer = combineReducers({
   remainingWords,
   remainingSkips,
   messages,
+  round,
 
   inGame,
   creatingGame,
