@@ -71,6 +71,7 @@
                         :players         players
                         :remaining-words (- (count round-words) 1)
                         :remaining-skips (:remaining-skips state)
+                        :round           (:round state)
                         :scores          scores
                         :screen          (get screens client-id)
                         :teams           teams
@@ -132,7 +133,6 @@
   (let [player-seq  (make-player-seq teams)
         round-words (randomize-words words)]
     (-> state
-        (assoc :joinable? false)
         (assoc :round 1)
         (assoc :player-seq player-seq)
         (assoc :scores (zipmap (map :name teams) (repeat 0)))
