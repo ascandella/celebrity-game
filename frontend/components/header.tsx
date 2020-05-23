@@ -37,12 +37,16 @@ const Header: FunctionComponent<HeaderProps> = ({
         help: "say anything except your phrase",
       },
       2: {
+        title: "Charades",
+        help: "act it out",
+      },
+      3: {
         title: "One Word",
         help: "... and only one,",
       },
-      3: {
-        title: "Charades",
-        help: "act it out",
+      4: {
+        title: "Freeze",
+        help: "strike a pose",
       },
     };
 
