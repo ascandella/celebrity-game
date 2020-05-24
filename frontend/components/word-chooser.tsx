@@ -82,6 +82,10 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
     return word.toLowerCase().replace(/\.|-| /g, "");
   };
 
+  const bannedWord = (word: string): boolean => {
+    return word.includes("covid") || word.includes("virus");
+  };
+
   const finishEditing = (index: number): void => {
     if (!words[index]) {
       return;
@@ -101,7 +105,11 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
       newWords = otherWords;
     }
     newWords = newWords.filter((word, j) => {
-      return normalizeWord(word).length > 0 || j === newWords.length - 1;
+      const normalized = normalizeWord(word);
+      if (bannedWord(normalized)) {
+        return false;
+      }
+      return normalized.length > 0 || j === newWords.length - 1;
     });
     persistWords([...newWords]);
     const isFull = maxWords > 0 && newWords.length === maxWords;
