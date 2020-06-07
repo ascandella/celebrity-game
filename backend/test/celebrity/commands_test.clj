@@ -308,6 +308,12 @@
                  :round-words     ["word"]}]
       (is (= state (handle-skip-word {} {} state)))))
 
+  (testing "With two remaining words"
+    (let [state    {:remaining-skips 1
+                    :round-words     ["two" "words"]}
+          response (handle-skip-word {} {} state)]
+      (is (= ["words" "two"] (:round-words response)))))
+
   (testing "With remaining skips"
     (let [state                                 {:remaining-skips 2
                                                  :round-words     ["foo" "bar" "baz"]}
