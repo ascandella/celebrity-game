@@ -185,13 +185,12 @@
     (broadcast-message {:system true
                         :text   (format "%s started their turn" (active-player-name state))}
                        state)
-    (let []
-      (broadcast-state
-        (-> state
-            ;; you start with as many skips as the round number
-            (assoc :remaining-skips round)
-            (assoc :turn-id turn-id)
-            (assoc :turn-ends (.plus (Instant/now) (Duration/ofMillis turn-ends-in))))))))
+    (broadcast-state
+     (-> state
+         ;; you start with as many skips as the round number
+         (assoc :remaining-skips round)
+         (assoc :turn-id turn-id)
+         (assoc :turn-ends (.plus (Instant/now) (Duration/ofMillis turn-ends-in)))))))
 
 (defn ensure-active-player
   "Wrap a handler and ensure the sender is the active player."
@@ -253,75 +252,90 @@
                           :round-end true
                           :text      "Out of words, on to the next round"} state)
       (next-round
-        (assoc state :leftover-clock (->> turn-ends
-                                          (Duration/between (Instant/now))
-                                          .toMillis))))))
+       (assoc state :leftover-clock (->> turn-ends
+                                         (Duration/between (Instant/now))
+                                         .toMillis))))))
+
+(defn- shuffle-skip
+  "Return words randomized, guaranteeing that the first word is not the same"
+  [words]
+  (let [head   (first words)
+        second (fnext words)
+        others (drop 2 words)]
+    (cons second (shuffle (cons head others)))))
 
 (defn handle-skip-word
-  [_ _ {:keys [remaining-skips] :as state}]
+  [_ _ {:keys [round-words remaining-skips] :as state}]
   (broadcast-state
-    (if (< remaining-skips 1)
-      (do
-        (log/error "Can't skip with remaining: " remaining-skips)
-        state)
-      (do
-        (broadcast-message {:system true
-                            :text   (format "%s skipped a word" (active-player-name state))} state)
-        (next-word-or-round (update state :remaining-skips dec))))))
+   (cond
+     (< remaining-skips 1)     (do
+                                 (log/error "Can't skip with remaining: " remaining-skips)
+                                 state)
+     (< (count round-words) 2) (do
+                                 (log/error "Only one word remaining, can't skip")
+                                 state)
+     :else                     (do
+                                 (broadcast-message
+                                  {:system true
+                                   :text   (format "%s skipped a word" (active-player-name state))}
+                                  state)
+                                 (-> state
+                                     (update :remaining-skips dec)
+                                     (update :round-words shuffle-skip))))))
 
 (defn count-guess-and-advance
-  [state]
-  (broadcast-state
-    (next-word-or-round
-      (-> state
-          (update :turn-score inc)
-          (update-in [:scores (active-team state)] inc)))))
+[state]
+(broadcast-state
+ (next-word-or-round
+  (-> state
+      (update :turn-score inc)
+      (update-in [:scores (active-team state)] inc)))))
 
 (defn handle-count-guess
-  [_ _ {:keys [round-words] :as state}]
-  (broadcast-message {:system true
-                      :text   (format "\"%s\" was right" (first round-words))}
-                     state)
-  (count-guess-and-advance state))
+[_ _ {:keys [round-words] :as state}]
+(broadcast-message {:system true
+                    :text   (format "\"%s\" was right" (first round-words))}
+                   state)
+(count-guess-and-advance state))
 
 (defn handle-send-message
-  [client-id {:keys [message]} {:keys [round-words players] :as state}]
-  (let [player (player-by-id client-id players)
-        word   (first round-words)]
-    (if (= (stem/stem message) (stem/stem word))
-      (do
-        (log/info "Correct guess: " word message)
-        (broadcast-message {:player  player
-                            :correct true
-                            :text    message} state)
-        (count-guess-and-advance state))
-      (do
-        (log/info "Incorrect guess: " word message)
-        (broadcast-message {:player player
-                            :text   message} state)
-        ;; no need to broadcast state here, but return it just in case
-        state))))
+[client-id {:keys [message]} {:keys [round-words players] :as state}]
+(let [player (player-by-id client-id players)
+      word   (first round-words)]
+  (if (= (stem/stem message) (stem/stem word))
+    (do
+      (log/info "Correct guess: " word message)
+      (broadcast-message {:player  player
+                          :correct true
+                          :text    message} state)
+      (count-guess-and-advance state))
+    (do
+      (log/info "Incorrect guess: " word message)
+      (broadcast-message {:player player
+                          :text   message} state)
+      ;; no need to broadcast state here, but return it just in case
+      state))))
 
 (def command-handlers
-  {"join-team"    handle-join-team
-   "set-words"    handle-set-words
-   "start-game"   handle-start-game
-   "send-message" (ensure-active-team handle-send-message)
-   "start-turn"   (ensure-active-player handle-start-turn)
-   "skip-word"    (ensure-active-player handle-skip-word)
-   "count-guess"  (ensure-active-player handle-count-guess)
-   "ping"         handle-ping})
+{"join-team"    handle-join-team
+ "set-words"    handle-set-words
+ "start-game"   handle-start-game
+ "send-message" (ensure-active-team handle-send-message)
+ "start-turn"   (ensure-active-player handle-start-turn)
+ "skip-word"    (ensure-active-player handle-skip-word)
+ "count-guess"  (ensure-active-player handle-count-guess)
+ "ping"         handle-ping})
 
 (defn handle-client-message
-  [{:keys [id command] :as msg} state]
-  (let [name (get-name state id)]
-    (log/info "Responding to command" command "for client" id ": " name " for message " msg)
-    (if-let [handler (get command-handlers command)]
-      (handler id msg state)
-      (do
-        (log/error "Unknown command " command)
-        (message-client id state {:error (str "Unknown command: " command)
-                                  :event "command-error"})))))
+[{:keys [id command] :as msg} state]
+(let [name (get-name state id)]
+  (log/info "Responding to command" command "for client" id ": " name " for message " msg)
+  (if-let [handler (get command-handlers command)]
+    (handler id msg state)
+    (do
+      (log/error "Unknown command " command)
+      (message-client id state {:error (str "Unknown command: " command)
+                                :event "command-error"})))))
 
 (defn handle-turn-end
   [event {:keys [words turn-id turn-score] :as state}]
@@ -329,8 +343,8 @@
   (if (= (:turn-id event) turn-id)
     (do
       (broadcast-message
-        {:system true
-         :text   (format "Time's up! %s scored %s points" (active-player-name state) turn-score)}
+       {:system true
+        :text   (format "Time's up! %s scored %s points" (active-player-name state) turn-score)}
         state)
       (broadcast-state (next-player state)))
     (do
