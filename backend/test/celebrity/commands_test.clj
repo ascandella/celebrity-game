@@ -290,10 +290,12 @@
   (testing "With an active ID"
     (let [state    {:turn-id        "my-turn"
                     :leftover-clock 100
+                    :round-words    ["bilbo" "baggins"]
                     :player-seq     ["1" "2"]}
           response (handle-turn-end {:turn-id "my-turn"}
                                     state)]
       (is (nil? (:leftover-clock response)))
+      (is (= ["baggins" "bilbo"] (:round-words response)))
       (is (= "2" (first (:player-seq response)))))))
 
 (deftest handle-skip-word-tests
