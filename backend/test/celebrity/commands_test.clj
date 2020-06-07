@@ -290,20 +290,37 @@
   (testing "With an active ID"
     (let [state    {:turn-id        "my-turn"
                     :leftover-clock 100
+                    :round-words    ["bilbo" "baggins"]
                     :player-seq     ["1" "2"]}
           response (handle-turn-end {:turn-id "my-turn"}
                                     state)]
       (is (nil? (:leftover-clock response)))
+      (is (= ["baggins" "bilbo"] (:round-words response)))
       (is (= "2" (first (:player-seq response)))))))
 
 (deftest handle-skip-word-tests
   (testing "With no remaining skips"
-    (let [state    {:remaining-skips 0}
+    (let [state    {:remaining-skips 0
+                    :round-words     ["words" "here"]}
           response (handle-skip-word {} {} state)]
       (is (= state response))))
 
-  (testing "With remaining skips"
-    (let [state    {:remaining-skips 2
-                    :round-words     ["foo" "bar"]}
+  (testing "With only one remaining word"
+    (let [state {:remaining-skips 1
+                 :round-words     ["word"]}]
+      (is (= state (handle-skip-word {} {} state)))))
+
+  (testing "With two remaining words"
+    (let [state    {:remaining-skips 1
+                    :round-words     ["two" "words"]}
           response (handle-skip-word {} {} state)]
-      (is (= "bar" (first (:round-words response)))))))
+      (is (= ["words" "two"] (:round-words response)))))
+
+  (testing "With remaining skips"
+    (let [state                                 {:remaining-skips 2
+                                                 :round-words     ["foo" "bar" "baz"]}
+          {:keys [remaining-skips round-words]} (handle-skip-word {} {} state)]
+      (is (= 1 remaining-skips))
+      (is (= "bar" (first round-words)))
+      (is (= 3 (count round-words)))
+      (is (= #{"foo" "bar" "baz"} (set round-words))))))

@@ -185,13 +185,12 @@
     (broadcast-message {:system true
                         :text   (format "%s started their turn" (active-player-name state))}
                        state)
-    (let []
-      (broadcast-state
-        (-> state
-            ;; you start with as many skips as the round number
-            (assoc :remaining-skips round)
-            (assoc :turn-id turn-id)
-            (assoc :turn-ends (.plus (Instant/now) (Duration/ofMillis turn-ends-in))))))))
+    (broadcast-state
+     (-> state
+         ;; you start with as many skips as the round number
+         (assoc :remaining-skips round)
+         (assoc :turn-id turn-id)
+         (assoc :turn-ends (.plus (Instant/now) (Duration/ofMillis turn-ends-in)))))))
 
 (defn ensure-active-player
   "Wrap a handler and ensure the sender is the active player."
@@ -223,15 +222,24 @@
     (> round rounds) (assoc :screens
                             (zipmap (keys screens) (repeat "game-over")))))
 
+(defn- shuffle-words
+  "Return words randomized, guaranteeing that the first word is not the same"
+  [words]
+  (let [head   (first words)
+        second (fnext words)
+        others (drop 2 words)]
+    (cons second (shuffle (cons head others)))))
+
+
 (defn next-round
   "Advance to the rext round"
   [{:keys [words] :as state}]
   (maybe-end-game
-    (-> state
-        (assoc :round-words (randomize-words words))
-        (dissoc :turn-id)
-        (dissoc :turn-ends)
-        (update :round inc))))
+   (-> state
+       (assoc :round-words (randomize-words words))
+       (dissoc :turn-id)
+       (dissoc :turn-ends)
+       (update :round inc))))
 
 (defn next-player
   [state]
@@ -240,6 +248,7 @@
       (dissoc :turn-id)
       (dissoc :leftover-clock)
       (dissoc :turn-ends)
+      (update :round-words shuffle-words)
       (update :player-seq next)))
 
 (defn next-word-or-round
@@ -253,29 +262,36 @@
                           :round-end true
                           :text      "Out of words, on to the next round"} state)
       (next-round
-        (assoc state :leftover-clock (->> turn-ends
-                                          (Duration/between (Instant/now))
-                                          .toMillis))))))
+       (assoc state :leftover-clock (->> turn-ends
+                                         (Duration/between (Instant/now))
+                                         .toMillis))))))
 
 (defn handle-skip-word
-  [_ _ {:keys [remaining-skips] :as state}]
+  [_ _ {:keys [round-words remaining-skips] :as state}]
   (broadcast-state
-    (if (< remaining-skips 1)
-      (do
-        (log/error "Can't skip with remaining: " remaining-skips)
-        state)
-      (do
-        (broadcast-message {:system true
-                            :text   (format "%s skipped a word" (active-player-name state))} state)
-        (next-word-or-round (update state :remaining-skips dec))))))
+   (cond
+     (< remaining-skips 1)     (do
+                                 (log/error "Can't skip with remaining: " remaining-skips)
+                                 state)
+     (< (count round-words) 2) (do
+                                 (log/error "Only one word remaining, can't skip")
+                                 state)
+     :else                     (do
+                                 (broadcast-message
+                                  {:system true
+                                   :text   (format "%s skipped a word" (active-player-name state))}
+                                  state)
+                                 (-> state
+                                     (update :remaining-skips dec)
+                                     (update :round-words shuffle-words))))))
 
 (defn count-guess-and-advance
   [state]
   (broadcast-state
-    (next-word-or-round
-      (-> state
-          (update :turn-score inc)
-          (update-in [:scores (active-team state)] inc)))))
+   (next-word-or-round
+    (-> state
+        (update :turn-score inc)
+        (update-in [:scores (active-team state)] inc)))))
 
 (defn handle-count-guess
   [_ _ {:keys [round-words] :as state}]
@@ -329,9 +345,9 @@
   (if (= (:turn-id event) turn-id)
     (do
       (broadcast-message
-        {:system true
-         :text   (format "Time's up! %s scored %s points" (active-player-name state) turn-score)}
-        state)
+       {:system true
+        :text   (format "Time's up! %s scored %s points" (active-player-name state) turn-score)}
+       state)
       (broadcast-state (next-player state)))
     (do
       (log/info "Ignoring turn end for inactive ID: " (:turn-id event) turn-id)
