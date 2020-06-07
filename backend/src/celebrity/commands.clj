@@ -286,58 +286,58 @@
                                      (update :round-words shuffle-words))))))
 
 (defn count-guess-and-advance
-[state]
-(broadcast-state
- (next-word-or-round
-  (-> state
-      (update :turn-score inc)
-      (update-in [:scores (active-team state)] inc)))))
+  [state]
+  (broadcast-state
+   (next-word-or-round
+    (-> state
+        (update :turn-score inc)
+        (update-in [:scores (active-team state)] inc)))))
 
 (defn handle-count-guess
-[_ _ {:keys [round-words] :as state}]
-(broadcast-message {:system true
-                    :text   (format "\"%s\" was right" (first round-words))}
-                   state)
-(count-guess-and-advance state))
+  [_ _ {:keys [round-words] :as state}]
+  (broadcast-message {:system true
+                      :text   (format "\"%s\" was right" (first round-words))}
+                     state)
+  (count-guess-and-advance state))
 
 (defn handle-send-message
-[client-id {:keys [message]} {:keys [round-words players] :as state}]
-(let [player (player-by-id client-id players)
-      word   (first round-words)]
-  (if (= (stem/stem message) (stem/stem word))
-    (do
-      (log/info "Correct guess: " word message)
-      (broadcast-message {:player  player
-                          :correct true
-                          :text    message} state)
-      (count-guess-and-advance state))
-    (do
-      (log/info "Incorrect guess: " word message)
-      (broadcast-message {:player player
-                          :text   message} state)
-      ;; no need to broadcast state here, but return it just in case
-      state))))
+  [client-id {:keys [message]} {:keys [round-words players] :as state}]
+  (let [player (player-by-id client-id players)
+        word   (first round-words)]
+    (if (= (stem/stem message) (stem/stem word))
+      (do
+        (log/info "Correct guess: " word message)
+        (broadcast-message {:player  player
+                            :correct true
+                            :text    message} state)
+        (count-guess-and-advance state))
+      (do
+        (log/info "Incorrect guess: " word message)
+        (broadcast-message {:player player
+                            :text   message} state)
+        ;; no need to broadcast state here, but return it just in case
+        state))))
 
 (def command-handlers
-{"join-team"    handle-join-team
- "set-words"    handle-set-words
- "start-game"   handle-start-game
- "send-message" (ensure-active-team handle-send-message)
- "start-turn"   (ensure-active-player handle-start-turn)
- "skip-word"    (ensure-active-player handle-skip-word)
- "count-guess"  (ensure-active-player handle-count-guess)
- "ping"         handle-ping})
+  {"join-team"    handle-join-team
+   "set-words"    handle-set-words
+   "start-game"   handle-start-game
+   "send-message" (ensure-active-team handle-send-message)
+   "start-turn"   (ensure-active-player handle-start-turn)
+   "skip-word"    (ensure-active-player handle-skip-word)
+   "count-guess"  (ensure-active-player handle-count-guess)
+   "ping"         handle-ping})
 
 (defn handle-client-message
-[{:keys [id command] :as msg} state]
-(let [name (get-name state id)]
-  (log/info "Responding to command" command "for client" id ": " name " for message " msg)
-  (if-let [handler (get command-handlers command)]
-    (handler id msg state)
-    (do
-      (log/error "Unknown command " command)
-      (message-client id state {:error (str "Unknown command: " command)
-                                :event "command-error"})))))
+  [{:keys [id command] :as msg} state]
+  (let [name (get-name state id)]
+    (log/info "Responding to command" command "for client" id ": " name " for message " msg)
+    (if-let [handler (get command-handlers command)]
+      (handler id msg state)
+      (do
+        (log/error "Unknown command " command)
+        (message-client id state {:error (str "Unknown command: " command)
+                                  :event "command-error"})))))
 
 (defn handle-turn-end
   [event {:keys [words turn-id turn-score] :as state}]
@@ -347,7 +347,7 @@
       (broadcast-message
        {:system true
         :text   (format "Time's up! %s scored %s points" (active-player-name state) turn-score)}
-        state)
+       state)
       (broadcast-state (next-player state)))
     (do
       (log/info "Ignoring turn end for inactive ID: " (:turn-id event) turn-id)
