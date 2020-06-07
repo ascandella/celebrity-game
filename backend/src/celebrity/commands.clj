@@ -222,15 +222,24 @@
     (> round rounds) (assoc :screens
                             (zipmap (keys screens) (repeat "game-over")))))
 
+(defn- shuffle-words
+  "Return words randomized, guaranteeing that the first word is not the same"
+  [words]
+  (let [head   (first words)
+        second (fnext words)
+        others (drop 2 words)]
+    (cons second (shuffle (cons head others)))))
+
+
 (defn next-round
   "Advance to the rext round"
   [{:keys [words] :as state}]
   (maybe-end-game
-    (-> state
-        (assoc :round-words (randomize-words words))
-        (dissoc :turn-id)
-        (dissoc :turn-ends)
-        (update :round inc))))
+   (-> state
+       (assoc :round-words (randomize-words words))
+       (dissoc :turn-id)
+       (dissoc :turn-ends)
+       (update :round inc))))
 
 (defn next-player
   [state]
@@ -239,6 +248,7 @@
       (dissoc :turn-id)
       (dissoc :leftover-clock)
       (dissoc :turn-ends)
+      (update :round-words shuffle-words)
       (update :player-seq next)))
 
 (defn next-word-or-round
@@ -255,14 +265,6 @@
        (assoc state :leftover-clock (->> turn-ends
                                          (Duration/between (Instant/now))
                                          .toMillis))))))
-
-(defn- shuffle-skip
-  "Return words randomized, guaranteeing that the first word is not the same"
-  [words]
-  (let [head   (first words)
-        second (fnext words)
-        others (drop 2 words)]
-    (cons second (shuffle (cons head others)))))
 
 (defn handle-skip-word
   [_ _ {:keys [round-words remaining-skips] :as state}]
@@ -281,7 +283,7 @@
                                   state)
                                  (-> state
                                      (update :remaining-skips dec)
-                                     (update :round-words shuffle-skip))))))
+                                     (update :round-words shuffle-words))))))
 
 (defn count-guess-and-advance
 [state]
