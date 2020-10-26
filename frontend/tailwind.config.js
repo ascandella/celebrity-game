@@ -8,4 +8,5 @@ module.exports = {
     variants: {},
     plugins: [],
   },
+  purge: ["./components/**/*.tsx", "./pages/**/*.tsx"],
 };
