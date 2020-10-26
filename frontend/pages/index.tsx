@@ -12,7 +12,7 @@ const composeEnhancers =
   compose;
 const store = createStore(
   gameApp,
-  composeEnhancers(applyMiddleware(thunkMiddleware))
+  composeEnhancers(applyMiddleware(thunkMiddleware)),
 );
 
 const Index: FunctionComponent<{}> = () => {

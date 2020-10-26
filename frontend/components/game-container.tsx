@@ -54,7 +54,7 @@ const mapDispatchToProps = (dispatch: Dispatch) => ({
 
 const JoinOrCreateContainer = connect(
   mapStateToProps,
-  mapDispatchToProps
+  mapDispatchToProps,
 )(JoinOrCreate);
 
 type GameContainerProps = {

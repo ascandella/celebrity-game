@@ -7,8 +7,9 @@
 body {
   font-family: "Varela";
 }
+
 a {
-  @apply text-tangarine cursor-pointer;
+  @apply cursor-pointer text-tangarine;
 }
 
 p {

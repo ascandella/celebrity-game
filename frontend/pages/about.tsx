@@ -9,7 +9,7 @@ type AboutSectionProps = {
   children: React.ReactNode;
 };
 
-const AboutSection: FunctionComponent<AboutSectionProps> = ({
+const AboutSection: FunctionComponent = ({
   title,
   children,
 }: AboutSectionProps) => (
