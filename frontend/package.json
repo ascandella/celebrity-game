@@ -52,6 +52,7 @@
     }
   },
   "prettier": {
-    "trailingComma": "all"
+    "trailingComma": "all",
+    "endOfLine": "lf"
   }
 }
