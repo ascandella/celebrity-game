@@ -1,4 +1,4 @@
-import React, { FunctionComponent } from "react";
+import React from "react";
 import { Provider } from "react-redux";
 import { createStore } from "redux";
 import gameApp from "../reducers/index";
@@ -9,10 +9,7 @@ type AboutSectionProps = {
   children: React.ReactNode;
 };
 
-const AboutSection: FunctionComponent = ({
-  title,
-  children,
-}: AboutSectionProps) => (
+const AboutSection = ({ title, children }: AboutSectionProps) => (
   <div className="pb-6">
     <div className="flex justify-center">
       <div className="w-full max-w-lg">
@@ -27,7 +24,7 @@ const AboutSection: FunctionComponent = ({
 
 const store = createStore(gameApp);
 
-const About: FunctionComponent = () => {
+const About = () => {
   return (
     <Provider store={store}>
       <ContentWrapper>

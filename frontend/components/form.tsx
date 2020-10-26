@@ -1,6 +1,5 @@
 import React, { FunctionComponent } from "react";
 import styled from "styled-components";
-import PinkGradient from "./styles";
 
 interface FormClassAttrs {
   className?: string;
@@ -33,7 +32,7 @@ export const FormError: FunctionComponent<FormErrorProps> = ({
   return (
     <div className="flex justify-center mb-4">
       <div
-        className="bg-red-100 border border-red-400 text-red-700 p-2 relative"
+        className="relative p-2 text-red-700 bg-red-100 border border-red-400"
         role="alert"
       >
         <span className="block sm:inline">{error}</span>
@@ -47,25 +46,14 @@ type SubmitButtonProps = {
   value: string;
 };
 
-interface StyledButtonProps {
-  className?: string;
-}
-
-const StyledButton = styled.input.attrs<StyledButtonProps>({
-  className:
-    "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 cursor-pointer focus:outline-none focus:shadow-outline",
-})``;
-
-export const SubmitButton: FunctionComponent<SubmitButtonProps> = ({
-  submitting,
-  value,
-}: SubmitButtonProps) => (
-  <StyledButton
+export const SubmitButton = ({ submitting, value }: SubmitButtonProps) => (
+  <input
     type="submit"
-    style={{ background: PinkGradient }}
     value={value}
     disabled={submitting}
-    className={submitting ? "opacity-50 " : ""}
+    className={`bg-blue-500 bg-pink-gradient hover:bg-blue-699 text-white font-bold py-1 px-4 cursor-pointer focus:outline-none focus:shadow-outline ${
+      submitting && "opacity-44"
+    }`}
   />
 );
 

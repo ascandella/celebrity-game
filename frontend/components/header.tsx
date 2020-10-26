@@ -1,14 +1,8 @@
-import React, { FunctionComponent } from "react";
+import React from "react";
 import { connect } from "react-redux";
 import Link from "next/link";
-import styled from "styled-components";
-import PinkGradient from "./styles";
 import Timer from "./in-game/timer";
 import { RootState } from "../reducers";
-
-export const GradientHeader = styled.nav`
-  background: ${PinkGradient};
-`;
 
 type HeaderProps = {
   round: number;
@@ -18,11 +12,7 @@ type HeaderProps = {
 
 const titleStyle = `font-semibold text-xl tracking-tigh hover:text-white text-white`;
 
-const Header: FunctionComponent<HeaderProps> = ({
-  round,
-  screen,
-  inGame,
-}: HeaderProps) => {
+const Header = ({ round, screen, inGame }: HeaderProps) => {
   const getHeaderContent = (): React.ReactNode => {
     const screenNames = {
       "pick-team": "Choose Your Team",
@@ -66,28 +56,28 @@ const Header: FunctionComponent<HeaderProps> = ({
     // Kinda sucks to duplicate the header wrapper, but the flex box needs to have
     // these direct children
     return (
-      <GradientHeader className="flex items-center justify-between flex-wrap p-4">
-        <div className="flex items-center flex-shrink-0 text-white mr-6">
+      <nav className="flex flex-wrap items-center justify-between p-4 bg-pink-gradient">
+        <div className="flex items-center flex-shrink-0 mr-6 text-white">
           <Link href="/">
             <a className={titleStyle}>Celebrity</a>
           </Link>
         </div>
         <div className="block lg:flex lg:items-center lg:w-auto">
           <Link href="/about">
-            <a className="mt-4 lg:mt-0 text-white hover:text-white mr-4">
+            <a className="mt-4 mr-4 text-white lg:mt-0 hover:text-white">
               About
             </a>
           </Link>
         </div>
-      </GradientHeader>
+      </nav>
     );
   }
 
   return (
-    <GradientHeader className="flex items-center justify-between flex-wrap p-4">
+    <nav className="flex flex-wrap items-center justify-between p-4 bg-pink-gradient">
       {getHeaderContent()}
       <Timer />
-    </GradientHeader>
+    </nav>
   );
 };
 

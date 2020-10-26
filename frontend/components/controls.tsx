@@ -1,16 +1,7 @@
 import React, { FunctionComponent } from "react";
 import { connect } from "react-redux";
-import styled from "styled-components";
 import CelebrityClient from "../clients/celebrity";
 import { RootState } from "../reducers";
-import PinkGradient from "./styles";
-
-const StartButton = styled.button.attrs({
-  className:
-    "text-white font-bold py-2 px-4 border-b-4 border-orange-700 hover:border-orange-500 rounded",
-})`
-  background: ${PinkGradient};
-`;
 
 type ControlProps = {
   isStartable: boolean;
@@ -28,7 +19,12 @@ const GameControls: FunctionComponent<ControlProps> = ({
   }
 
   return (
-    <StartButton onClick={() => client.startGame()}>Start Game</StartButton>
+    <button
+      className="px-4 py-2 font-bold text-white border-b-4 border-orange-700 rounded hover:border-orange-500 bg-pink-gradient"
+      onClick={() => client.startGame()}
+    >
+      Start Game
+    </button>
   );
 };
 

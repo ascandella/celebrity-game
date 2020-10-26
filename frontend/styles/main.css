@@ -8,6 +8,10 @@ body {
   font-family: "Varela";
 }
 
+.bg-pink-gradient {
+  background: linear-gradient(120deg, #d53369 0%, #daae51 100%);
+}
+
 a {
   @apply cursor-pointer text-tangarine;
 }
