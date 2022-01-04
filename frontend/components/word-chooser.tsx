@@ -35,7 +35,7 @@ const EditableWord: FunctionComponent<EditableWordProps> = ({
           autoFocus={isFocused}
         />
       ) : (
-        <span className="leading-8 w-full" onClick={startEdit}>
+        <span className="w-full leading-8" onClick={startEdit}>
           {value}
         </span>
       )}
@@ -129,7 +129,7 @@ const WordChooser: FunctionComponent<WordChooserProps> = ({
 
   return (
     <FormWrapper>
-      <div className="bg-white shadow-md px-8 pt-6 pb-6 mb-4">
+      <div className="px-8 pt-6 pb-6 mb-4 bg-white shadow-md">
         <form onSubmit={handleSubmit}>
           <div className="mb-2">
             {maxWords > 0 && (

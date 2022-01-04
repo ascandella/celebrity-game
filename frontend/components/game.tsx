@@ -8,11 +8,6 @@ import InGameContainer from "./in-game/container";
 import { RootState } from "../reducers";
 import CelebrityClient from "../clients/celebrity";
 
-type player = {
-  id: string;
-  name: string;
-};
-
 type GameProps = {
   gameCode: string;
   playerName: string;
@@ -53,9 +48,9 @@ const Game: FunctionComponent<GameProps> = ({
       <InGameContainer client={client} />
 
       {hasControl && screen !== "round" && (
-        <div className="flex justify-center text-center mt-4">
+        <div className="flex justify-center mt-4 text-center">
           <div>
-            <div className="border border-t-4 border-blue-400 bg-blue-100 px-4 py-2">
+            <div className="py-2 px-4 bg-blue-100 border border-t-4 border-blue-400">
               Room code: <span className="font-medium">{gameCode}</span>
             </div>
           </div>

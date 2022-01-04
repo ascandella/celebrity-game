@@ -9,7 +9,7 @@ type TeamPickerProps = {
   teams: Team[];
   teamName: string;
   client: CelebrityClient;
-  wordCounts: {};
+  wordCounts: Record<string, number>;
 };
 
 const TeamPicker: FunctionComponent<TeamPickerProps> = ({
@@ -30,9 +30,9 @@ const TeamPicker: FunctionComponent<TeamPickerProps> = ({
 
   return (
     <div>
-      <div className="flex flex-between justify-center flex-wrap">
+      <div className="flex flex-wrap justify-center flex-between">
         {teams.map((team, index) => (
-          <div key={index} className="max-w-md p-4 w-1/2 text-center">
+          <div key={index} className="p-4 w-1/2 max-w-md text-center">
             <button
               className={`${
                 team.name === teamName && "opacity-50 cursor-not-allowed"
@@ -51,12 +51,12 @@ const TeamPicker: FunctionComponent<TeamPickerProps> = ({
                 return (
                   <li key={j}>
                     <span className="mr-2">{player.name}</span>
-                    {Array.from({ length: playerWordCount }, (x, i) => (
+                    {Array.from({ length: playerWordCount }, (_, i) => (
                       <svg
                         key={i}
                         height="8"
                         width="8"
-                        className="fill-current text-teal-400 inline"
+                        className="inline text-teal-400 fill-current"
                       >
                         <circle cx="4" cy="4" r="3" />
                       </svg>

@@ -28,10 +28,10 @@ export default class CelebrityClient {
     this.dispatch = dispatch;
   }
 
-  connect(): Promise<Event> {
+  connect(): Promise<Event | null> {
     return new Promise((resolve, reject) => {
       if (this.connected) {
-        resolve();
+        resolve(null);
       }
 
       this.wsClient = new WebSocket(getGameURL());
@@ -83,7 +83,7 @@ export default class CelebrityClient {
 
   async sendCommand(
     command: string,
-    data: { [key: string]: any }
+    data: { [key: string]: any },
   ): Promise<void> {
     if (!this.connected) {
       this.dispatch(setConnecting(true));
@@ -99,7 +99,7 @@ export default class CelebrityClient {
       JSON.stringify({
         ...data,
         command,
-      })
+      }),
     );
   }
 
