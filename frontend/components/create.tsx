@@ -137,7 +137,7 @@ class CreateGame extends Component<CreateProps, CreateState> {
       <FormWrapper>
         <form
           onSubmit={this.handleSubmit.bind(this)}
-          className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+          className="px-8 pt-6 pb-8 mb-4 bg-white rounded shadow-md"
         >
           <div className="mb-4">
             <FormLabel>

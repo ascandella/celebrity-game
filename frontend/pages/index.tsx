@@ -15,7 +15,7 @@ const store = createStore(
   composeEnhancers(applyMiddleware(thunkMiddleware)),
 );
 
-const Index: FunctionComponent<{}> = () => {
+const Index: FunctionComponent = () => {
   return (
     <Provider store={store}>
       <GameContainer />

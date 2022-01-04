@@ -143,7 +143,7 @@ const InitialConnectionStatus: ConnectionStatus = {
 
 const connection = (
   state = InitialConnectionStatus,
-  action
+  action,
 ): ConnectionStatus => {
   switch (action.type) {
     case SET_CONNECTING:
@@ -215,7 +215,7 @@ const gameConfig = (state: GameConfig = {}, action): GameConfig => {
   }
 };
 
-const wordCounts = (state = {}, action): {} => {
+const wordCounts = (state = undefined, action): number | undefined => {
   switch (action.type) {
     case BROADCAST:
       return action.wordCounts;
@@ -224,7 +224,7 @@ const wordCounts = (state = {}, action): {} => {
   }
 };
 
-const myWords = (state = [], action): {} => {
+const myWords = (state = [], action): string[] => {
   switch (action.type) {
     case BROADCAST:
       return action.words;
