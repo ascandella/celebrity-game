@@ -215,7 +215,7 @@ const gameConfig = (state: GameConfig = {}, action): GameConfig => {
   }
 };
 
-const wordCounts = (state = undefined, action): number | undefined => {
+const wordCounts = (state = {}, action): Record<string, number> => {
   switch (action.type) {
     case BROADCAST:
       return action.wordCounts;
